@@ -24,15 +24,14 @@
 # Can be used as separate project for boost building with standard CMake way.
 
 cmake_minimum_required(VERSION 3.2)
-project(BoostCMaker)
-
-# TODO: use common CMakeLists.txt from LibCMaker
+project(LibCMaker_Boost)
 
 if(NOT LIBCMAKER_SRC_DIR)
   message(FATAL_ERROR
     "Please set LIBCMAKER_SRC_DIR with path to LibCMaker modules root")
 endif()
 list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_SRC_DIR}/cmake/modules")
+
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 # To prevent the list expansion on an argument with ';'.
