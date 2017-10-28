@@ -26,22 +26,13 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 project(test_compile_with_boost CXX)
 
 
-function(bcm_print_debug_message message)
-  if(bcm_STATUS_DEBUG)
-    string(TIMESTAMP timestamp)
-    if(bcm_CACHE_RUN)
-      set(type "DEBUG (CACHE RUN)")
-    else()
-      set(type "DEBUG")
-    endif()
-    message(STATUS "[bcm *** ${type} *** ${timestamp}] ${message}")
-  endif()
-endfunction()
+#-----------------------------------------------------------------------
+# Set path to LibCMaker root
+#-----------------------------------------------------------------------
 
-function(bcm_print_var_value in_var)
-  bcm_print_debug_message("Var: ${in_var} == ${${in_var}}")
-endfunction()
-
+set(LIBCMAKER_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker")
+# Uncomment it if need functions from LibCMaker
+#list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_SRC_DIR}/cmake/modules")
 
 
 #-----------------------------------------------------------------------
@@ -53,9 +44,8 @@ set(boost_COMPONENTS filesystem system)
 #set(BUILD_SHARED_LIBS ON)
 set(Boost_USE_STATIC_LIBS ON)
 
-# Set useful vars for BoostCMaker.
-set(bcm_STATUS_DEBUG ON)
-set(bcm_STATUS_PRINT ON)
+# Set useful vars for lib_cmaker_boost().
+set(cmr_PRINT_DEBUG ON)
 set(bcm_DOWNLOAD_DIR "${PROJECT_BINARY_DIR}")
 set(bcm_SRC_DIR "${PROJECT_BINARY_DIR}")
 set(bcm_BUILD_DIR "${PROJECT_BINARY_DIR}/build")
@@ -65,20 +55,20 @@ set(bcm_BUILD_DIR "${PROJECT_BINARY_DIR}/build")
 # Build and install the boost.
 #-----------------------------------------------------------------------
 
-include(${PROJECT_SOURCE_DIR}/cmake/BoostCMaker/BoostCMaker.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/LibCMaker_Boost/lib_cmaker_boost.cmake)
 
 # Make compile, build and install the boost at a config CMake phase,
 # generate the config file BoostConfig.
 # For specified boost components dependence components will builded too.
 
 # Install specified boost version and components.
-BoostCMaker(VERSION ${boost_VERSION} COMPONENTS ${boost_COMPONENTS})
+lib_cmaker_boost(VERSION ${boost_VERSION} COMPONENTS ${boost_COMPONENTS})
 # Install default boost version and only headers.
-#BoostCMaker()
+#lib_cmaker_boost()
 # Install specified boost version and only headers.
-#BoostCMaker(VERSION ${boost_VERSION})
+#lib_cmaker_boost(VERSION ${boost_VERSION})
 # Install default boost version and all libs.
-#BoostCMaker(COMPONENTS all)
+#lib_cmaker_boost(COMPONENTS all)
 
 
 #-----------------------------------------------------------------------
@@ -99,14 +89,16 @@ endif()
 #-----------------------------------------------------------------------
 
 # Use newly got boost library.
-find_package(Boost ${boost_VERSION} REQUIRED CONFIG COMPONENTS ${boost_COMPONENTS})
+find_package(
+  Boost ${boost_VERSION} REQUIRED CONFIG COMPONENTS ${boost_COMPONENTS})
 
 # QUIET suppresses the big warning issued, and allows fallback
 #find_package(Boost 1.63 QUIET CONFIG COMPONENTS filesystem system)
 #if(NOT Boost_FOUND)
     # Do warn about falling back to system, but can make message more
     # explicit/informative
-#    message(STATUS "No BoostConfig.cmake config file found, falling back to FindBoost...")
+#    message(STATUS
+#      "No BoostConfig.cmake config file found, falling back to FindBoost...")
     # Use REQUIRED flag to fail if not found
 #    find_package(Boost 1.63 REQUIRED COMPONENTS filesystem system)
 #endif()

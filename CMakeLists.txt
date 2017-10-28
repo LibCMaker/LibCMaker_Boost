@@ -26,25 +26,20 @@
 cmake_minimum_required(VERSION 3.2)
 project(BoostCMaker)
 
+# TODO: use common CMakeLists.txt from LibCMaker
+
+if(NOT LIBCMAKER_SRC_DIR)
+  message(FATAL_ERROR
+    "Please set LIBCMAKER_SRC_DIR with path to LibCMaker modules root")
+endif()
+list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_SRC_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
+# To prevent the list expansion on an argument with ';'.
+# See also
+# http://stackoverflow.com/a/20989991
+# http://stackoverflow.com/a/20985057
+string (REPLACE " " ";" lib_COMPONENTS "${lib_COMPONENTS}")
+
 include(bcm_boost_cmaker)
-
-if(NOT DEFINED boost_VERSION)
-  set(default_boost_version ON)
-endif()
-if(NOT DEFINED boost_COMPONENTS)
-  set(only_headers ON)
-else()
-  separate_arguments(boost_COMPONENTS)
-endif()
-
-if(default_boost_version AND only_headers)
-  bcm_boost_cmaker()
-elseif(default_boost_version)
-  bcm_boost_cmaker(COMPONENTS ${boost_COMPONENTS})
-elseif(only_headers)
-  bcm_boost_cmaker(VERSION ${boost_VERSION})
-else()
-  bcm_boost_cmaker(VERSION ${boost_VERSION} COMPONENTS ${boost_COMPONENTS})
-endif()
+bcm_boost_cmaker()

@@ -144,9 +144,11 @@ function(write_boost_libdepfile _var _dir _link _thread _variant)
     # Write the stanza
     # Handle the weird case of boost_thread, which is always -mt
     if(_comp STREQUAL "thread" AND NOT _libmttag)
-      make_import_target(_text boost_${_comp} "${_libprefix}${_comp}-mt${_libvrtag}${_libsuffix}" ${_variant})
+      make_import_target(_text boost_${_comp}
+        "${_libprefix}${_comp}-mt${_libvrtag}${_libsuffix}" ${_variant})
     else()
-      make_import_target(_text boost_${_comp} "${_libprefix}${_comp}${_libmttag}${_libvrtag}${_libsuffix}" ${_variant})
+      make_import_target(_text boost_${_comp}
+        "${_libprefix}${_comp}${_libmttag}${_libvrtag}${_libsuffix}" ${_variant})
     endif()
     set(_addimports "${_addimports}${_text}")
     # Here's where we'd need to handle any link dependencies
@@ -175,7 +177,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(BOOST_LIBDIR "@CMAKE_INSTALL_PREFIX@/lib")
-set(BOOST_CMAKEDIR "${BOOST_LIBDIR}/cmake/Boost-@boost_VERSION@")
+set(BOOST_CMAKEDIR "${BOOST_LIBDIR}/cmake/Boost-@lib_VERSION@")
 set(BOOST_LIBPREFIX "@CMAKE_SHARED_LIBRARY_PREFIX@")
 set(BOOST_SHARED_LIBSUFFIX "@CMAKE_SHARED_LIBRARY_SUFFIX@")
 set(BOOST_STATIC_LIBSUFFIX "@CMAKE_STATIC_LIBRARY_SUFFIX@")
@@ -209,7 +211,8 @@ if(NOT DEFINED Boost_SHARED_LIBS_FOUND AND NOT DEFINED Boost_STATIC_LIBS_FOUND)
 endif()
 
 if(Boost_SHARED_LIBS_FOUND AND Boost_STATIC_LIBS_FOUND)
-  message(FATAL_ERROR "Can not be set both BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS")
+  message(FATAL_ERROR
+    "Can not be set both BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS")
 elseif(Boost_SHARED_LIBS_FOUND AND NOT Boost_STATIC_LIBS_FOUND)
   set(BOOST_LINKING_MODELS shared)
   set(BOOST_LIBSUFFIX ${BOOST_SHARED_LIBSUFFIX})
@@ -248,7 +251,8 @@ endif()
 # with the globbing and regexing!
 set(BOOST_COMPONENTS)
 
-file(GLOB BOOST_COMPONENTS RELATIVE "${BOOST_LIBDIR}" "${BOOST_LIBDIR}/${BOOST_LIBPREFIX}boost_*${BOOST_LIBSUFFIX}")
+file(GLOB BOOST_COMPONENTS RELATIVE
+  "${BOOST_LIBDIR}" "${BOOST_LIBDIR}/${BOOST_LIBPREFIX}boost_*${BOOST_LIBSUFFIX}")
 
 string(REPLACE "${BOOST_LIBSUFFIX}" "" BOOST_COMPONENTS "${BOOST_COMPONENTS}")
 string(REGEX REPLACE "libboost_|(-d|-mt)" "" BOOST_COMPONENTS "${BOOST_COMPONENTS}")
@@ -306,12 +310,14 @@ foreach(_lm ${BOOST_LINKING_MODELS})
       @ONLY
       )
 
-    list(APPEND _ldfiles @PROJECT_BINARY_DIR@/BoostLibraryDepends-${_lm}-${_tm}.cmake)
+    list(APPEND _ldfiles
+      @PROJECT_BINARY_DIR@/BoostLibraryDepends-${_lm}-${_tm}.cmake)
 
     foreach(_vm ${BOOST_VARIANT_MODELS})
       # Write file for the join of link+thread+variant models
       message(STATUS "Writing BoostLibraryDepends-${_lm}-${_tm}-${_vm}.cmake")
-      write_boost_libdepfile(_fname ${OUTPUT_DIR} ${_lm} ${_tm} ${_vm} ${BOOST_COMPONENTS})
+      write_boost_libdepfile(
+        _fname ${OUTPUT_DIR} ${_lm} ${_tm} ${_vm} ${BOOST_COMPONENTS})
       list(APPEND _ldfiles "${_fname}")
     endforeach()
   endforeach()

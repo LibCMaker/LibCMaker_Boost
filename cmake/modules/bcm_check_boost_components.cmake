@@ -28,7 +28,7 @@
 
 include(CMakeParseArguments) # cmake_parse_arguments
 
-include(bcm_fatal_error)
+include(cmr_print_fatal_error)
 
 function(bcm_check_boost_components)
 
@@ -93,14 +93,14 @@ function(bcm_check_boost_components)
     endif()
   
     if(${boost_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
-      bcm_fatal_error("Boost of version ${boost_VERSION} don't have the component ${name}.")
+      cmr_print_fatal_error("Boost of version ${boost_VERSION} don't have the component ${name}.")
     endif()
 
     if(ANDROID)
       string(COMPARE EQUAL "${name}" "python" bad_component)
       if(bad_component)
         # TODO: CrystaX NDK has python
-        bcm_fatal_error("Android NDK don't have python for Boost.Python.")
+        cmr_print_fatal_error("Android NDK don't have python for Boost.Python.")
       endif()
       
       # Boost.Context in 1.57.0 and earlier don't support arm64.
@@ -112,12 +112,14 @@ function(bcm_check_boost_components)
               AND NOT boost_VERSION VERSION_GREATER "1.61.0"))
         string(COMPARE EQUAL "${name}" "context" bad_component)
         if(bad_component)
-          bcm_fatal_error("Boost.Context in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
+          cmr_print_fatal_error(
+            "Boost.Context in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
         endif()
 
         string(COMPARE EQUAL "${name}" "coroutine" bad_component)
         if(bad_component)
-          bcm_fatal_error("Boost.Coroutine in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
+          cmr_print_fatal_error(
+            "Boost.Coroutine in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
         endif()
       endif()
       
@@ -127,7 +129,8 @@ function(bcm_check_boost_components)
               AND NOT boost_VERSION VERSION_GREATER "1.61.0")
         string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
         if(bad_component)
-          bcm_fatal_error("Boost.Coroutine2 in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
+          cmr_print_fatal_error(
+            "Boost.Coroutine2 in boost of version ${boost_VERSION} don't support ${ANDROID_SYSROOT_ABI}.")
         endif()
       endif()
 

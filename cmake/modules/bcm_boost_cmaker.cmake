@@ -41,14 +41,13 @@ include(ExternalProject) # ExternalProject_Add, ExternalProject_Add_Step
 include(GNUInstallDirs)
 include(ProcessorCount) # ProcessorCount
 
+include(cmr_print_debug_message)
+include(cmr_print_fatal_error)
+include(cmr_print_var_value)
+
 include(bcm_check_boost_components)
-include(bcm_fatal_error)
 include(bcm_get_boost_download_params)
 include(bcm_set_cmake_flags)
-include(bcm_status_debug)
-
-include(bcm_print_debug_message)
-include(bcm_print_var_value)
 
 # To find bcm templates dir.
 set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
@@ -60,14 +59,13 @@ set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
 #   Boost_USE_STATIC_LIBS
 #   BUILD_SHARED_LIBS
 
-#   bcm_STATUS_DEBUG
-#   bcm_STATUS_PRINT
+#   cmr_PRINT_DEBUG
 
-#   bcm_DOWNLOAD_DIR  -- for downloaded files
-#   bcm_SRC_DIR       -- for unpacked sources
-#   bcm_BUILD_DIR     -- for build files
+#   lib_DOWNLOAD_DIR      -- for downloaded files
+#   lib_UNPACKED_SRC_DIR  -- for unpacked sources
+#   lib_BUILD_DIR         -- for build files
 
-#   bcm_BUILD_TOOLS_ONLY
+#   lib_BUILD_HOST_TOOLS
 #   bcm_BUILD_BCP_TOOL
 
 
@@ -87,49 +85,41 @@ set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
 function(bcm_boost_cmaker)
   cmake_minimum_required(VERSION 3.2)
 
-  cmake_parse_arguments(boost "" "VERSION" "COMPONENTS" "${ARGV}")
-  # -> boost_VERSION
-  # -> boost_COMPONENTS
-  
-  if(boost_UNPARSED_ARGUMENTS)
-    bcm_fatal_error("Unparsed arguments: ${boost_UNPARSED_ARGUMENTS}")
+  if(NOT lib_VERSION)
+    set(lib_VERSION "1.64.0")
   endif()
-  if(NOT boost_VERSION)
-    set(boost_VERSION "1.64.0")
-  endif()
-  if(NOT boost_COMPONENTS)
-    set(boost_COMPONENTS "only_headers")
+  if(NOT lib_COMPONENTS)
+    set(lib_COMPONENTS "only_headers")
   endif()
   
-  list(LENGTH boost_COMPONENTS components_length)
-  list(FIND boost_COMPONENTS "all" all_index)
+  list(LENGTH lib_COMPONENTS components_length)
+  list(FIND lib_COMPONENTS "all" all_index)
   if(NOT all_index EQUAL -1 AND NOT components_length EQUAL 1)
-    bcm_fatal_error("COMPONENTS can not contain 'all' keyword with something others.")
+    cmr_print_fatal_error(
+      "COMPONENTS can not contain 'all' keyword with something others.")
   endif()
 
-  bcm_check_boost_components(VERSION ${boost_VERSION} COMPONENTS ${boost_COMPONENTS})
+  bcm_check_boost_components(
+    VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS})
 
-  bcm_get_version_parts(${boost_VERSION}
-      boost_MAJOR_VERSION boost_MINOR_VERSION boost_PATCH_VERSION boost_TWEAK_VERSION)
+  bcm_get_boost_download_params(${lib_VERSION}
+    boost_url boost_sha1 boost_src_dir_name boost_tar_file_name)
 
-  bcm_get_boost_download_params(${boost_VERSION}
-      boost_url boost_sha1 boost_src_dir_name boost_tar_file_name)
-
-  if(NOT bcm_DOWNLOAD_DIR)
-    set(bcm_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  if(NOT lib_DOWNLOAD_DIR)
+    set(lib_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR})
   endif()
 
-  if(NOT bcm_SRC_DIR)
-    set(bcm_SRC_DIR "${bcm_DOWNLOAD_DIR}/sources")
+  if(NOT lib_UNPACKED_SRC_DIR)
+    set(lib_UNPACKED_SRC_DIR "${lib_DOWNLOAD_DIR}/sources")
   endif()
 
-  if(NOT bcm_BUILD_DIR)
-    set(bcm_BUILD_DIR "${bcm_DOWNLOAD_DIR}/build")
+  if(NOT lib_BUILD_DIR)
+    set(lib_BUILD_DIR "${lib_DOWNLOAD_DIR}/build")
   endif()
 
-  set(boost_tar_file "${bcm_DOWNLOAD_DIR}/${boost_tar_file_name}")
-  set(boost_src_dir "${bcm_SRC_DIR}/${boost_src_dir_name}")
-  set(boost_build_dir "${bcm_BUILD_DIR}/${boost_src_dir_name}")
+  set(boost_tar_file "${lib_DOWNLOAD_DIR}/${boost_tar_file_name}")
+  set(boost_src_dir "${lib_UNPACKED_SRC_DIR}/${boost_src_dir_name}")
+  set(boost_build_dir "${lib_BUILD_DIR}/${boost_src_dir_name}")
 
 
   #-----------------------------------------------------------------------
@@ -153,7 +143,7 @@ function(bcm_boost_cmaker)
 #  elseif(MSVC)
     set(toolset_name "msvc")
   elseif()
-      bcm_fatal_error("Unsupported compiler system.")
+    cmr_print_fatal_error("Unsupported compiler system.")
   endif()
 
   if(ANDROID)
@@ -210,7 +200,7 @@ function(bcm_boost_cmaker)
   list(APPEND common_b2_args "-a") # Rebuild everything
   list(APPEND common_b2_args "-q") # Stop at first error
   
-  if(bcm_STATUS_DEBUG)
+  if(cmr_PRINT_DEBUG)
     list(APPEND common_b2_args "-d+2") # Show commands as they are executed
     list(APPEND common_b2_args "--debug-configuration") # Diagnose configuration
   else()
@@ -271,10 +261,10 @@ function(bcm_boost_cmaker)
   
   # Build and install the specified <library>. If this option is used,
   # only libraries specified using this option will be built.
-  string(COMPARE EQUAL "${boost_COMPONENTS}" "only_headers" only_headers)
-  string(COMPARE EQUAL "${boost_COMPONENTS}" "all" build_all_libs)
+  string(COMPARE EQUAL "${lib_COMPONENTS}" "only_headers" only_headers)
+  string(COMPARE EQUAL "${lib_COMPONENTS}" "all" build_all_libs)
   if(NOT build_all_libs AND NOT only_headers)
-    foreach(build_lib ${boost_COMPONENTS})
+    foreach(build_lib ${lib_COMPONENTS})
       list(APPEND b2_args "--with-${build_lib}")
     endforeach()
   endif()
@@ -294,20 +284,23 @@ function(bcm_boost_cmaker)
   #
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
       AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(FATAL_ERROR "Not supported build type ${CMAKE_BUILD_TYPE}, only allowed Debug and Release.")
+    message(FATAL_ERROR
+      "Not supported build type ${CMAKE_BUILD_TYPE}, only allowed Debug and Release.")
   endif()
   
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
-      list(APPEND b2_args "variant=release")
+    list(APPEND b2_args "variant=release")
   elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      list(APPEND b2_args "variant=debug")
+    list(APPEND b2_args "variant=debug")
   endif()
   
   if(BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS)
-    message(FATAL_ERROR "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as ON")
+    message(FATAL_ERROR
+      "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as ON")
   elseif(DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS
         AND DEFINED Boost_USE_STATIC_LIBS AND NOT Boost_USE_STATIC_LIBS)
-    message(FATAL_ERROR "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as OFF")
+    message(FATAL_ERROR
+      "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as OFF")
   elseif(BUILD_SHARED_LIBS AND NOT Boost_USE_STATIC_LIBS)
     list(APPEND b2_args "link=shared")
     # TODO: for BOOST_ALL_DYN_LINK
@@ -323,7 +316,9 @@ function(bcm_boost_cmaker)
     list(APPEND b2_args "link=static")
   endif()
   
-  option(Boost_USE_MULTITHREADED "Build Boost multi threaded library variants" ON)
+  option(
+    Boost_USE_MULTITHREADED "Build Boost multi threaded library variants" ON
+  )
   if(Boost_USE_MULTITHREADED)
     list(APPEND b2_args "threading=multi")
   else()
@@ -546,9 +541,8 @@ function(bcm_boost_cmaker)
     set(step_log_opts LOG 1)
     # TODO: check file log path
     get_filename_component(x "@bcm_PACKAGE_SOURCE_DIR@/.." ABSOLUTE)
-    bcm_status_print(
-        "For progress check log files in directory: ${bcm_SRC_DIR}"
-    )
+    cmr_print_debug_message(
+      "For progress check log files in directory: ${lib_UNPACKED_SRC_DIR}")
   else()
     set(log_opts "")
     set(step_log_opts "")
@@ -593,10 +587,10 @@ function(bcm_boost_cmaker)
   #
   if(NOT EXISTS "${boost_src_dir}")
     message(STATUS "Extract ${boost_tar_file}")
-    file(MAKE_DIRECTORY ${bcm_SRC_DIR})
+    file(MAKE_DIRECTORY ${lib_UNPACKED_SRC_DIR})
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E tar xjf ${boost_tar_file}
-      WORKING_DIRECTORY ${bcm_SRC_DIR}
+      WORKING_DIRECTORY ${lib_UNPACKED_SRC_DIR}
     )
   endif()
   
@@ -631,12 +625,13 @@ function(bcm_boost_cmaker)
   find_program(b2_file NAMES b2 PATHS ${boost_src_dir} NO_DEFAULT_PATH)
   if(NOT b2_file)
 
-    if(bcm_STATUS_DEBUG)
-      bcm_status_debug("bootstrap.sh options for b2 (bjam) tool building:")
+    if(cmr_PRINT_DEBUG)
+      cmr_print_debug_message(
+        "bootstrap.sh options for b2 (bjam) tool building:")
       foreach(opt ${bootstrap_args})
-        bcm_status_debug("  ${opt}")
+        cmr_print_debug_message("  ${opt}")
       endforeach()
-      bcm_status_debug("------")
+      cmr_print_debug_message("------")
     endif()
 
     ExternalProject_Add_Step(boost boost_build_b2
@@ -658,19 +653,20 @@ function(bcm_boost_cmaker)
   #
   if(bcm_BUILD_BCP_TOOL)
     unset(bcp_file CACHE)
-    find_program(bcp_file NAMES bcp PATHS ${CMAKE_INSTALL_FULL_BINDIR}/bcp NO_DEFAULT_PATH)
+    find_program(bcp_file
+      NAMES bcp PATHS ${CMAKE_INSTALL_FULL_BINDIR}/bcp NO_DEFAULT_PATH)
 
     if(NOT bcp_file)
       # We need to use a custom set of layout and toolset arguments
       # to prevent "duplicate target" errors.
       list(APPEND bcp_b2_args ${common_b2_args})
 
-      if(bcm_STATUS_DEBUG)
-        bcm_status_debug("b2 options for bcp tool building:")
+      if(cmr_PRINT_DEBUG)
+        cmr_print_debug_message("b2 options for bcp tool building:")
         foreach(opt ${bcp_b2_args})
-          bcm_status_debug("  ${opt}")
+          cmr_print_debug_message("  ${opt}")
         endforeach()
-        bcm_status_debug("------")
+        cmr_print_debug_message("------")
       endif()
 
       ExternalProject_Add_Step(boost install_bcp
@@ -679,7 +675,9 @@ function(bcm_boost_cmaker)
         COMMAND
           <BINARY_DIR>/b2 ${bcp_b2_args} <SOURCE_DIR>/tools/bcp
         COMMAND
-          ${CMAKE_COMMAND} -E copy <BINARY_DIR>/dist/bin/bcp ${CMAKE_INSTALL_FULL_BINDIR}/bcp
+          ${CMAKE_COMMAND} -E copy
+            <BINARY_DIR>/dist/bin/bcp
+            ${CMAKE_INSTALL_FULL_BINDIR}/bcp
         DEPENDS
           ${boost_src_dir}/b2
         DEPENDEES
@@ -695,7 +693,7 @@ function(bcm_boost_cmaker)
   #-----------------------------------------------------------------------
   # Exit if build tools only.
   #
-  if(bcm_BUILD_TOOLS_ONLY)
+  if(lib_BUILD_HOST_TOOLS)
     return()
   endif()
 
@@ -705,16 +703,16 @@ function(bcm_boost_cmaker)
   #
   list(APPEND b2_args ${common_b2_args})
 
-  if(bcm_STATUS_DEBUG)
+  if(cmr_PRINT_DEBUG)
     file(READ "${user_config_jamfile}" USER_JAM_CONTENT)
-    bcm_status_debug("b2 options for boost library building:")
+    cmr_print_debug_message("b2 options for boost library building:")
     foreach(opt ${b2_args})
-      bcm_status_debug("  ${opt}")
+      cmr_print_debug_message("  ${opt}")
     endforeach()
-    bcm_status_debug("------")
-    bcm_status_debug("Boost user jam config:")
-    bcm_status_debug("------\n${USER_JAM_CONTENT}")
-    bcm_status_debug("------")
+    cmr_print_debug_message("------")
+    cmr_print_debug_message("Boost user jam config:")
+    cmr_print_debug_message("------\n${USER_JAM_CONTENT}")
+    cmr_print_debug_message("------")
   endif()
 
   ExternalProject_Add_Step(boost boost_build_libs
@@ -740,7 +738,7 @@ function(bcm_boost_cmaker)
   # lifting of discovery of installed Boost libraries and setting
   # up appropriate import targets for them.
   set(cmake_support_files_install_dir
-    "${CMAKE_INSTALL_FULL_LIBDIR}/cmake/Boost-${boost_VERSION}"
+    "${CMAKE_INSTALL_FULL_LIBDIR}/cmake/Boost-${lib_VERSION}"
   )
   
   configure_file(
@@ -764,15 +762,19 @@ function(bcm_boost_cmaker)
   # Step for installation of all the above, as required
   ExternalProject_Add_Step(boost install_cmake_support_files
     COMMAND
-      ${CMAKE_COMMAND} -E make_directory ${cmake_support_files_install_dir}
+      ${CMAKE_COMMAND} -E make_directory
+        ${cmake_support_files_install_dir}
     COMMAND
-      ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/BoostWriteCMakeImportFiles.cmake
+      ${CMAKE_COMMAND}
+        -P ${PROJECT_BINARY_DIR}/BoostWriteCMakeImportFiles.cmake
     COMMAND
       ${CMAKE_COMMAND} -E copy
-        ${PROJECT_BINARY_DIR}/BoostConfig.cmake ${cmake_support_files_install_dir}
+        ${PROJECT_BINARY_DIR}/BoostConfig.cmake
+        ${cmake_support_files_install_dir}
     COMMAND
       ${CMAKE_COMMAND} -E copy
-        ${PROJECT_BINARY_DIR}/BoostConfigVersion.cmake ${cmake_support_files_install_dir}
+        ${PROJECT_BINARY_DIR}/BoostConfigVersion.cmake
+        ${cmake_support_files_install_dir}
     DEPENDEES
       install
     DEPENDS

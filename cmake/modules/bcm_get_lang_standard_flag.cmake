@@ -27,8 +27,8 @@
 # Copyright (c) 2017 Pawel Bylica
 # All rights reserved.
 
-include(bcm_internal_error)
-include(bcm_status_debug)
+include(cmr_print_fatal_error)
+include(cmr_print_debug_message)
 
 function(bcm_get_lang_standard_flag LANG OUTPUT)
   set(CXX_standards 17 14 11 98)
@@ -37,10 +37,14 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
   # This maps the logic in the CMake code:
   # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1433-L1467
 
-  bcm_status_debug("CMAKE_${LANG}_STANDARD_DEFAULT: ${CMAKE_${LANG}_STANDARD_DEFAULT}")
-  bcm_status_debug("CMAKE_${LANG}_STANDARD: ${CMAKE_${LANG}_STANDARD}")
-  bcm_status_debug("CMAKE_${LANG}_EXTENSIONS: ${CMAKE_${LANG}_EXTENSIONS}")
-  bcm_status_debug("CMAKE_${LANG}_STANDARD_REQUIRED: ${CMAKE_${LANG}_STANDARD_REQUIRED}")
+  cmr_print_debug_message(
+    "CMAKE_${LANG}_STANDARD_DEFAULT: ${CMAKE_${LANG}_STANDARD_DEFAULT}")
+  cmr_print_debug_message(
+    "CMAKE_${LANG}_STANDARD: ${CMAKE_${LANG}_STANDARD}")
+  cmr_print_debug_message(
+    "CMAKE_${LANG}_EXTENSIONS: ${CMAKE_${LANG}_EXTENSIONS}")
+  cmr_print_debug_message(
+    "CMAKE_${LANG}_STANDARD_REQUIRED: ${CMAKE_${LANG}_STANDARD_REQUIRED}")
 
   set("${OUTPUT}" "" PARENT_SCOPE)  # Reset output in case of quick return.
 
@@ -48,7 +52,8 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
   if(no_default)
     # This compiler has no notion of language standard levels.
     # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1427-L1432
-    bcm_status_debug("This compiler has no notion of language standard levels.")
+    cmr_print_debug_message(
+      "This compiler has no notion of language standard levels.")
     return()
   endif()
 
@@ -57,7 +62,7 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
   if(no_standard)
     # The standard not defined by user.
     # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1433-L1437
-    bcm_status_debug("The standard not defined by user.")
+    cmr_print_debug_message("The standard not defined by user.")
     return()
   endif()
 
@@ -72,7 +77,7 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
   set(standards "${${LANG}_standards}")
   list(FIND standards "${standard}" begin)
   if("${begin}" EQUAL "-1")
-    bcm_internal_error("${LANG} standard ${standard} not known")
+    cmr_print_fatal_error("${LANG} standard ${standard} not known")
     return()
   endif()
 
@@ -83,7 +88,7 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
     list(GET standards ${idx} standard)
     set(option_name "CMAKE_${LANG}${standard}_${ext}_COMPILE_OPTION")
     set(flag "${${option_name}}")
-    bcm_status_debug("${option_name}: '${flag}'")
+    cmr_print_debug_message("${option_name}: '${flag}'")
     string(COMPARE NOTEQUAL "${flag}" "" has_flag)
     if(has_flag OR CMAKE_${LANG}_STANDARD_REQUIRED)
       # Break if flag found or standard is required and we don't want to
@@ -91,6 +96,6 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
       break()
     endif()
   endforeach()
-  bcm_status_debug("bcm_get_lang_standard_flag(${LANG}): '${flag}'")
+  cmr_print_debug_message("bcm_get_lang_standard_flag(${LANG}): '${flag}'")
   set("${OUTPUT}" "${flag}" PARENT_SCOPE)
 endfunction()

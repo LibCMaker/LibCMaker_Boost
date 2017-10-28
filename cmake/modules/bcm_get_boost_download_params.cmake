@@ -21,14 +21,14 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-include(bcm_get_version_parts)
-include(bcm_fatal_error)
+include(cmr_get_version_parts)
+include(cmr_print_fatal_error)
 
 function(bcm_get_boost_download_params
     version
     out_url out_sha1 out_src_dir_name out_tar_file_name)
 
-  bcm_get_version_parts(${version} major minor patch tweak)
+  cmr_get_version_parts(${version} major minor patch tweak)
 
   set(boost_base_url "https://downloads.sourceforge.net/project/boost/boost")
   
@@ -41,7 +41,7 @@ function(bcm_get_boost_download_params
   endif()
 
   if(NOT DEFINED boost_sha1)
-    bcm_fatal_error("Boost version ${version} is not supported.")
+    cmr_print_fatal_error("Boost version ${version} is not supported.")
   endif()
 
   set(version_underscore "${major}_${minor}_${patch}")

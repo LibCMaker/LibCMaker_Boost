@@ -103,11 +103,13 @@ if(NOT DEFINED Boost_SHARED_LIBS_FOUND AND NOT DEFINED Boost_STATIC_LIBS_FOUND)
 endif()
 
 if(Boost_USE_STATIC_LIBS AND NOT Boost_STATIC_LIBS_FOUND)
-  message(FATAL_ERROR "The found Boost installation, loaded from\n${__cfl_boost_config_dir}\n does not provide the static variants of the Boost libraries.")
+  message(FATAL_ERROR
+    "The found Boost installation, loaded from\n${__cfl_boost_config_dir}\n does not provide the static variants of the Boost libraries.")
 endif()
 
 if(Boost_SHARED_LIBS_FOUND AND Boost_STATIC_LIBS_FOUND)
-  message(FATAL_ERROR "Can not be set both BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS")
+  message(FATAL_ERROR
+    "Can not be set both BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS")
 elseif(Boost_SHARED_LIBS_FOUND AND NOT Boost_STATIC_LIBS_FOUND)
   set(Boost_LINKMODEL_TAG "-shared")
 elseif(NOT Boost_SHARED_LIBS_FOUND AND Boost_STATIC_LIBS_FOUND)
@@ -135,7 +137,8 @@ if(NOT DEFINED Boost_MULTITHREADED_FOUND)
 endif()
 
 if(DEFINED Boost_USE_MULTITHREADED AND NOT Boost_USE_MULTITHREADED AND Boost_MULTITHREADED_FOUND)
-  message(FATAL_ERROR "The found Boost installation, loaded from\n${__cfl_boost_config_dir}\n does not provide the single threaded variants of the Boost libraries.")
+  message(FATAL_ERROR
+    "The found Boost installation, loaded from\n${__cfl_boost_config_dir}\n does not provide the single threaded variants of the Boost libraries.")
 endif()
 
 if(Boost_MULTITHREADED_FOUND)
@@ -160,8 +163,14 @@ endif()
 #-----------------------------------------------------------------------
 # Set the header path
 #
-get_filename_component(Boost_INCLUDE_DIR "${__cfl_boost_config_dir}/../../../include" ABSOLUTE CACHE)
-set(Boost_INCLUDE_DIR "${Boost_INCLUDE_DIR}" CACHE PATH "Path to the Boost headers")
+get_filename_component(
+  Boost_INCLUDE_DIR "${__cfl_boost_config_dir}/../../../include"
+  ABSOLUTE CACHE
+)
+set(
+  Boost_INCLUDE_DIR "${Boost_INCLUDE_DIR}"
+  CACHE PATH "Path to the Boost headers"
+)
 mark_as_advanced(Boost_INCLUDE_DIR)
 set(Boost_INCLUDE_DIRS "${Boost_INCLUDE_DIR}")
 
@@ -169,7 +178,8 @@ set(Boost_INCLUDE_DIRS "${Boost_INCLUDE_DIR}")
 # Load library depends file for link/thread model requested
 #
 if(NOT Boost_LIBDEPS_LOADED)
-  include("${__cfl_boost_config_dir}/BoostLibraryDepends${Boost_LINKMODEL_TAG}${Boost_THREADMODEL_TAG}.cmake")
+  include(
+    "${__cfl_boost_config_dir}/BoostLibraryDepends${Boost_LINKMODEL_TAG}${Boost_THREADMODEL_TAG}.cmake")
   set(Boost_LIBDEPS_LOADED 1)
 endif()
 
@@ -182,7 +192,10 @@ foreach(_boost_component ${Boost_INSTALLED_COMPONENTS})
   string(TOUPPER "${_boost_component}" _boost_component_upper)
 
   set(Boost_${_boost_component_upper}_FOUND 1)
-  set(Boost_${_boost_component_upper}_LIBRARY "boost_${_boost_component}" CACHE FILEPATH "Path (imported) to the Boost ${_boost_component} library")
+  set(
+    Boost_${_boost_component_upper}_LIBRARY "boost_${_boost_component}"
+    CACHE FILEPATH "Path (imported) to the Boost ${_boost_component} library"
+  )
 
   mark_as_advanced(Boost_${_boost_component_upper}_LIBRARY)
 
