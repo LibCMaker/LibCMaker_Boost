@@ -36,7 +36,6 @@
 # Release/Debug/Profile Single/Multithread variants can be installed
 # alongside each other. Fairly easy to modify to allow separation of these.
 
-include(CMakeParseArguments) # cmake_parse_arguments
 include(ExternalProject) # ExternalProject_Add, ExternalProject_Add_Step
 include(GNUInstallDirs)
 include(ProcessorCount) # ProcessorCount
@@ -329,7 +328,7 @@ function(bcm_boost_cmaker)
   
 
   #-----------------------------------------------------------------------
-  # OS specifits
+  # OS specifics
   #
 
   if(ANDROID)

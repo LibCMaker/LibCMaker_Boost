@@ -47,14 +47,6 @@ function(lib_cmaker_boost)
 
 
   #-----------------------------------------------------------------------
-  # Build dirs
-  #-----------------------------------------------------------------------
-
-  set(bcm_bin_dir_name "LibCMaker_Boost")
-  set(bcm_bin_dir "${CMAKE_CURRENT_BINARY_DIR}/${bcm_bin_dir_name}")
-
-
-  #-----------------------------------------------------------------------
   # Build args
   #-----------------------------------------------------------------------
 
@@ -70,6 +62,22 @@ function(lib_cmaker_boost)
   if(Boost_USE_MULTITHREADED)
     list(APPEND bcm_CMAKE_ARGS
       -DBoost_USE_MULTITHREADED=${Boost_USE_MULTITHREADED}
+    )
+  endif()
+  # TODO: use standard cmake vars SKIP_INSTALL_*
+  if(SKIP_INSTALL_HEADERS)
+    list(APPEND lcm_CMAKE_ARGS
+      -DSKIP_INSTALL_HEADERS=${SKIP_INSTALL_HEADERS}
+    )
+  endif()
+  if(SKIP_INSTALL_LIBRARIES)
+    list(APPEND lcm_CMAKE_ARGS
+      -DSKIP_INSTALL_LIBRARIES=${SKIP_INSTALL_LIBRARIES}
+    )
+  endif()
+  if(SKIP_INSTALL_ALL)
+    list(APPEND lcm_CMAKE_ARGS
+      -DSKIP_INSTALL_ALL=${SKIP_INSTALL_ALL}
     )
   endif()
   

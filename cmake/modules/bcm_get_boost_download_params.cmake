@@ -33,11 +33,11 @@ function(bcm_get_boost_download_params
   set(boost_base_url "https://downloads.sourceforge.net/project/boost/boost")
   
   # TODO: get url and sha1 for all boost version
-  if(version VERSION_EQUAL "1.64.0")
-    set(boost_sha1 "51421ef259a4530edea0fbfc448460fcc5c64edb")
-  endif()
   if(version VERSION_EQUAL "1.63.0")
     set(boost_sha1 "9f1dd4fa364a3e3156a77dc17aa562ef06404ff6")
+  endif()
+  if(version VERSION_EQUAL "1.64.0")
+    set(boost_sha1 "51421ef259a4530edea0fbfc448460fcc5c64edb")
   endif()
 
   if(NOT DEFINED boost_sha1)
