@@ -1,11 +1,11 @@
 # ****************************************************************************
-#  Project:  BoostCMaker
+#  Project:  LibCMaker_Boost
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
 #    Copyright (c) 2017 NikitaFeodonit
 #
-#    This file is part of the BoostCMaker project.
+#    This file is part of the LibCMaker_Boost project.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published

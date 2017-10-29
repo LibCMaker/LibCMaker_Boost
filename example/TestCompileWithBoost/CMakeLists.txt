@@ -1,11 +1,11 @@
 # ****************************************************************************
-#  Project:  BoostCMaker
+#  Project:  LibCMaker_Boost
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
 #    Copyright (c) 2017 NikitaFeodonit
 #
-#    This file is part of the BoostCMaker project.
+#    This file is part of the LibCMaker_Boost project.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published
@@ -36,7 +36,7 @@ set(LIBCMAKER_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker")
 
 
 #-----------------------------------------------------------------------
-# Set vars for BoostCMaker and FindBoost.
+# Set vars for LibCMaker_Boost and FindBoost.
 #-----------------------------------------------------------------------
 
 set(boost_VERSION "1.64.0")
@@ -108,7 +108,7 @@ find_package(
 # Link to a boost library
 #-----------------------------------------------------------------------
 
-# Use/Link it to a boost library, BoostCMaker sets the same variables
+# Use/Link it to a boost library, LibCMaker_Boost sets the same variables
 # to libs as FindBoost does, but these are imported targets so
 # always expand to the exact library used.
 #target_include_directories(target_name PRIVATE ${Boost_INCLUDE_DIRS})
