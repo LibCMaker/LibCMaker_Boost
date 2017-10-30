@@ -305,7 +305,7 @@ foreach(_lm ${BOOST_LINKING_MODELS})
 
     # Configure the front end lib depends file for the link+thread
     # model
-    configure_file(@bcm_TEMPLATES_DIR@/BoostLibraryDepends.cmake.in
+    configure_file(@cmr_boost_TEMPLATES_DIR@/BoostLibraryDepends.cmake.in
       @PROJECT_BINARY_DIR@/BoostLibraryDepends-${_lm}-${_tm}.cmake
       @ONLY
       )

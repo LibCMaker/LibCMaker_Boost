@@ -23,7 +23,7 @@
 
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
-project(test_compile_with_boost CXX)
+project(LibCMaker_Boost_Compile_Test CXX)
 
 
 #-----------------------------------------------------------------------
@@ -39,17 +39,26 @@ set(LIBCMAKER_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker")
 # Set vars for LibCMaker_Boost and FindBoost.
 #-----------------------------------------------------------------------
 
-set(boost_VERSION "1.64.0")
-set(boost_COMPONENTS filesystem system)
+# Standard CMake vars.
 #set(BUILD_SHARED_LIBS ON)
-set(Boost_USE_STATIC_LIBS ON)
+
+#set(SKIP_INSTALL_HEADERS ON)
+#set(SKIP_INSTALL_LIBRARIES ON)
+#set(SKIP_INSTALL_ALL ON)
 
 # Set useful vars for lib_cmaker_boost().
 set(cmr_PRINT_DEBUG ON)
-set(bcm_DOWNLOAD_DIR "${PROJECT_BINARY_DIR}")
-set(bcm_SRC_DIR "${PROJECT_BINARY_DIR}")
-set(bcm_BUILD_DIR "${PROJECT_BINARY_DIR}/build")
 
+set(lib_VERSION "1.64.0")
+set(lib_COMPONENTS filesystem system)
+
+set(DOWNLOAD_DIR "${PROJECT_BINARY_DIR}")
+set(UNPACKED_SRC_DIR "${PROJECT_BINARY_DIR}")
+set(BUILD_DIR "${PROJECT_BINARY_DIR}/build")
+
+# Library specific vars.
+set(Boost_USE_STATIC_LIBS ON)
+#set(Boost_USE_MULTITHREADED ON)
 
 #-----------------------------------------------------------------------
 # Build and install the boost.
@@ -57,18 +66,36 @@ set(bcm_BUILD_DIR "${PROJECT_BINARY_DIR}/build")
 
 include(${PROJECT_SOURCE_DIR}/cmake/LibCMaker_Boost/lib_cmaker_boost.cmake)
 
-# Make compile, build and install the boost at a config CMake phase,
-# generate the config file BoostConfig.
+# Make compile, build and install the library at a config CMake phase,
+# generate the CMake config files.
+
 # For specified boost components dependence components will builded too.
 
-# Install specified boost version and components.
-lib_cmaker_boost(VERSION ${boost_VERSION} COMPONENTS ${boost_COMPONENTS})
-# Install default boost version and only headers.
-#lib_cmaker_boost()
-# Install specified boost version and only headers.
-#lib_cmaker_boost(VERSION ${boost_VERSION})
-# Install default boost version and all libs.
-#lib_cmaker_boost(COMPONENTS all)
+# Install specified library version and components.
+lib_cmaker_boost(
+  VERSION ${lib_VERSION}
+  COMPONENTS ${lib_COMPONENTS}
+  DOWNLOAD_DIR ${DOWNLOAD_DIR}
+  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
+  BUILD_DIR ${BUILD_DIR}
+)
+
+# Install specified library version and only headers.
+#lib_cmaker_boost(
+#  VERSION ${lib_VERSION}
+#  DOWNLOAD_DIR ${DOWNLOAD_DIR}
+#  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
+#  BUILD_DIR ${BUILD_DIR}
+#)
+
+# Install specified library version and all libs.
+#lib_cmaker_boost(
+#  VERSION ${lib_VERSION}
+#  COMPONENTS all
+#  DOWNLOAD_DIR ${DOWNLOAD_DIR}
+#  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
+#  BUILD_DIR ${BUILD_DIR}
+#)
 
 
 #-----------------------------------------------------------------------
@@ -90,7 +117,7 @@ endif()
 
 # Use newly got boost library.
 find_package(
-  Boost ${boost_VERSION} REQUIRED CONFIG COMPONENTS ${boost_COMPONENTS})
+  Boost ${lib_VERSION} REQUIRED CONFIG COMPONENTS ${lib_COMPONENTS})
 
 # QUIET suppresses the big warning issued, and allows fallback
 #find_package(Boost 1.63 QUIET CONFIG COMPONENTS filesystem system)

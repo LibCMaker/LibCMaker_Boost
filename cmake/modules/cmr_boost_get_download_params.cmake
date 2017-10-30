@@ -24,33 +24,33 @@
 include(cmr_get_version_parts)
 include(cmr_print_fatal_error)
 
-function(bcm_get_boost_download_params
+function(cmr_boost_get_download_params
     version
-    out_url out_sha1 out_src_dir_name out_tar_file_name)
+    out_url out_sha out_src_dir_name out_tar_file_name)
 
-  cmr_get_version_parts(${version} major minor patch tweak)
-
-  set(boost_base_url "https://downloads.sourceforge.net/project/boost/boost")
+  set(lib_base_url "https://downloads.sourceforge.net/project/boost/boost")
   
   # TODO: get url and sha1 for all boost version
   if(version VERSION_EQUAL "1.63.0")
-    set(boost_sha1 "9f1dd4fa364a3e3156a77dc17aa562ef06404ff6")
+    set(lib_sha "9f1dd4fa364a3e3156a77dc17aa562ef06404ff6")
   endif()
   if(version VERSION_EQUAL "1.64.0")
-    set(boost_sha1 "51421ef259a4530edea0fbfc448460fcc5c64edb")
+    set(lib_sha "51421ef259a4530edea0fbfc448460fcc5c64edb")
   endif()
 
-  if(NOT DEFINED boost_sha1)
-    cmr_print_fatal_error("Boost version ${version} is not supported.")
+  if(NOT DEFINED lib_sha)
+    cmr_print_fatal_error("Library version ${version} is not supported.")
   endif()
 
+  cmr_get_version_parts(${version} major minor patch tweak)
   set(version_underscore "${major}_${minor}_${patch}")
-  set(boost_src_name "boost_${version_underscore}")
-  set(boost_tar_file_name "${boost_src_name}.tar.bz2")
-  set(boost_url "${boost_base_url}/${version}/${boost_tar_file_name}")
 
-  set(${out_url} "${boost_url}" PARENT_SCOPE)
-  set(${out_sha1} "${boost_sha1}" PARENT_SCOPE)
-  set(${out_src_dir_name} "${boost_src_name}" PARENT_SCOPE)
-  set(${out_tar_file_name} "${boost_tar_file_name}" PARENT_SCOPE)
+  set(lib_src_name "boost_${version_underscore}")
+  set(lib_tar_file_name "${lib_src_name}.tar.bz2")
+  set(lib_url "${lib_base_url}/${version}/${lib_tar_file_name}")
+
+  set(${out_url} "${lib_url}" PARENT_SCOPE)
+  set(${out_sha} "${lib_sha}" PARENT_SCOPE)
+  set(${out_src_dir_name} "${lib_src_name}" PARENT_SCOPE)
+  set(${out_tar_file_name} "${lib_tar_file_name}" PARENT_SCOPE)
 endfunction()

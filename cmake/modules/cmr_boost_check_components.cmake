@@ -30,7 +30,7 @@ include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_print_fatal_error)
 
-function(bcm_check_boost_components)
+function(cmr_boost_check_components)
 
   cmake_parse_arguments(boost "" "VERSION" "COMPONENTS" "${ARGV}")
   # -> boost_VERSION
@@ -81,7 +81,7 @@ function(bcm_check_boost_components)
       endif()
     endforeach()
 
-    set(bcm_NOT_BUILD_LIBRARIES ${boost_libs} PARENT_SCOPE)
+    set(cmr_NOT_BUILD_LIBRARIES ${boost_libs} PARENT_SCOPE)
     return()
   endif()
 

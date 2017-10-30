@@ -40,5 +40,5 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 # http://stackoverflow.com/a/20985057
 string (REPLACE " " ";" lib_COMPONENTS "${lib_COMPONENTS}")
 
-include(bcm_boost_cmaker)
-bcm_boost_cmaker()
+include(cmr_boost_cmaker)
+cmr_boost_cmaker()

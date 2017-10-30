@@ -28,56 +28,83 @@ endif()
 # TODO: prevent multiply includes for CMAKE_MODULE_PATH
 list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_SRC_DIR}/cmake/modules")
 
-# To find bcm source dir.
-set(cmr_LibCMaker_Boost_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
+# To find library CMaker source dir.
+set(lcm_LibCMaker_LIB_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
 # TODO: prevent multiply includes for CMAKE_MODULE_PATH
-list(APPEND CMAKE_MODULE_PATH "${cmr_LibCMaker_Boost_SRC_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${lcm_LibCMaker_LIB_SRC_DIR}/cmake/modules")
+
+include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_lib_cmaker)
 include(cmr_print_debug_message)
 include(cmr_print_var_value)
 
-# See description for "bcm_boost_cmaker()" for params and vars.
+# See description for "cmr_boost_cmaker()" for params and vars.
 function(lib_cmaker_boost)
   cmake_minimum_required(VERSION 3.2)
 
-  cmake_parse_arguments(boost "" "VERSION" "COMPONENTS" "${ARGV}")
-  # -> boost_VERSION
-  # -> boost_COMPONENTS
+  set(options
+    # optional args
+  )
+  
+  set(oneValueArgs
+    # required args
+    VERSION BUILD_DIR
+    # optional args
+    DOWNLOAD_DIR UNPACKED_SRC_DIR
+  )
+
+  set(multiValueArgs
+    # optional args
+    COMPONENTS
+  )
+
+  cmake_parse_arguments(arg
+      "${options}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
+  # -> lib_VERSION
+  # -> lib_BUILD_DIR
+  # -> lib_* ...
+
+  cmr_print_var_value(LIBCMAKER_SRC_DIR)
+
+  cmr_print_var_value(arg_VERSION)
+  cmr_print_var_value(arg_BUILD_DIR)
+
+  cmr_print_var_value(arg_DOWNLOAD_DIR)
+  cmr_print_var_value(arg_UNPACKED_SRC_DIR)
+
+  cmr_print_var_value(arg_COMPONENTS)
+
+  # Required args
+  if(NOT arg_VERSION)
+    cmr_print_fatal_error("Argument VERSION is not defined.")
+  endif()
+  if(NOT arg_BUILD_DIR)
+    cmr_print_fatal_error("Argument BUILD_DIR is not defined.")
+  endif()
+  if(arg_UNPARSED_ARGUMENTS)
+    cmr_print_fatal_error(
+      "There are unparsed arguments: ${arg_UNPARSED_ARGUMENTS}")
+  endif()
 
 
   #-----------------------------------------------------------------------
   # Build args
   #-----------------------------------------------------------------------
 
-  set(bcm_CMAKE_ARGS)
+  set(lcm_CMAKE_ARGS)
+  # TODO: use standard cmake vars SKIP_INSTALL_*
 
   # Vars from FindBoost.cmake
   # TODO: add more vars from FindBoost.cmake
-  if(Boost_USE_STATIC_LIBS)
-    list(APPEND bcm_CMAKE_ARGS
+  if(DEFINED Boost_USE_STATIC_LIBS)
+    list(APPEND lcm_CMAKE_ARGS
       -DBoost_USE_STATIC_LIBS=${Boost_USE_STATIC_LIBS}
     )
   endif()
-  if(Boost_USE_MULTITHREADED)
-    list(APPEND bcm_CMAKE_ARGS
+  if(DEFINED Boost_USE_MULTITHREADED)
+    list(APPEND lcm_CMAKE_ARGS
       -DBoost_USE_MULTITHREADED=${Boost_USE_MULTITHREADED}
-    )
-  endif()
-  # TODO: use standard cmake vars SKIP_INSTALL_*
-  if(SKIP_INSTALL_HEADERS)
-    list(APPEND lcm_CMAKE_ARGS
-      -DSKIP_INSTALL_HEADERS=${SKIP_INSTALL_HEADERS}
-    )
-  endif()
-  if(SKIP_INSTALL_LIBRARIES)
-    list(APPEND lcm_CMAKE_ARGS
-      -DSKIP_INSTALL_LIBRARIES=${SKIP_INSTALL_LIBRARIES}
-    )
-  endif()
-  if(SKIP_INSTALL_ALL)
-    list(APPEND lcm_CMAKE_ARGS
-      -DSKIP_INSTALL_ALL=${SKIP_INSTALL_ALL}
     )
   endif()
   
@@ -85,14 +112,15 @@ function(lib_cmaker_boost)
   #-----------------------------------------------------------------------
   # BUILDING
   #-----------------------------------------------------------------------
+
   cmr_lib_cmaker(
-    PROJECT_DIR ${cmr_LibCMaker_Boost_SRC_DIR}
-    BUILD_DIR ${bcm_BUILD_DIR}
-    VERSION ${boost_VERSION}
-    DOWNLOAD_DIR ${bcm_DOWNLOAD_DIR}
-    UNPACKED_SRC_DIR ${bcm_SRC_DIR}
-    COMPONENTS ${boost_COMPONENTS}
-    CMAKE_ARGS ${bcm_CMAKE_ARGS}
+    PROJECT_DIR ${lcm_LibCMaker_LIB_SRC_DIR}
+    BUILD_DIR ${arg_BUILD_DIR}
+    VERSION ${arg_VERSION}
+    DOWNLOAD_DIR ${arg_DOWNLOAD_DIR}
+    UNPACKED_SRC_DIR ${arg_UNPACKED_SRC_DIR}
+    COMPONENTS ${arg_COMPONENTS}
+    CMAKE_ARGS ${lcm_CMAKE_ARGS}
   )
 
 endfunction()

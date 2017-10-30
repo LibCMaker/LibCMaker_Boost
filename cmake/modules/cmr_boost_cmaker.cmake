@@ -44,12 +44,12 @@ include(cmr_print_debug_message)
 include(cmr_print_fatal_error)
 include(cmr_print_var_value)
 
-include(bcm_check_boost_components)
-include(bcm_get_boost_download_params)
-include(bcm_set_cmake_flags)
+include(cmr_boost_check_components)
+include(cmr_boost_get_download_params)
+include(cmr_boost_set_cmake_flags)
 
 # To find bcm templates dir.
-set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(cmr_boost_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 
 # Useful vars:
@@ -65,7 +65,7 @@ set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
 #   lib_BUILD_DIR         -- for build files
 
 #   lib_BUILD_HOST_TOOLS
-#   bcm_BUILD_BCP_TOOL
+#   cmr_BUILD_BCP_TOOL
 
 
 # Function params:
@@ -81,12 +81,26 @@ set(bcm_TEMPLATES_DIR "${CMAKE_CURRENT_LIST_DIR}")
 #     running the bootstrap.sh script supplied with Boost as:
 #       ./bootstrap.sh --with-libraries=all --show-libraries
 #
-function(bcm_boost_cmaker)
+function(cmr_boost_cmaker)
   cmake_minimum_required(VERSION 3.2)
 
+  # Required vars
   if(NOT lib_VERSION)
-    set(lib_VERSION "1.64.0")
+    cmr_print_fatal_error("Variable lib_VERSION is not defined.")
   endif()
+  if(NOT lib_BUILD_DIR)
+    cmr_print_fatal_error("Variable lib_BUILD_DIR is not defined.")
+  endif()
+
+  # Optional vars
+  if(NOT lib_DOWNLOAD_DIR)
+    set(lib_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  if(NOT lib_UNPACKED_SRC_DIR)
+    set(lib_UNPACKED_SRC_DIR "${lib_DOWNLOAD_DIR}/sources")
+  endif()
+
+
   if(NOT lib_COMPONENTS)
     set(lib_COMPONENTS "only_headers")
   endif()
@@ -98,27 +112,16 @@ function(bcm_boost_cmaker)
       "COMPONENTS can not contain 'all' keyword with something others.")
   endif()
 
-  bcm_check_boost_components(
+  cmr_boost_check_components(
     VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS})
 
-  bcm_get_boost_download_params(${lib_VERSION}
-    boost_url boost_sha1 boost_src_dir_name boost_tar_file_name)
 
-  if(NOT lib_DOWNLOAD_DIR)
-    set(lib_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  endif()
+  cmr_boost_get_download_params(${lib_VERSION}
+    lib_URL lib_SHA lib_SRC_DIR_NAME lib_ARCH_FILE_NAME)
 
-  if(NOT lib_UNPACKED_SRC_DIR)
-    set(lib_UNPACKED_SRC_DIR "${lib_DOWNLOAD_DIR}/sources")
-  endif()
-
-  if(NOT lib_BUILD_DIR)
-    set(lib_BUILD_DIR "${lib_DOWNLOAD_DIR}/build")
-  endif()
-
-  set(boost_tar_file "${lib_DOWNLOAD_DIR}/${boost_tar_file_name}")
-  set(boost_src_dir "${lib_UNPACKED_SRC_DIR}/${boost_src_dir_name}")
-  set(boost_build_dir "${lib_BUILD_DIR}/${boost_src_dir_name}")
+  set(lib_ARCH_FILE "${lib_DOWNLOAD_DIR}/${lib_ARCH_FILE_NAME}")
+  set(lib_SRC_DIR "${lib_UNPACKED_SRC_DIR}/${lib_SRC_DIR_NAME}")
+  set(lib_BUILD_SRC_DIR "${lib_BUILD_DIR}/${lib_SRC_DIR_NAME}")
 
 
   #-----------------------------------------------------------------------
@@ -215,7 +218,7 @@ function(bcm_boost_cmaker)
   
   # Build in this location instead of building within the distribution tree.
   list(APPEND common_b2_args
-    "--build-dir=${boost_build_dir}"
+    "--build-dir=${lib_BUILD_SRC_DIR}"
   )
 
   
@@ -270,9 +273,9 @@ function(bcm_boost_cmaker)
 
   # Do not build, stage, or install the specified <library>.
   # By default, all libraries are built.
-  # TODO: change bcm_NOT_BUILD_LIBRARIES to params "NOT COMPONENTS"
-  if(only_headers AND bcm_NOT_BUILD_LIBRARIES)
-    foreach(not_build_lib ${bcm_NOT_BUILD_LIBRARIES})
+  # TODO: change cmr_NOT_BUILD_LIBRARIES to params "NOT COMPONENTS"
+  if(only_headers AND cmr_NOT_BUILD_LIBRARIES)
+    foreach(not_build_lib ${cmr_NOT_BUILD_LIBRARIES})
       list(APPEND b2_args "--without-${not_build_lib}")
     endforeach()
   endif()
@@ -333,7 +336,7 @@ function(bcm_boost_cmaker)
 
   if(ANDROID)
     # TODO: add work with ICU
-    list(APPEND bcm_BOOTSTRAP_ARGS "--without-icu")
+    list(APPEND cmr_BOOTSTRAP_ARGS "--without-icu")
     
     # TODO: set --layout=system for link=shared for Android
     #list(APPEND b2_args "--layout=system")
@@ -362,37 +365,37 @@ function(bcm_boost_cmaker)
     # "aapcs" "eabi" "ms" "n32" "n64" "o32" "o64" "sysv" "x32"
     if(ANDROID_SYSROOT_ABI STREQUAL arm
         OR ANDROID_SYSROOT_ABI STREQUAL arm64)
-      set(bcm_BJAM_ARCH arm)
-      set(bcm_BJAM_ABI aapcs)
+      set(cmr_BJAM_ARCH arm)
+      set(cmr_BJAM_ABI aapcs)
     elseif(ANDROID_SYSROOT_ABI STREQUAL x86
         OR ANDROID_SYSROOT_ABI STREQUAL x86_64)
-      set(bcm_BJAM_ARCH x86)
-      set(bcm_BJAM_ABI sysv)
+      set(cmr_BJAM_ARCH x86)
+      set(cmr_BJAM_ABI sysv)
     elseif(ANDROID_SYSROOT_ABI STREQUAL mips)
-      set(bcm_BJAM_ARCH mips1)
-      set(bcm_BJAM_ABI o32)
+      set(cmr_BJAM_ARCH mips1)
+      set(cmr_BJAM_ABI o32)
     elseif(ANDROID_SYSROOT_ABI STREQUAL mips64)
-      set(bcm_BJAM_ARCH mips1)
-      set(bcm_BJAM_ABI o64)
+      set(cmr_BJAM_ARCH mips1)
+      set(cmr_BJAM_ABI o64)
     endif()
     
     # Legal values for 'address-model':
     # "16" "32" "64" "32_64"
     if(ANDROID_SYSROOT_ABI MATCHES "^.{3,4}64$")
-      set(bcm_BJAM_ADDR_MODEL 64)
+      set(cmr_BJAM_ADDR_MODEL 64)
     else()
-      set(bcm_BJAM_ADDR_MODEL 32)
+      set(cmr_BJAM_ADDR_MODEL 32)
     endif()
     
-    list(APPEND b2_args "address-model=${bcm_BJAM_ADDR_MODEL}")
-    list(APPEND b2_args "architecture=${bcm_BJAM_ARCH}")
-    list(APPEND b2_args "abi=${bcm_BJAM_ABI}")
+    list(APPEND b2_args "address-model=${cmr_BJAM_ADDR_MODEL}")
+    list(APPEND b2_args "architecture=${cmr_BJAM_ARCH}")
+    list(APPEND b2_args "abi=${cmr_BJAM_ABI}")
   endif()
 
 
   if(APPLE OR MSVC OR (UNIX AND NOT ANDROID))
     # TODO: address-model=64 for MSVC and amd64
-    #string(COMPARE EQUAL "${bcm_MSVC_ARCH}" "amd64" is_x64)
+    #string(COMPARE EQUAL "${cmr_MSVC_ARCH}" "amd64" is_x64)
     #if(MSVC AND is_x64)
     #  list(APPEND b2_args "address-model=64")
     #endif()
@@ -406,7 +409,7 @@ function(bcm_boost_cmaker)
   # Compiler and linker flags
   #
   
-  bcm_set_cmake_flags()
+  cmr_boost_set_cmake_flags()
   # -> CMAKE_C_FLAGS
   # -> CMAKE_CXX_FLAGS
 
@@ -433,7 +436,7 @@ function(bcm_boost_cmaker)
   # ... e.g. "gdwarf" etc as per
   # https://cdcvs.fnal.gov/redmine/projects/build-framework/repository/boost-ssi-build/revisions/master/entry/build_boost.sh
   
-  # TODO: to bcm_set_cmake_flags()
+  # TODO: to cmr_boost_set_cmake_flags()
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_C_FLAGS
       "${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_FLAGS}"
@@ -451,9 +454,9 @@ function(bcm_boost_cmaker)
   endif()
   
 #  if(BUILD_SHARED_LIBS)
-#    set(bcm_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+#    set(cmr_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 #  elseif()
-#    set(bcm_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS}")
+#    set(cmr_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS}")
 #  endif()
   
   if(BUILD_SHARED_LIBS AND CMAKE_EXE_LINKER_FLAGS)
@@ -527,7 +530,7 @@ function(bcm_boost_cmaker)
 
   if(MSVC)
     # TODO: env_cmd for MSVC
-    #set(env_cmd "${bcm_MSVC_VCVARSALL}" "${bcm_MSVC_ARCH}")
+    #set(env_cmd "${cmr_MSVC_VCVARSALL}" "${cmr_MSVC_ARCH}")
   else()
     # Workaround for: http://public.kitware.com/Bug/view.php?id=15567
     set(env_cmd "${CMAKE_COMMAND}" -E echo "configure")
@@ -539,7 +542,7 @@ function(bcm_boost_cmaker)
     set(log_opts LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
     set(step_log_opts LOG 1)
     # TODO: check file log path
-    get_filename_component(x "@bcm_PACKAGE_SOURCE_DIR@/.." ABSOLUTE)
+    get_filename_component(x "@cmr_PACKAGE_SOURCE_DIR@/.." ABSOLUTE)
     cmr_print_debug_message(
       "For progress check log files in directory: ${lib_UNPACKED_SRC_DIR}")
   else()
@@ -571,11 +574,11 @@ function(bcm_boost_cmaker)
   #-----------------------------------------------------------------------
   # Download tar file
   #
-  if(NOT EXISTS "${boost_tar_file}")
-    message(STATUS "Download ${boost_url}")
+  if(NOT EXISTS "${lib_ARCH_FILE}")
+    message(STATUS "Download ${lib_URL}")
     file(
-      DOWNLOAD "${boost_url}" "${boost_tar_file}"
-      EXPECTED_HASH SHA1=${boost_sha1}
+      DOWNLOAD "${lib_URL}" "${lib_ARCH_FILE}"
+      EXPECTED_HASH SHA1=${lib_SHA}
       SHOW_PROGRESS
     )
   endif()
@@ -584,11 +587,11 @@ function(bcm_boost_cmaker)
   #-----------------------------------------------------------------------
   # Extract tar file
   #
-  if(NOT EXISTS "${boost_src_dir}")
-    message(STATUS "Extract ${boost_tar_file}")
+  if(NOT EXISTS "${lib_SRC_DIR}")
+    message(STATUS "Extract ${lib_ARCH_FILE}")
     file(MAKE_DIRECTORY ${lib_UNPACKED_SRC_DIR})
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xjf ${boost_tar_file}
+      COMMAND ${CMAKE_COMMAND} -E tar xjf ${lib_ARCH_FILE}
       WORKING_DIRECTORY ${lib_UNPACKED_SRC_DIR}
     )
   endif()
@@ -601,7 +604,7 @@ function(bcm_boost_cmaker)
   #
   ExternalProject_Add(boost
     SOURCE_DIR
-      ${boost_src_dir}
+      ${lib_SRC_DIR}
     BUILD_IN_SOURCE
       1
     CONFIGURE_COMMAND
@@ -621,7 +624,7 @@ function(bcm_boost_cmaker)
   # Build b2 (bjam) if required.
   #
   unset(b2_file CACHE)
-  find_program(b2_file NAMES b2 PATHS ${boost_src_dir} NO_DEFAULT_PATH)
+  find_program(b2_file NAMES b2 PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH)
   if(NOT b2_file)
 
     if(cmr_PRINT_DEBUG)
@@ -650,7 +653,7 @@ function(bcm_boost_cmaker)
   #-----------------------------------------------------------------------
   # Build and install bcp program if required.
   #
-  if(bcm_BUILD_BCP_TOOL)
+  if(cmr_BUILD_BCP_TOOL)
     unset(bcp_file CACHE)
     find_program(bcp_file
       NAMES bcp PATHS ${CMAKE_INSTALL_FULL_BINDIR}/bcp NO_DEFAULT_PATH)
@@ -678,7 +681,7 @@ function(bcm_boost_cmaker)
             <BINARY_DIR>/dist/bin/bcp
             ${CMAKE_INSTALL_FULL_BINDIR}/bcp
         DEPENDS
-          ${boost_src_dir}/b2
+          ${lib_SRC_DIR}/b2
         DEPENDEES
           install
         WORKING_DIRECTORY
@@ -720,7 +723,7 @@ function(bcm_boost_cmaker)
     COMMAND
       <BINARY_DIR>/b2 ${b2_args}
     DEPENDS
-      ${boost_src_dir}/b2
+      ${lib_SRC_DIR}/b2
     DEPENDEES
       configure
     DEPENDERS
@@ -741,19 +744,19 @@ function(bcm_boost_cmaker)
   )
   
   configure_file(
-    ${bcm_TEMPLATES_DIR}/BoostWriteCMakeImportFiles.cmake.in
+    ${cmr_boost_TEMPLATES_DIR}/BoostWriteCMakeImportFiles.cmake.in
     ${PROJECT_BINARY_DIR}/BoostWriteCMakeImportFiles.cmake
     @ONLY
   )
   
   configure_file(
-    ${bcm_TEMPLATES_DIR}/BoostConfigVersion.cmake.in
+    ${cmr_boost_TEMPLATES_DIR}/BoostConfigVersion.cmake.in
     ${PROJECT_BINARY_DIR}/BoostConfigVersion.cmake
     @ONLY
   )
   
   configure_file(
-    ${bcm_TEMPLATES_DIR}/BoostConfig.cmake.in
+    ${cmr_boost_TEMPLATES_DIR}/BoostConfig.cmake.in
     ${PROJECT_BINARY_DIR}/BoostConfig.cmake
     @ONLY
   )
@@ -777,7 +780,7 @@ function(bcm_boost_cmaker)
     DEPENDEES
       install
     DEPENDS
-      ${bcm_TEMPLATES_DIR}/BoostLibraryDepends.cmake.in
+      ${cmr_boost_TEMPLATES_DIR}/BoostLibraryDepends.cmake.in
       ${PROJECT_BINARY_DIR}/BoostWriteCMakeImportFiles.cmake
       ${PROJECT_BINARY_DIR}/BoostConfigVersion.cmake
       ${PROJECT_BINARY_DIR}/BoostConfig.cmake

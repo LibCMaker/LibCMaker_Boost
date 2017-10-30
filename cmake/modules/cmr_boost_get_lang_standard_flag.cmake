@@ -30,7 +30,7 @@
 include(cmr_print_fatal_error)
 include(cmr_print_debug_message)
 
-function(bcm_get_lang_standard_flag LANG OUTPUT)
+function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   set(CXX_standards 17 14 11 98)
   set(C_standards 11 99 90)
   # Find the <lang> standard flag.
@@ -96,6 +96,7 @@ function(bcm_get_lang_standard_flag LANG OUTPUT)
       break()
     endif()
   endforeach()
-  cmr_print_debug_message("bcm_get_lang_standard_flag(${LANG}): '${flag}'")
+  cmr_print_debug_message(
+    "cmr_boost_get_lang_standard_flag(${LANG}): '${flag}'")
   set("${OUTPUT}" "${flag}" PARENT_SCOPE)
 endfunction()

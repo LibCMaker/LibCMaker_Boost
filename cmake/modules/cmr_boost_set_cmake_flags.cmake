@@ -30,9 +30,9 @@
 include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_print_fatal_error)
-include(bcm_get_lang_standard_flag)
+include(cmr_boost_get_lang_standard_flag)
 
-function(bcm_set_cmake_flags)
+function(cmr_boost_set_cmake_flags)
   cmake_parse_arguments(x "SKIP_INCLUDES" "CPPFLAGS" "" "${ARGV}")
   # -> x_SKIP_INCLUDES
   # -> x_CPPFLAGS
@@ -76,13 +76,13 @@ function(bcm_set_cmake_flags)
     endforeach()
   endif()
 
-  bcm_get_lang_standard_flag(CXX flag)
+  cmr_boost_get_lang_standard_flag(CXX flag)
   string(COMPARE NOTEQUAL "${flag}" "" has_flag)
   if(has_flag)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
   endif()
 
-  bcm_get_lang_standard_flag(C flag)
+  cmr_boost_get_lang_standard_flag(C flag)
   string(COMPARE NOTEQUAL "${flag}" "" has_flag)
   if(has_flag)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
