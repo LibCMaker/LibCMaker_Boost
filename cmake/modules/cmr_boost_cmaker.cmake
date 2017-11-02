@@ -42,6 +42,7 @@ include(ProcessorCount) # ProcessorCount
 
 include(cmr_print_debug_message)
 include(cmr_print_fatal_error)
+include(cmr_print_message)
 include(cmr_print_var_value)
 
 include(cmr_boost_check_components)
@@ -297,11 +298,11 @@ function(cmr_boost_cmaker)
   endif()
   
   if(BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS)
-    message(FATAL_ERROR
+    cmr_print_fatal_error(
       "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as ON")
   elseif(DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS
         AND DEFINED Boost_USE_STATIC_LIBS AND NOT Boost_USE_STATIC_LIBS)
-    message(FATAL_ERROR
+    cmr_print_fatal_error(
       "BUILD_SHARED_LIBS AND Boost_USE_STATIC_LIBS are both defined as OFF")
   elseif(BUILD_SHARED_LIBS AND NOT Boost_USE_STATIC_LIBS)
     list(APPEND b2_args "link=shared")
@@ -575,7 +576,7 @@ function(cmr_boost_cmaker)
   # Download tar file
   #
   if(NOT EXISTS "${lib_ARCH_FILE}")
-    message(STATUS "Download ${lib_URL}")
+    cmr_print_message("Download ${lib_URL}")
     file(
       DOWNLOAD "${lib_URL}" "${lib_ARCH_FILE}"
       EXPECTED_HASH SHA1=${lib_SHA}
@@ -588,7 +589,7 @@ function(cmr_boost_cmaker)
   # Extract tar file
   #
   if(NOT EXISTS "${lib_SRC_DIR}")
-    message(STATUS "Extract ${lib_ARCH_FILE}")
+    cmr_print_message("Extract ${lib_ARCH_FILE}")
     file(MAKE_DIRECTORY ${lib_UNPACKED_SRC_DIR})
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E tar xjf ${lib_ARCH_FILE}

@@ -106,7 +106,7 @@ lib_cmaker_boost(
 set(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 if(ANDROID)
-  set(CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
+  list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
   # TODO: fix default CMAKE_CXX_STANDARD to 11 or 14
 endif()
 
@@ -142,11 +142,11 @@ find_package(
 #target_link_libraries(target_name ${Boost_LIBRARIES})
 
 # Build test executables
-add_executable (${PROJECT_NAME} test_header.cpp)
+add_executable(${PROJECT_NAME} test_header.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
-add_executable (${PROJECT_NAME}_2 test_compiled.cpp)
+add_executable(${PROJECT_NAME}_2 test_compiled.cpp)
 target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_2 ${Boost_LIBRARIES})
 set_property(TARGET ${PROJECT_NAME}_2 PROPERTY CXX_STANDARD 11)
