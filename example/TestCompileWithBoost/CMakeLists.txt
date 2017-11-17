@@ -103,7 +103,7 @@ lib_cmaker_boost(
 #-----------------------------------------------------------------------
 
 # Set CMake's search path for the config file BoostConfig.
-set(CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 if(ANDROID)
   list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
