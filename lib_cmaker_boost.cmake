@@ -117,13 +117,14 @@ function(lib_cmaker_boost)
   #-----------------------------------------------------------------------
 
   cmr_lib_cmaker(
-    PROJECT_DIR ${lcm_LibCMaker_Boost_SRC_DIR}
-    BUILD_DIR ${arg_BUILD_DIR}
     VERSION ${arg_VERSION}
+    PROJECT_DIR ${lcm_LibCMaker_Boost_SRC_DIR}
     DOWNLOAD_DIR ${arg_DOWNLOAD_DIR}
     UNPACKED_SRC_DIR ${arg_UNPACKED_SRC_DIR}
-    COMPONENTS ${arg_COMPONENTS}
+    BUILD_DIR ${arg_BUILD_DIR}
     CMAKE_ARGS ${lcm_CMAKE_ARGS}
+    COMPONENTS ${arg_COMPONENTS}
+    BUILD
   )
 
 endfunction()
