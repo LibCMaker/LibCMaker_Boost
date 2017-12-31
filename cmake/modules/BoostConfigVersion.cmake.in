@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017 NikitaFeodonit
+#    Copyright (c) 2017-2018 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
