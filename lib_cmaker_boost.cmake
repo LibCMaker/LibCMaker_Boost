@@ -33,6 +33,7 @@ include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_lib_cmaker)
 include(cmr_print_debug_message)
+include(cmr_print_message)
 include(cmr_print_var_value)
 
 
@@ -45,6 +46,8 @@ list(APPEND CMAKE_MODULE_PATH "${lcm_LibCMaker_Boost_SRC_DIR}/cmake/modules")
 # See description for "cmr_boost_cmaker()" for params and vars.
 function(lib_cmaker_boost)
   cmake_minimum_required(VERSION 3.2)
+
+  cmr_print_message("======== Build library: Boost ========")
 
   set(options
     # optional args
