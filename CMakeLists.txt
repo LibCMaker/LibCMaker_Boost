@@ -34,11 +34,5 @@ list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_SRC_DIR}/cmake/modules")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
-# To prevent the list expansion on an argument with ';'.
-# See also
-# http://stackoverflow.com/a/20989991
-# http://stackoverflow.com/a/20985057
-string (REPLACE " " ";" lib_COMPONENTS "${lib_COMPONENTS}")
-
 include(cmr_boost_cmaker)
 cmr_boost_cmaker()

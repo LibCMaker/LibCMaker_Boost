@@ -27,6 +27,20 @@ project(LibCMaker_Boost_Compile_Test CXX)
 
 
 #-----------------------------------------------------------------------
+# Configure for find_package.
+#-----------------------------------------------------------------------
+
+# Set CMake's search path for find_package(), find_program(), find_library(),
+# find_file(), and find_path() commands.
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
+
+if(ANDROID)
+  list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
+  # TODO: fix default CMAKE_CXX_STANDARD to 11 or 14
+endif()
+
+
+#-----------------------------------------------------------------------
 # Set path to LibCMaker root
 #-----------------------------------------------------------------------
 
@@ -49,12 +63,12 @@ set(LIBCMAKER_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker")
 # Set useful vars for lib_cmaker_boost().
 set(cmr_PRINT_DEBUG ON)
 
-set(lib_VERSION "1.64.0")
+set(lib_VERSION "1.65.1")
 set(lib_COMPONENTS filesystem system)
 
 set(DOWNLOAD_DIR "${PROJECT_BINARY_DIR}")
 set(UNPACKED_SRC_DIR "${PROJECT_BINARY_DIR}")
-set(BUILD_DIR "${PROJECT_BINARY_DIR}/build")
+set(BUILD_DIR "${PROJECT_BINARY_DIR}/build_boost")
 
 # Library specific vars.
 set(Boost_USE_STATIC_LIBS ON)
@@ -96,20 +110,6 @@ lib_cmaker_boost(
 #  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
 #  BUILD_DIR ${BUILD_DIR}
 #)
-
-
-#-----------------------------------------------------------------------
-# Configure for find_package.
-#-----------------------------------------------------------------------
-
-# Set CMake's search path for find_package(), find_program(), find_library(),
-# find_file(), and find_path() commands.
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
-
-if(ANDROID)
-  list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
-  # TODO: fix default CMAKE_CXX_STANDARD to 11 or 14
-endif()
 
 
 #-----------------------------------------------------------------------
