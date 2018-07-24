@@ -307,6 +307,13 @@
   #-----------------------------------------------------------------------
   # Compiler and linker flags
   #
+  # If Clang then
+  #   CMAKE_C99_EXTENSION_COMPILE_OPTION '-std=gnu99'
+  #   CMAKE_CXX11_EXTENSION_COMPILE_OPTION '-std=gnu++11'
+  # So disable it.
+  set(CMAKE_C_EXTENSIONS OFF)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+  
   include(cmr_boost_set_cmake_flags)
   cmr_boost_set_cmake_flags()
   # Out vars:
@@ -339,7 +346,7 @@
       -Duse_cmake_archiver=${use_cmake_archiver}
       -Dusing_mpi=${using_mpi}
       -Dbuild_TYPE="$<UPPER_CASE:$<CONFIG>>"
-      -Dcxx_FLAGS="${CMAKE_CXX_FLAGS}"
+      -Dcxx_FLAGS="\"${CMAKE_CXX_FLAGS}\""
       -Djam_AR=${CMAKE_AR}
       -Djam_RANLIB=${CMAKE_RANLIB}
       -Dcmr_PRINT_DEBUG=${cmr_PRINT_DEBUG}
