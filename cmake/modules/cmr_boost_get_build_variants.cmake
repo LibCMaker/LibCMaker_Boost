@@ -21,36 +21,26 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-include(cmr_get_version_parts)
-include(cmr_print_fatal_error)
+function(cmr_boost_get_build_variants out_BUILD_VARIANTS)
 
-function(cmr_boost_get_download_params
-    version
-    out_url out_sha out_src_dir_name out_tar_file_name)
-
-  set(lib_base_url "https://downloads.sourceforge.net/project/boost/boost")
-  
-  # TODO: get url and sha1 for all boost version
-  if(version VERSION_EQUAL "1.63.0")
-    set(lib_sha "9f1dd4fa364a3e3156a77dc17aa562ef06404ff6")
-  endif()
-  if(version VERSION_EQUAL "1.64.0")
-    set(lib_sha "51421ef259a4530edea0fbfc448460fcc5c64edb")
+  if(BUILD_SHARED_LIBS)
+    list(APPEND build_variants "link=shared")
+  else()
+    list(APPEND build_variants "link=static")
   endif()
 
-  if(NOT DEFINED lib_sha)
-    cmr_print_fatal_error("Library version ${version} is not supported.")
+  option(
+    Boost_USE_MULTITHREADED "Build Boost multi threaded library variants" ON
+  )
+  if(Boost_USE_MULTITHREADED)
+    list(APPEND build_variants "threading=multi")
+  else()
+    list(APPEND build_variants "threading=single")
   endif()
 
-  cmr_get_version_parts(${version} major minor patch tweak)
-  set(version_underscore "${major}_${minor}_${patch}")
+  # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
+  # https://stackoverflow.com/a/24470998
+  list(APPEND build_variants "variant=$<LOWER_CASE:$<CONFIG>>")
 
-  set(lib_src_name "boost_${version_underscore}")
-  set(lib_tar_file_name "${lib_src_name}.tar.bz2")
-  set(lib_url "${lib_base_url}/${version}/${lib_tar_file_name}")
-
-  set(${out_url} "${lib_url}" PARENT_SCOPE)
-  set(${out_sha} "${lib_sha}" PARENT_SCOPE)
-  set(${out_src_dir_name} "${lib_src_name}" PARENT_SCOPE)
-  set(${out_tar_file_name} "${lib_tar_file_name}" PARENT_SCOPE)
+  set(${out_BUILD_VARIANTS} ${build_variants} PARENT_SCOPE)
 endfunction()

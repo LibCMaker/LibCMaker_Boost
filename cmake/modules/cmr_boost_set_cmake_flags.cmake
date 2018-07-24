@@ -45,28 +45,30 @@ function(cmr_boost_set_cmake_flags)
   set(cppflags "")
 
   if(ANDROID)
-    # --sysroot=/path/to/sysroot not added by CMake 3.7+
+    # --sysroot=/path/to/sysroot do not added by CMake 3.7+
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-    set(cppflags "${cppflags} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
 
     if(NOT x_SKIP_INCLUDES)
       foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
-        set(
-            CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
+        set(CMAKE_CXX_FLAGS
+          "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
         )
-        set(
-            CMAKE_C_FLAGS
-            "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
+        set(cppflags
+          "${cppflags} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
         )
-        set(
-            cppflags
-            "${cppflags} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
+      endforeach()
+      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})
+        # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
+        # https://stackoverflow.com/a/6274608
+        set(CMAKE_C_FLAGS
+          "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
         )
       endforeach()
     endif()
 
+    # TODO: work with CMAKE_C_IMPLICIT_LINK_LIBRARIES
     foreach(x ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
       if(EXISTS "${x}")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${x}")
@@ -74,6 +76,24 @@ function(cmr_boost_set_cmake_flags)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -l${x}")
       endif()
     endforeach()
+  endif()  # if(ANDROID)
+
+  if(MSVC)
+    # Disable auto-linking
+    # TODO: check with BOOST_ALL_DYN_LINK == OFF
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DBOOST_ALL_NO_LIB=1")
+  
+    # Fix some compile errors
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DNOMINMAX")
+  
+    # Fix boost.python:
+    # include\pymath.h: warning C4273: 'round': inconsistent dll linkage
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHAVE_ROUND")
+  endif()
+
+  string(COMPARE NOTEQUAL "${CMAKE_OSX_SYSROOT}" "" have_osx_sysroot)
+  if(have_osx_sysroot)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT}")
   endif()
 
   cmr_boost_get_lang_standard_flag(CXX flag)
@@ -91,51 +111,43 @@ function(cmr_boost_set_cmake_flags)
   string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_TARGET}" "" has_value)
   string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_TARGET}" "" has_option)
   if(has_value AND has_option)
-    set(
-        CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_TARGET}${CMAKE_CXX_COMPILER_TARGET}"
+    set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_TARGET}${CMAKE_CXX_COMPILER_TARGET}"
     )
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILER_TARGET}" "" has_value)
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILE_OPTIONS_TARGET}" "" has_option)
   if(has_value AND has_option)
-    set(
-        CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_TARGET}${CMAKE_C_COMPILER_TARGET}"
+    set(CMAKE_C_FLAGS
+      "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_TARGET}${CMAKE_C_COMPILER_TARGET}"
     )
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}" "" has_value)
   string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}" "" has_option)
   if(has_value AND has_option)
-    set(
-        CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}"
+    set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}"
     )
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN}" "" has_value)
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}" "" has_option)
   if(has_value AND has_option)
-    set(
-        CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN}"
+    set(CMAKE_C_FLAGS
+      "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN}"
     )
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_PIC}" "" has_pic)
   if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
-    set(
-        CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_PIC}"
-    )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_PIC}")
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILE_OPTIONS_PIC}" "" has_pic)
   if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
-    set(
-        CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_PIC}"
-    )
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_PIC}")
   endif()
 
   string(COMPARE EQUAL "${x_CPPFLAGS}" "" is_empty)
@@ -143,6 +155,12 @@ function(cmr_boost_set_cmake_flags)
     set("${x_CPPFLAGS}" "${${x_CPPFLAGS}} ${cppflags}" PARENT_SCOPE)
   endif()
 
+  # Need to find out how to add flags on a per variant mode
+  # ... e.g. "gdwarf" etc as per
+  # https://cdcvs.fnal.gov/redmine/projects/build-framework/repository/boost-ssi-build/revisions/master/entry/build_boost.sh
+
+  #TODO: work with CMAKE_SHARED_LINKER_FLAGS and CMAKE_STATIC_LINKER_FLAGS.
+  
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)

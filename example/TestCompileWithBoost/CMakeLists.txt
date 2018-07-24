@@ -21,23 +21,29 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.2)
 
 project(LibCMaker_Boost_Compile_Test CXX)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(cmr_PRINT_DEBUG ON)
+
 
 #-----------------------------------------------------------------------
-# Configure for find_package.
+# Configure to find_package()
 #-----------------------------------------------------------------------
 
-# Set CMake's search path for find_package(), find_program(), find_library(),
-# find_file(), and find_path() commands.
+# Set CMake's search path for find_*() commands.
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 if(ANDROID)
   list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
-  # TODO: fix default CMAKE_CXX_STANDARD to 11 or 14
 endif()
+
+# To use our FindBoost.cmake.
+list(APPEND CMAKE_MODULE_PATH
+  "${PROJECT_SOURCE_DIR}/cmake/LibCMaker_Boost/cmake"
+)
 
 
 #-----------------------------------------------------------------------
@@ -50,104 +56,128 @@ set(LIBCMAKER_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker")
 
 
 #-----------------------------------------------------------------------
-# Set vars for LibCMaker_Boost and FindBoost.
+# Set vars to LibCMaker_Boost and FindBoost
 #-----------------------------------------------------------------------
 
 # Standard CMake vars.
 #set(BUILD_SHARED_LIBS ON)
 
-#set(SKIP_INSTALL_HEADERS ON)
-#set(SKIP_INSTALL_LIBRARIES ON)
-#set(SKIP_INSTALL_ALL ON)
+# Set required compiler language standards.
+set(CMAKE_C_STANDARD 99)    # 11 99 90
+set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
 
-# Set useful vars for lib_cmaker_boost().
-set(cmr_PRINT_DEBUG ON)
-
-set(lib_VERSION "1.65.1")
-set(lib_COMPONENTS filesystem system)
-
-set(DOWNLOAD_DIR "${PROJECT_BINARY_DIR}")
-set(UNPACKED_SRC_DIR "${PROJECT_BINARY_DIR}")
-set(BUILD_DIR "${PROJECT_BINARY_DIR}/build_boost")
+# Vars to lib_cmaker_boost().
+set(BOOST_lib_VERSION     "1.64.0")
+set(BOOST_lib_COMPONENTS  filesystem system)
+set(BOOST_DOWNLOAD_DIR    "${PROJECT_BINARY_DIR}")
+set(BOOST_UNPACKED_DIR    "${PROJECT_BINARY_DIR}")
+set(BOOST_BUILD_DIR       "${PROJECT_BINARY_DIR}/build_boost")
 
 # Library specific vars.
-set(Boost_USE_STATIC_LIBS ON)
-#set(Boost_USE_MULTITHREADED ON)
+set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
+set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
+
 
 #-----------------------------------------------------------------------
-# Build and install the boost.
+# Build and install the Boost
 #-----------------------------------------------------------------------
 
 include(${PROJECT_SOURCE_DIR}/cmake/LibCMaker_Boost/lib_cmaker_boost.cmake)
 
-# Make compile, build and install the library at a config CMake phase,
-# generate the CMake config files.
-
+# Make compile, build and install the library at a config CMake phase.
 # For specified boost components dependence components will builded too.
 
 # Install specified library version and components.
 lib_cmaker_boost(
-  VERSION ${lib_VERSION}
-  COMPONENTS ${lib_COMPONENTS}
-  DOWNLOAD_DIR ${DOWNLOAD_DIR}
-  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
-  BUILD_DIR ${BUILD_DIR}
+  VERSION       ${BOOST_lib_VERSION}
+  COMPONENTS    ${BOOST_lib_COMPONENTS}
+  DOWNLOAD_DIR  ${BOOST_DOWNLOAD_DIR}
+  UNPACKED_DIR  ${BOOST_UNPACKED_DIR}
+  BUILD_DIR     ${BOOST_BUILD_DIR}
 )
 
 # Install specified library version and only headers.
 #lib_cmaker_boost(
-#  VERSION ${lib_VERSION}
-#  DOWNLOAD_DIR ${DOWNLOAD_DIR}
-#  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
-#  BUILD_DIR ${BUILD_DIR}
+#  VERSION       ${BOOST_lib_VERSION}
+#  DOWNLOAD_DIR  ${BOOST_DOWNLOAD_DIR}
+#  UNPACKED_DIR  ${BOOST_UNPACKED_DIR}
+#  BUILD_DIR     ${BOOST_BUILD_DIR}
 #)
 
 # Install specified library version and all libs.
 #lib_cmaker_boost(
-#  VERSION ${lib_VERSION}
-#  COMPONENTS all
-#  DOWNLOAD_DIR ${DOWNLOAD_DIR}
-#  UNPACKED_SRC_DIR ${UNPACKED_SRC_DIR}
-#  BUILD_DIR ${BUILD_DIR}
+#  VERSION       ${BOOST_lib_VERSION}
+#  COMPONENTS    all
+#  DOWNLOAD_DIR  ${BOOST_DOWNLOAD_DIR}
+#  UNPACKED_DIR  ${BOOST_UNPACKED_DIR}
+#  BUILD_DIR     ${BOOST_BUILD_DIR}
 #)
 
 
 #-----------------------------------------------------------------------
-# find_package
+# find_package()
 #-----------------------------------------------------------------------
+
+# Vars to find_project() only. Use to select installed Boost configuration.
+#set(Boost_USE_MULTITHREADED ON)  # Set above.
+#set(Boost_USE_STATIC_LIBS OFF)
+# Here we depend to BUILD_SHARED_LIBS for Boost_USE_STATIC_LIBS.
+if(BUILD_SHARED_LIBS)
+  set(Boost_USE_STATIC_LIBS OFF)
+else()
+  set(Boost_USE_STATIC_LIBS ON)
+endif()
 
 # Use newly got boost library.
 find_package(
-  Boost ${lib_VERSION} REQUIRED CONFIG COMPONENTS ${lib_COMPONENTS})
+  Boost ${lib_VERSION} REQUIRED COMPONENTS ${BOOST_lib_COMPONENTS} CONFIG)
 
 # QUIET suppresses the big warning issued, and allows fallback
 #find_package(Boost 1.63 QUIET CONFIG COMPONENTS filesystem system)
 #if(NOT Boost_FOUND)
-    # Do warn about falling back to system, but can make message more
-    # explicit/informative
-#    message(STATUS
-#      "No BoostConfig.cmake config file found, falling back to FindBoost...")
-    # Use REQUIRED flag to fail if not found
-#    find_package(Boost 1.63 REQUIRED COMPONENTS filesystem system)
+#  # Do warn about falling back to system, but can make message more
+#  # explicit/informative
+#  message(STATUS
+#    "No BoostConfig.cmake config file found, falling back to FindBoost...")
+#  # Use REQUIRED flag to fail if not found
+#  find_package(Boost 1.63 REQUIRED COMPONENTS filesystem system)
 #endif()
 
 
 #-----------------------------------------------------------------------
-# Link to a boost library
+# Link to the library
 #-----------------------------------------------------------------------
 
-# Use/Link it to a boost library, LibCMaker_Boost sets the same variables
-# to libs as FindBoost does, but these are imported targets so
-# always expand to the exact library used.
-#target_include_directories(target_name PRIVATE ${Boost_INCLUDE_DIRS})
-#target_link_libraries(target_name ${Boost_LIBRARIES})
+# Build test executables.
 
-# Build test executables
+# To run it on Linux with the shared libs
+# which are built with non standard path in CMAKE_INSTALL_PREFIX use:
+# LD_LIBRARY_PATH="<${CMAKE_INSTALL_PREFIX}>/lib:.:$LD_LIBRARY_PATH" ./LibCMaker_Boost_Compile_Test_2
+# where <${CMAKE_INSTALL_PREFIX}> is path which is used
+# as value for CMAKE_INSTALL_PREFIX.
+
+# Get an example sources from the lib sources.
+set(BOOST_version_underscore "1_64_0")
+set(lib_SRC_DIR
+  "${BOOST_UNPACKED_DIR}/boost-${BOOST_lib_VERSION}/boost_${BOOST_version_underscore}/"
+)
+set(lib_EXAMPLES_SRC_DIR ${lib_SRC_DIR}/libs/filesystem/example)
+
+# Example #1
 add_executable(${PROJECT_NAME} test_header.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
+# Boost
+#target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} Boost::boost)
+
+# Example #2
 add_executable(${PROJECT_NAME}_2 test_compiled.cpp)
-target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_2 ${Boost_LIBRARIES})
 set_property(TARGET ${PROJECT_NAME}_2 PROPERTY CXX_STANDARD 11)
+
+# Boost
+#target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
+#target_link_libraries(${PROJECT_NAME}_2 ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_2
+  Boost::boost Boost::filesystem Boost::system
+)

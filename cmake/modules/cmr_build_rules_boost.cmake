@@ -1,0 +1,470 @@
+# ****************************************************************************
+#  Project:  LibCMaker_Boost
+#  Purpose:  A CMake build script for Boost Libraries
+#  Author:   NikitaFeodonit, nfeodonit@yandex.com
+# ****************************************************************************
+#    Copyright (c) 2017-2018 NikitaFeodonit
+#
+#    This file is part of the LibCMaker_Boost project.
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published
+#    by the Free Software Foundation, either version 3 of the License,
+#    or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#    See the GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ****************************************************************************
+
+# Part of "LibCMaker/cmake/modules/cmr_build_rules.cmake".
+
+
+  # Based on the BoostBuilder:
+  # https://github.com/drbenmorgan/BoostBuilder
+  # Based on the build-boost.sh from CrystaX NDK:
+  # https://www.crystax.net/
+  # https://github.com/crystax/android-platform-ndk/blob/master/build/tools/build-boost.sh
+  # Based on the Hunter:
+  # https://github.com/ruslo/hunter
+  
+  
+  # CMake build/bundle script for Boost Libraries.
+  # Automates build of Boost, allowing optional builds of library
+  # components plus CMake support files.
+  #
+  # In current form, install Boost libraries in "tagged" layout so that
+  # Release/Debug/Profile Single/Multithread variants can be installed
+  # alongside each other.
+  
+  
+  # Useful vars:
+  #   BUILD_SHARED_LIBS         -- build shared libs.
+  #   Boost_USE_MULTITHREADED   -- build multithread (-mt) libs, default is ON.
+  #
+  #   cmr_PRINT_DEBUG
+  #
+  #   lib_DOWNLOAD_DIR  -- for downloaded files
+  #   lib_UNPACKED_DIR  -- for unpacked sources
+  #   lib_BUILD_DIR     -- for build files
+  #
+  #   lib_BUILD_HOST_TOOLS -- build only 'b2' program and 'bcp' if specified.
+  #   BUILD_BCP_TOOL       -- build 'bcp' program.
+  #
+  #   lib_VERSION "1.64.0"
+  #     Version of boost library.
+  #
+  #   lib_COMPONENTS regex filesystem
+  #     List libraries to build. Dependence libs will builded too.
+  #     By default will installed only header lib.
+  #     May be "all" to build all boost libs,
+  #     in this case, there must be only one keyword "all".
+  #     The complete list of libraries provided by Boost can be found by
+  #     running the bootstrap.sh script supplied with Boost as:
+  #       ./bootstrap.sh --with-libraries=all --show-libraries
+
+
+  #-----------------------------------------------------------------------
+  # Initialization
+  #
+  include(GNUInstallDirs)
+  
+  set(boost_modules_DIR "${lib_BASE_DIR}/cmake/modules")
+  
+
+  #-----------------------------------------------------------------------
+  # Check COMPONENTS and get lib list
+  #
+  include(cmr_boost_get_lib_list)
+  cmr_boost_get_lib_list(
+    boost_LIB_LIST Boost_COMPONENTS
+    VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS})
+
+
+  #-----------------------------------------------------------------------
+  # bootstrap_ARGS
+  #
+  set(bootstrap_ARGS)
+  # TODO: for MINGW
+  #if(MINGW)
+  #  list(APPEND bootstrap_ARGS "gcc")
+  #endif()
+  if(ANDROID)
+    # TODO: add work with ICU
+    list(APPEND bootstrap_ARGS "--without-icu") # TODO: check it.
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # common_b2_ARGS
+  #
+  set(common_b2_ARGS)
+  list(APPEND common_b2_ARGS "-a") # Rebuild everything
+  list(APPEND common_b2_ARGS "-q") # Stop at first error
+  if(cmr_PRINT_DEBUG)
+    list(APPEND common_b2_ARGS "-d+2") # Show commands as they are executed
+    list(APPEND common_b2_ARGS "--debug-configuration") # Diagnose configuration
+  else()
+    list(APPEND common_b2_ARGS "-d0") # Suppress all informational messages
+  endif()
+  
+  # Parallelize build if possible
+  #include(ProcessorCount) # ProcessorCount
+  #ProcessorCount(NJOBS)
+  cmake_host_system_information(RESULT NJOBS QUERY NUMBER_OF_PHYSICAL_CORES)
+  if(NJOBS EQUAL 0)
+    set(NJOBS 1)
+  endif()
+  list(APPEND common_b2_ARGS "-j" "${NJOBS}")
+  
+  # Build in this location instead of building within the distribution tree.
+  list(APPEND common_b2_ARGS
+    "--build-dir=${lib_VERSION_BUILD_DIR}"
+  )
+
+
+  #-----------------------------------------------------------------------
+  # bcp_b2_ARGS
+  #
+  # We need to use a custom set of layout and toolset arguments
+  # for bcp building to prevent "duplicate target" errors.
+  set(bcp_b2_ARGS)
+  list(APPEND bcp_b2_ARGS ${common_b2_ARGS})
+
+
+  #-----------------------------------------------------------------------
+  # Build b2 (bjam) if required
+  #
+  set(b2_FILE_NAME "b2")
+  unset(b2_FILE CACHE)
+  find_program(b2_FILE
+    NAMES ${b2_FILE_NAME} PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH
+  )
+  if(NOT b2_FILE)
+    if(cmr_PRINT_DEBUG)
+      cmr_print_debug_message(
+        "bootstrap.sh options for 'b2' ('bjam') tool building:")
+      cmr_print_debug_message("------")
+      foreach(opt ${bootstrap_ARGS})
+        cmr_print_debug_message("  ${opt}")
+      endforeach()
+      cmr_print_debug_message("------")
+    endif()
+
+    set(bootstrap_FILE_NAME "bootstrap.sh")
+    if(WIN32)
+      set(bootstrap_FILE_NAME "bootstrap.bat")
+      set(b2_FILE_NAME "b2.exe")
+    endif()
+    set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
+    set(b2_FILE "${lib_SRC_DIR}/${b2_FILE_NAME}")
+    
+    # Add the files in the source tree:
+    #   <boost sources>/b2
+    #   <boost sources>/bjam
+    #   <boost sources>/bootstrap.log
+    #   <boost sources>/project-config.jam
+    #   <boost sources>/tools/build/src/engine/bin.*/*
+    #   <boost sources>/tools/build/src/engine/bootstrap/*
+    add_custom_command(OUTPUT ${b2_FILE}
+      COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
+      WORKING_DIRECTORY ${lib_SRC_DIR}
+      COMMENT "Build 'b2' ('bjam') tool."
+    )
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # Build and install bcp program if required
+  #
+  if(BUILD_BCP_TOOL)
+    if(cmr_PRINT_DEBUG)
+      cmr_print_debug_message("b2 options for 'bcp' tool building:")
+      cmr_print_debug_message("------")
+      foreach(opt ${bcp_b2_ARGS})
+        cmr_print_debug_message("  ${opt}")
+      endforeach()
+      cmr_print_debug_message("------")
+    endif()
+
+    set(bcp_FILE_NAME "bcp")
+    if(WIN32)
+      set(bcp_FILE_NAME "bcp.exe")
+    endif()
+    set(bcp_FILE "${lib_SRC_DIR}/dist/bin/${bcp_FILE_NAME}")
+
+    # Add the files in the source tree:
+    #   <boost sources>/dist/*
+    add_custom_command(OUTPUT ${bcp_FILE}
+      COMMAND
+        ${b2_FILE} ${bcp_b2_ARGS} "${lib_SRC_DIR}/tools/bcp"
+      WORKING_DIRECTORY ${lib_SRC_DIR}
+      DEPENDS ${b2_FILE}
+      COMMENT "Build 'bcp' tool."
+    )
+    
+    if(lib_BUILD_HOST_TOOLS)
+      add_custom_target(build_bcp ALL
+        DEPENDS ${bcp_FILE}
+      )
+    endif()
+    
+    install(
+      PROGRAMS ${bcp_FILE}
+      DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+    )
+  endif()
+
+  
+  #-----------------------------------------------------------------------
+  # Return if build tools only
+  #
+  if(lib_BUILD_HOST_TOOLS)
+    return()  # Return to cmr_build_rules().
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # b2_args
+  #
+  set(b2_ARGS)
+  list(APPEND b2_ARGS ${common_b2_ARGS})
+  
+  if(boost_LIB_LIST)
+    list(APPEND b2_ARGS ${boost_LIB_LIST})
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # Compiler toolset
+  #
+  include(cmr_boost_get_compiler_toolset)
+  cmr_boost_get_compiler_toolset()
+  # Out vars:
+  # -> toolset_name
+  # -> toolset_version
+  # -> toolset_full_name
+  # -> use_cmake_archiver
+  # -> boost_compiler
+  # -> using_mpi
+  # -> copy_mpi_command
+
+  list(APPEND b2_ARGS "toolset=${toolset_full_name}")
+
+
+  #-----------------------------------------------------------------------
+  # Install options
+  #
+  # Install headers and compiled library files to the configured locations.
+  list(APPEND b2_ARGS "install")
+
+  # Build and install only compiled library files to the stage directory.
+  #list(APPEND b2_ARGS "stage")
+  # --stagedir=<STAGEDIR>   Install library files here
+
+
+  #-----------------------------------------------------------------------
+  # Directories
+  #
+  # Install architecture independent files here
+  list(APPEND b2_ARGS
+    "--prefix=${CMAKE_INSTALL_PREFIX}"
+  )
+  # Install header files here
+  list(APPEND b2_ARGS
+    "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+  )
+  # Install library files here
+  list(APPEND b2_ARGS
+    "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
+  )
+
+
+  #-----------------------------------------------------------------------
+  # Build variants
+  #
+  include(cmr_boost_get_build_variants)
+  cmr_boost_get_build_variants(build_variants)
+  # Use:
+  # -> BUILD_SHARED_LIBS
+  # -> Boost_USE_MULTITHREADED  # Set to ON by default.
+  
+  list(APPEND b2_ARGS ${build_variants})
+
+
+  #-----------------------------------------------------------------------
+  # OS specifics
+  #
+  include(cmr_boost_get_os_specifics)
+  cmr_boost_get_os_specifics(os_specifics)
+  list(APPEND b2_ARGS ${os_specifics})
+
+
+  #-----------------------------------------------------------------------
+  # Compiler and linker flags
+  #
+  include(cmr_boost_set_cmake_flags)
+  cmr_boost_set_cmake_flags()
+  # Out vars:
+  # -> CMAKE_C_FLAGS
+  # -> CMAKE_CXX_FLAGS
+  # -> CMAKE_EXE_LINKER_FLAGS
+  
+  if(BUILD_SHARED_LIBS AND CMAKE_EXE_LINKER_FLAGS)
+    list(APPEND b2_ARGS "linkflags=${CMAKE_EXE_LINKER_FLAGS}")
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # Generate 'user-config.jam' file
+  #
+  # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
+  # https://stackoverflow.com/a/24470998
+  set(jam_CMAKE_FILE
+    "${boost_modules_DIR}/cmr_boost_generate_user_config_jam.cmake"
+  )
+  set(user_jam_FILE "${lib_VERSION_BUILD_DIR}/user-config.jam")
+  
+  add_custom_command(OUTPUT ${user_jam_FILE}
+    COMMAND ${CMAKE_COMMAND}
+      -DLIBCMAKER_SRC_DIR=${LIBCMAKER_SRC_DIR}
+      -Duser_jam_FILE=${user_jam_FILE}
+      -Dtoolset_name=${toolset_name}
+      -Dtoolset_version=${toolset_version}
+      -Dboost_compiler=${boost_compiler}
+      -Duse_cmake_archiver=${use_cmake_archiver}
+      -Dusing_mpi=${using_mpi}
+      -Dbuild_TYPE="$<UPPER_CASE:$<CONFIG>>"
+      -Dcxx_FLAGS="${CMAKE_CXX_FLAGS}"
+      -Djam_AR=${CMAKE_AR}
+      -Djam_RANLIB=${CMAKE_RANLIB}
+      -Dcmr_PRINT_DEBUG=${cmr_PRINT_DEBUG}
+      -P ${jam_CMAKE_FILE}
+    WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
+    COMMENT "Generate 'user-config.jam' file."
+  )
+
+  list(APPEND b2_ARGS "--user-config=${user_jam_FILE}")
+
+
+  #-----------------------------------------------------------------------
+  # Create and install CMake support files.
+  #
+  include(cmr_get_version_parts)
+  cmr_get_version_parts(${lib_VERSION}
+    Boost_MAJOR_VERSION
+    Boost_MINOR_VERSION
+    Boost_SUBMINOR_VERSION
+    Boost_TWEAK_VERSION  # Unused.
+  )
+
+  set(config_TEMPLATE_DIR "${boost_modules_DIR}")
+  set(config_BINARY_DIR
+    "${lib_VERSION_BUILD_DIR}/cmake/Boost-${lib_VERSION}"
+  )
+  set(config_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/cmake")
+  set(config_INSTALL_VER_DIR "${config_INSTALL_CMAKE_DIR}/Boost-${lib_VERSION}")
+  
+  set(config_PACKAGE_TEMPLATE
+    "${config_TEMPLATE_DIR}/BoostConfig.in.cmake"
+  )
+  set(config_PACKAGE
+    "${config_BINARY_DIR}/BoostConfig.cmake"
+  )
+  set(config_PACKAGE_VERSION
+    "${config_BINARY_DIR}/BoostConfigVersion.cmake"
+  )
+
+  include(CMakePackageConfigHelpers)
+  # Add functions:
+  # -> configure_package_config_file()
+  # -> write_basic_package_version_file()
+  
+  # Use:
+  # * PROJECT_NAME
+  # * BUILD_SHARED_LIBS
+  # * CMAKE_INSTALL_FULL_INCLUDEDIR
+  # * CMAKE_INSTALL_FULL_LIBDIR
+  # * config_INSTALL_VER_DIR
+  # * Boost_MAJOR_VERSION
+  # * Boost_MINOR_VERSION
+  # * Boost_SUBMINOR_VERSION
+  # * Boost_USE_MULTITHREADED
+  configure_package_config_file(
+    "${config_PACKAGE_TEMPLATE}"
+    "${config_PACKAGE}"
+    PATH_VARS
+      CMAKE_INSTALL_FULL_INCLUDEDIR
+      CMAKE_INSTALL_FULL_LIBDIR
+    INSTALL_DESTINATION "${config_INSTALL_VER_DIR}"
+  )
+
+  write_basic_package_version_file(
+    "${config_PACKAGE_VERSION}"
+    VERSION
+      ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}
+    COMPATIBILITY SameMajorVersion
+  )
+
+  # Use:
+  # * BoostLibraryDepends.in.cmake
+  set(config_IMPORTS
+    "${config_TEMPLATE_DIR}/cmr_boost_generate_cmake_import_files.cmake"
+  )
+  set(config_IMPORTS_STAMP "${lib_VERSION_BUILD_DIR}/config_imports_stamp")
+  string(REPLACE ";" " " string_COMPONENTS "${Boost_COMPONENTS}")
+  
+  add_custom_command(OUTPUT ${config_IMPORTS_STAMP}
+    COMMAND ${CMAKE_COMMAND}
+      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
+      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
+      -DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
+      -DCMAKE_STATIC_LIBRARY_SUFFIX=${CMAKE_STATIC_LIBRARY_SUFFIX}
+      -Dtemplates_DIR=${config_TEMPLATE_DIR}
+      -Dgenerate_DIR=${config_BINARY_DIR}
+      -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+      -DBoost_USE_MULTITHREADED=${Boost_USE_MULTITHREADED}
+      -DBoost_BUILD_VARIANT=$<CONFIG>
+      -DBoost_COMPONENTS=${string_COMPONENTS}
+      -P ${config_IMPORTS}
+    COMMAND ${CMAKE_COMMAND} -E touch ${config_IMPORTS_STAMP}
+    WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
+    DEPENDS ${config_IMPORTS} ${config_TEMPLATE_DIR}/BoostTargets.in.cmake
+    COMMENT "Generate CMake config files."
+  )
+
+  install(
+    DIRECTORY ${config_BINARY_DIR}
+    DESTINATION ${config_INSTALL_CMAKE_DIR}
+  )
+
+
+  #-----------------------------------------------------------------------
+  # Build boost library
+  #
+  if(cmr_PRINT_DEBUG)
+    cmr_print_debug_message("b2 options for Boost library building:")
+    cmr_print_debug_message("------")
+    foreach(opt ${b2_ARGS})
+      cmr_print_debug_message("  ${opt}")
+    endforeach()
+    cmr_print_debug_message("------")
+  endif()
+
+  set(boost_STAMP "${lib_VERSION_BUILD_DIR}/boost_stamp")
+
+  add_custom_command(OUTPUT ${boost_STAMP}
+    COMMAND ${b2_FILE} ${b2_ARGS}
+    COMMAND ${CMAKE_COMMAND} -E touch ${boost_STAMP}
+    WORKING_DIRECTORY ${lib_SRC_DIR}
+    DEPENDS ${b2_FILE} ${bcp_FILE} ${user_jam_FILE} ${config_IMPORTS_STAMP}
+    COMMENT "Build Boost library."
+  )
+  
+  add_custom_target(build_boost ALL
+    DEPENDS ${boost_STAMP}
+  )
