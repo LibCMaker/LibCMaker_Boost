@@ -31,8 +31,8 @@ include(cmr_print_fatal_error)
 include(cmr_print_debug_message)
 
 function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
-  set(CXX_standards 17 14 11 98)
   set(C_standards 11 99 90)
+  set(CXX_standards 17 14 11 98)
   # Find the <lang> standard flag.
   # This maps the logic in the CMake code:
   # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1433-L1467

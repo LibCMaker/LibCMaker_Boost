@@ -66,11 +66,15 @@ function(lib_cmaker_boost)
   #-----------------------------------------------------------------------
   # Library specific build arguments
   #-----------------------------------------------------------------------
+  
+  set(lib_LANGUAGES CXX C ASM)
 
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
   set(cmr_LIB_VARS
+    B2_PROGRAM_PATH
     BUILD_BCP_TOOL
     Boost_USE_MULTITHREADED
+    PRINT_BOOST_DEBUG
   )
 
   foreach(d ${cmr_LIB_VARS})
@@ -87,6 +91,45 @@ function(lib_cmaker_boost)
   # Building
   #-----------------------------------------------------------------------
 
+  # Build tools for cross building if need
+  if(NOT B2_PROGRAM_PATH AND IOS OR ANDROID OR WINDOWS_STORE)
+    include(GNUInstallDirs)
+    set(b2_FILE_NAME "b2")
+    if(WIN32)
+      set(b2_FILE_NAME "b2.exe")
+    endif()
+    
+    set(_b2_program_path "${CMAKE_INSTALL_FULL_BINDIR}/${b2_FILE_NAME}")
+
+    if(NOT EXISTS ${_b2_program_path})
+      cmr_print_message("-------- Build tools for cross building --------")
+  
+      cmr_lib_cmaker_main(
+        NAME          ${lib_NAME}
+        VERSION       ${arg_VERSION}
+        COMPONENTS    ${arg_COMPONENTS}
+        BASE_DIR      ${lcm_${lib_NAME}_SRC_DIR}
+        DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
+        UNPACKED_DIR  ${arg_UNPACKED_DIR}/host_tools_sources
+        BUILD_DIR     ${arg_BUILD_DIR}_host_tools
+        CMAKE_ARGS    ${lcm_CMAKE_ARGS}
+        BUILD_HOST_TOOLS
+        INSTALL
+      )
+    endif()
+
+    set(B2_PROGRAM_PATH "${_b2_program_path}"
+      CACHE PATH "Specify an absolute path to the 'b2' tool."
+    )
+    list(APPEND lcm_CMAKE_ARGS
+      -DB2_PROGRAM_PATH=${B2_PROGRAM_PATH}
+    )
+
+    cmr_print_message(
+      "-------- Cross building with 'b2' tool in ${B2_PROGRAM_PATH} --------"
+    )
+  endif()
+
   cmr_lib_cmaker_main(
     NAME          ${lib_NAME}
     VERSION       ${arg_VERSION}
@@ -98,5 +141,4 @@ function(lib_cmaker_boost)
     CMAKE_ARGS    ${lcm_CMAKE_ARGS}
     INSTALL
   )
-
 endfunction()

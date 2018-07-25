@@ -28,6 +28,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     list(APPEND os_specifics "--layout=tagged")
 
     # Whether to link to static or shared C and C++ runtime.
+    # TODO: see BUILD_SHARED_LIBS and ANDROID_STL=c++_static/c++_shared
     list(APPEND os_specifics "runtime-link=shared")
 
     # Legal values for 'target-os':

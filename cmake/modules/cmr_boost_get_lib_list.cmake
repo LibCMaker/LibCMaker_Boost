@@ -115,17 +115,68 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
         cmr_print_fatal_error(
           "COMPONENTS can not contain 'all' keyword with something others.")
       endif()
-      foreach(name IN LISTS BOOST_COMPONENT_NAMES)
-        if(NOT ${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
-          # Add the <library> to the installed component list.
-          list(APPEND installed_components ${name})
-        endif()
-      endforeach()
-      if(installed_components)
-        set(${out_INSTALLED_COMPONENTS} ${installed_components} PARENT_SCOPE)
-      endif()
-      return()  # if build all libs.
+      set(build_all_libs ON)
     endif()
+  endif()
+  
+  
+  if(build_all_libs)
+    foreach(name IN LISTS BOOST_COMPONENT_NAMES)
+      if(${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
+        continue()
+      endif()
+  
+      if(ANDROID)
+        string(COMPARE EQUAL "${name}" "python" without_component)
+        if(without_component)
+          # TODO: CrystaX NDK has Python.
+          list(APPEND without_args "--without-${name}")
+          continue()
+        endif()
+  
+        # Boost.Context in 1.57.0 and earlier don't support arm64.
+        # Boost.Context in 1.61.0 and earlier don't support mips64.
+        # Boost.Coroutine depends on Boost.Context.
+        if((ANDROID_SYSROOT_ABI STREQUAL arm64
+                AND NOT lib_VERSION VERSION_GREATER "1.57.0")
+            OR (ANDROID_SYSROOT_ABI STREQUAL mips64
+                AND NOT lib_VERSION VERSION_GREATER "1.61.0"))
+          string(COMPARE EQUAL "${name}" "context" without_component)
+          if(without_component)
+            list(APPEND without_args "--without-${name}")
+            continue()
+          endif()
+  
+          string(COMPARE EQUAL "${name}" "coroutine" without_component)
+          if(without_component)
+            list(APPEND without_args "--without-${name}")
+            continue()
+          endif()
+        endif()
+        
+        # Starting from 1.59.0, there is Boost.Coroutine2 library,
+        # which depends on Boost.Context too.
+        if(ANDROID_SYSROOT_ABI STREQUAL mips64
+                AND NOT lib_VERSION VERSION_GREATER "1.61.0")
+          string(COMPARE EQUAL "${name}" "coroutine2" without_component)
+          if(without_component)
+            list(APPEND without_args "--without-${name}")
+            continue()
+          endif()
+        endif()
+      endif()  # if(ANDROID)
+  
+      # Add the <library> to the installed component list.
+      list(APPEND installed_components ${name})
+    endforeach()
+    
+    if(without_args)
+      set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
+    endif()
+    if(installed_components)
+      set(${out_INSTALLED_COMPONENTS} ${installed_components} PARENT_SCOPE)
+    endif()
+    return()  # if all libs.
   endif()
 
 

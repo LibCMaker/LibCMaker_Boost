@@ -74,6 +74,13 @@
   include(GNUInstallDirs)
   
   set(boost_modules_DIR "${lib_BASE_DIR}/cmake/modules")
+
+  cmr_print_message("Copy 'boost/config/user.hpp' to unpacked sources.")
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+      ${lib_BASE_DIR}/boost/config/user.hpp
+      ${lib_SRC_DIR}/boost/config/user.hpp
+  )
   
 
   #-----------------------------------------------------------------------
@@ -95,7 +102,7 @@
   #endif()
   if(ANDROID)
     # TODO: add work with ICU
-    list(APPEND bootstrap_ARGS "--without-icu") # TODO: check it.
+    list(APPEND bootstrap_ARGS "--without-icu")
   endif()
 
 
@@ -105,21 +112,34 @@
   set(common_b2_ARGS)
   list(APPEND common_b2_ARGS "-a") # Rebuild everything
   list(APPEND common_b2_ARGS "-q") # Stop at first error
-  if(cmr_PRINT_DEBUG)
-    list(APPEND common_b2_ARGS "-d+2") # Show commands as they are executed
-    list(APPEND common_b2_ARGS "--debug-configuration") # Diagnose configuration
+  
+  if(cmr_PRINT_DEBUG AND PRINT_BOOST_DEBUG)
+    # Show commands as they are executed
+    list(APPEND common_b2_ARGS "-d+2")
+    # Diagnose configuration
+    list(APPEND common_b2_ARGS "--debug-configuration")
+    # Report which targets are built with what properties
+    list(APPEND common_b2_ARGS "--debug-building")
+    # Diagnose generator search/execution
+    list(APPEND common_b2_ARGS "--debug-generator")
   else()
-    list(APPEND common_b2_ARGS "-d0") # Suppress all informational messages
+    # Suppress all informational messages
+    list(APPEND common_b2_ARGS "-d0")
   endif()
   
   # Parallelize build if possible
-  #include(ProcessorCount) # ProcessorCount
-  #ProcessorCount(NJOBS)
-  cmake_host_system_information(RESULT NJOBS QUERY NUMBER_OF_PHYSICAL_CORES)
-  if(NJOBS EQUAL 0)
-    set(NJOBS 1)
+  if(NOT DEFINED cmr_BUILD_MULTIPROC)
+    set(cmr_BUILD_MULTIPROC ON)
   endif()
-  list(APPEND common_b2_ARGS "-j" "${NJOBS}")
+  if(cmr_BUILD_MULTIPROC AND NOT DEFINED cmr_BUILD_MULTIPROC_CNT)
+    set(cmr_BUILD_MULTIPROC_CNT "1")
+    include(ProcessorCount) # ProcessorCount
+    ProcessorCount(CPU_CNT)
+    if(CPU_CNT GREATER 0)
+      set(cmr_BUILD_MULTIPROC_CNT ${CPU_CNT})
+    endif()
+    list(APPEND common_b2_ARGS "-j" "${cmr_BUILD_MULTIPROC_CNT}")
+  endif()
   
   # Build in this location instead of building within the distribution tree.
   list(APPEND common_b2_ARGS
@@ -137,43 +157,73 @@
 
 
   #-----------------------------------------------------------------------
-  # Build b2 (bjam) if required
+  # Run bootstrap script and build b2 (bjam) if required
   #
-  set(b2_FILE_NAME "b2")
-  unset(b2_FILE CACHE)
-  find_program(b2_FILE
-    NAMES ${b2_FILE_NAME} PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH
-  )
-  if(NOT b2_FILE)
-    if(cmr_PRINT_DEBUG)
-      cmr_print_debug_message(
-        "bootstrap.sh options for 'b2' ('bjam') tool building:")
-      cmr_print_debug_message("------")
-      foreach(opt ${bootstrap_ARGS})
-        cmr_print_debug_message("  ${opt}")
-      endforeach()
-      cmr_print_debug_message("------")
-    endif()
+  if(DEFINED B2_PROGRAM_PATH AND NOT EXISTS ${B2_PROGRAM_PATH})
+    cmr_print_fatal_error(
+      "B2_PROGRAM_PATH is defined as\n'${B2_PROGRAM_PATH}'\n and there is not 'b2' tool in this path."
+    )
+  endif()
 
-    set(bootstrap_FILE_NAME "bootstrap.sh")
-    if(WIN32)
-      set(bootstrap_FILE_NAME "bootstrap.bat")
-      set(b2_FILE_NAME "b2.exe")
+  if(B2_PROGRAM_PATH)
+    set(b2_FILE ${B2_PROGRAM_PATH})
+    list(APPEND bootstrap_ARGS "--with-bjam=${b2_FILE}")
+  else()
+    set(b2_FILE_NAME "b2")
+    unset(b2_FILE CACHE)
+    find_program(b2_FILE NAMES ${b2_FILE_NAME}
+      PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH
+    )
+    if(NOT b2_FILE)
+      if(WIN32)
+        set(b2_FILE_NAME "b2.exe")
+      endif()
+      set(b2_FILE "${lib_SRC_DIR}/${b2_FILE_NAME}")
     endif()
-    set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
-    set(b2_FILE "${lib_SRC_DIR}/${b2_FILE_NAME}")
-    
-    # Add the files in the source tree:
-    #   <boost sources>/b2
-    #   <boost sources>/bjam
-    #   <boost sources>/bootstrap.log
-    #   <boost sources>/project-config.jam
-    #   <boost sources>/tools/build/src/engine/bin.*/*
-    #   <boost sources>/tools/build/src/engine/bootstrap/*
-    add_custom_command(OUTPUT ${b2_FILE}
-      COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
-      WORKING_DIRECTORY ${lib_SRC_DIR}
-      COMMENT "Build 'b2' ('bjam') tool."
+  endif()
+
+  if(cmr_PRINT_DEBUG)
+    cmr_print_debug_message(
+      "bootstrap.sh options:")
+    cmr_print_debug_message("------")
+    foreach(opt ${bootstrap_ARGS})
+      cmr_print_debug_message("  ${opt}")
+    endforeach()
+    cmr_print_debug_message("------")
+  endif()
+
+  set(bootstrap_FILE_NAME "bootstrap.sh")
+  if(WIN32)
+    set(bootstrap_FILE_NAME "bootstrap.bat")
+  endif()
+  set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
+  set(bootstrap_STAMP "${lib_VERSION_BUILD_DIR}/bootstrap_stamp")
+  
+  # Add the files in the source tree:
+  #   <boost sources>/b2
+  #   <boost sources>/bjam
+  #   <boost sources>/bootstrap.log
+  #   <boost sources>/project-config.jam
+  #   <boost sources>/tools/build/src/engine/bin.*/*
+  #   <boost sources>/tools/build/src/engine/bootstrap/*
+  add_custom_command(OUTPUT ${bootstrap_STAMP}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_VERSION_BUILD_DIR}
+    COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
+    COMMAND ${CMAKE_COMMAND} -E touch ${bootstrap_STAMP}
+    WORKING_DIRECTORY ${lib_SRC_DIR}
+    COMMENT "Run bootstrap script."
+  )
+
+  if(lib_BUILD_HOST_TOOLS AND NOT BUILD_BCP_TOOL)
+    add_custom_target(run_bootstrap ALL
+      DEPENDS ${bootstrap_STAMP}
+    )
+  endif()
+
+  if(NOT B2_PROGRAM_PATH)
+    install(
+      PROGRAMS ${b2_FILE}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
   endif()
 
@@ -203,7 +253,7 @@
       COMMAND
         ${b2_FILE} ${bcp_b2_ARGS} "${lib_SRC_DIR}/tools/bcp"
       WORKING_DIRECTORY ${lib_SRC_DIR}
-      DEPENDS ${b2_FILE}
+      DEPENDS ${bootstrap_STAMP}
       COMMENT "Build 'bcp' tool."
     )
     
@@ -215,7 +265,7 @@
     
     install(
       PROGRAMS ${bcp_FILE}
-      DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
   endif()
 
@@ -240,6 +290,38 @@
 
 
   #-----------------------------------------------------------------------
+  # Install options and directories
+  #
+  if(lib_BUILD AND NOT lib_INSTALL)
+    # Build and install only compiled library files to the stage directory.
+    list(APPEND b2_ARGS "stage")
+
+    # Install library files here.
+    list(APPEND b2_ARGS
+      "--stagedir=${CMAKE_INSTALL_FULL_LIBDIR}"
+    )
+  endif()
+
+  if(lib_INSTALL)
+    # Install headers and compiled library files to the configured locations.
+    list(APPEND b2_ARGS "install")
+
+    # Install architecture independent files here
+    list(APPEND b2_ARGS
+      "--prefix=${CMAKE_INSTALL_PREFIX}"
+    )
+    # Install header files here
+    list(APPEND b2_ARGS
+      "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+    )
+    # Install library files here
+    list(APPEND b2_ARGS
+      "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
+    )
+  endif()
+
+
+  #-----------------------------------------------------------------------
   # Compiler toolset
   #
   include(cmr_boost_get_compiler_toolset)
@@ -254,34 +336,6 @@
   # -> copy_mpi_command
 
   list(APPEND b2_ARGS "toolset=${toolset_full_name}")
-
-
-  #-----------------------------------------------------------------------
-  # Install options
-  #
-  # Install headers and compiled library files to the configured locations.
-  list(APPEND b2_ARGS "install")
-
-  # Build and install only compiled library files to the stage directory.
-  #list(APPEND b2_ARGS "stage")
-  # --stagedir=<STAGEDIR>   Install library files here
-
-
-  #-----------------------------------------------------------------------
-  # Directories
-  #
-  # Install architecture independent files here
-  list(APPEND b2_ARGS
-    "--prefix=${CMAKE_INSTALL_PREFIX}"
-  )
-  # Install header files here
-  list(APPEND b2_ARGS
-    "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
-  )
-  # Install library files here
-  list(APPEND b2_ARGS
-    "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
-  )
 
 
   #-----------------------------------------------------------------------
@@ -319,11 +373,8 @@
   # Out vars:
   # -> CMAKE_C_FLAGS
   # -> CMAKE_CXX_FLAGS
+  # -> CMAKE_ASM_FLAGS
   # -> CMAKE_EXE_LINKER_FLAGS
-  
-  if(BUILD_SHARED_LIBS AND CMAKE_EXE_LINKER_FLAGS)
-    list(APPEND b2_ARGS "linkflags=${CMAKE_EXE_LINKER_FLAGS}")
-  endif()
 
 
   #-----------------------------------------------------------------------
@@ -346,12 +397,16 @@
       -Duse_cmake_archiver=${use_cmake_archiver}
       -Dusing_mpi=${using_mpi}
       -Dbuild_TYPE="$<UPPER_CASE:$<CONFIG>>"
-      -Dcxx_FLAGS="\"${CMAKE_CXX_FLAGS}\""
+      -Djam_c_FLAGS="\"${CMAKE_C_FLAGS}\""
+      -Djam_cxx_FLAGS="\"${CMAKE_CXX_FLAGS}\""
+      -Djam_asm_FLAGS="\"${CMAKE_ASM_FLAGS}\""
+      -Djam_link_FLAGS="\"${CMAKE_EXE_LINKER_FLAGS}\""
       -Djam_AR=${CMAKE_AR}
       -Djam_RANLIB=${CMAKE_RANLIB}
       -Dcmr_PRINT_DEBUG=${cmr_PRINT_DEBUG}
       -P ${jam_CMAKE_FILE}
     WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
+    DEPENDS ${bootstrap_STAMP}
     COMMENT "Generate 'user-config.jam' file."
   )
 
@@ -373,7 +428,7 @@
   set(config_BINARY_DIR
     "${lib_VERSION_BUILD_DIR}/cmake/Boost-${lib_VERSION}"
   )
-  set(config_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/cmake")
+  set(config_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake")
   set(config_INSTALL_VER_DIR "${config_INSTALL_CMAKE_DIR}/Boost-${lib_VERSION}")
   
   set(config_PACKAGE_TEMPLATE
@@ -394,8 +449,8 @@
   # Use:
   # * PROJECT_NAME
   # * BUILD_SHARED_LIBS
-  # * CMAKE_INSTALL_FULL_INCLUDEDIR
-  # * CMAKE_INSTALL_FULL_LIBDIR
+  # * CMAKE_INSTALL_INCLUDEDIR
+  # * CMAKE_INSTALL_LIBDIR
   # * config_INSTALL_VER_DIR
   # * Boost_MAJOR_VERSION
   # * Boost_MINOR_VERSION
@@ -405,8 +460,8 @@
     "${config_PACKAGE_TEMPLATE}"
     "${config_PACKAGE}"
     PATH_VARS
-      CMAKE_INSTALL_FULL_INCLUDEDIR
-      CMAKE_INSTALL_FULL_LIBDIR
+      CMAKE_INSTALL_INCLUDEDIR
+      CMAKE_INSTALL_LIBDIR
     INSTALL_DESTINATION "${config_INSTALL_VER_DIR}"
   )
 
@@ -440,7 +495,10 @@
       -P ${config_IMPORTS}
     COMMAND ${CMAKE_COMMAND} -E touch ${config_IMPORTS_STAMP}
     WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
-    DEPENDS ${config_IMPORTS} ${config_TEMPLATE_DIR}/BoostTargets.in.cmake
+    DEPENDS
+      ${bootstrap_STAMP}
+      ${config_IMPORTS}
+      ${config_TEMPLATE_DIR}/BoostTargets.in.cmake
     COMMENT "Generate CMake config files."
   )
 
@@ -468,7 +526,9 @@
     COMMAND ${b2_FILE} ${b2_ARGS}
     COMMAND ${CMAKE_COMMAND} -E touch ${boost_STAMP}
     WORKING_DIRECTORY ${lib_SRC_DIR}
-    DEPENDS ${b2_FILE} ${bcp_FILE} ${user_jam_FILE} ${config_IMPORTS_STAMP}
+    DEPENDS
+      ${bootstrap_STAMP} ${bcp_FILE}
+      ${user_jam_FILE} ${config_IMPORTS_STAMP}
     COMMENT "Build Boost library."
   )
   

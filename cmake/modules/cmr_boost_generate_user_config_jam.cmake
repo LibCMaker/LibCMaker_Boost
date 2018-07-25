@@ -23,50 +23,60 @@
 
 include(${LIBCMAKER_SRC_DIR}/cmake/modules/cmr_print_debug_message.cmake)
 
-set(cxx_FLAGS "${CMAKE_CXX_FLAGS_${build_TYPE}} ${cxx_FLAGS}")
+set(jam_c_FLAGS "${CMAKE_C_FLAGS_${build_TYPE}} ${jam_c_FLAGS}")
+set(jam_cxx_FLAGS "${CMAKE_CXX_FLAGS_${build_TYPE}} ${jam_cxx_FLAGS}")
+set(jam_asm_FLAGS "${CMAKE_ASM_FLAGS_${build_TYPE}} ${jam_asm_FLAGS}")
+
+# https://boostorg.github.io/build/manual/develop/index.html#bbv2.reference.tools
+# using <toolset_name> : [<version>] : [c++-compiler-command] : [compiler options] ;
 
 file(WRITE ${user_jam_FILE}
   "using ${toolset_name}\n"
   "  : ${toolset_version}\n"
 )
 
-if(MSVC)
-  # For Visual Studio C++ flags must not be set in compiler section.
-  # Section <compileflags> should be used.
-  #   * https://github.com/ruslo/hunter/issues/179
-  file(APPEND ${user_jam_FILE}
-    "  : \"${boost_compiler}\"\n"
-  )
-else()
-  # For Android C++ flags must be part of the compiler section:
-  #   * https://github.com/ruslo/hunter/issues/174
-  # For 'sanitize-address' toolchain flags must be part of the compiler section:
-  #   * https://github.com/ruslo/hunter/issues/269
-  file(APPEND ${user_jam_FILE}
-    "  : \"${boost_compiler}\" ${cxx_FLAGS}\n"
-  )
-endif()
+file(APPEND ${user_jam_FILE}
+  "  : \"${boost_compiler}\"\n : \n"
+)
 
 if(use_cmake_archiver)
   # We need custom '<archiver>' and '<ranlib>' for
   # Android LTO ('*-gcc-ar' instead of '*-ar')
   # WARNING: no spaces between '<archiver>' and '${CMAKE_AR}'!
   file(APPEND ${user_jam_FILE}
-    "  : <archiver>\"${jam_AR}\"\n"
+    " <archiver>\"${jam_AR}\"\n"
     " <ranlib>\"${jam_RANLIB}\"\n"
   )
 endif()
 
-if(MSVC)
-  # See 'boost_compiler' section
-  string(REPLACE " " ";" cxx_flags_list "${cxx_FLAGS}")
-  foreach(cxx_flag ${cxx_flags_list})
-    file(APPEND ${user_jam_FILE}
-      "  <compileflags>${cxx_flag}\n"
-    )
-  endforeach()
-endif()
+string(REPLACE " " ";" c_flags_list "${jam_c_FLAGS}")
+foreach(c_flag ${c_flags_list})
+  file(APPEND ${user_jam_FILE}
+    " <cflags>${c_flag}\n"
+  )
+endforeach()
 
+string(REPLACE " " ";" cxx_flags_list "${jam_cxx_FLAGS}")
+foreach(cxx_flag ${cxx_flags_list})
+  file(APPEND ${user_jam_FILE}
+    " <cxxflags>${cxx_flag}\n"
+  )
+endforeach()
+
+string(REPLACE " " ";" asm_flags_list "${jam_asm_FLAGS}")
+foreach(asm_flag ${asm_flags_list})
+  file(APPEND ${user_jam_FILE}
+    " <compileflags>${asm_flag}\n"
+  )
+endforeach()
+
+string(REPLACE " " ";" link_flags_list "${jam_link_FLAGS}")
+foreach(link_flag ${link_flags_list})
+  file(APPEND ${user_jam_FILE}
+    " <linkflags>${link_flag}\n"
+  )
+endforeach()
+  
 file(APPEND ${user_jam_FILE}
   ";\n"
   "${using_mpi}\n"

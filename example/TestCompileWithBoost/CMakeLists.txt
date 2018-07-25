@@ -21,6 +21,11 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
+# TODO: Android builds (shared, static).
+# TODO: add deps lib list.
+# TODO: work with ICU.
+
+
 cmake_minimum_required(VERSION 3.2)
 
 project(LibCMaker_Boost_Compile_Test CXX)
@@ -69,11 +74,15 @@ set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
 # Vars to lib_cmaker_boost().
 set(BOOST_lib_VERSION     "1.64.0")
 set(BOOST_lib_COMPONENTS  filesystem system)
+#set(BOOST_lib_COMPONENTS  all)
 set(BOOST_DOWNLOAD_DIR    "${PROJECT_BINARY_DIR}")
 set(BOOST_UNPACKED_DIR    "${PROJECT_BINARY_DIR}")
 set(BOOST_BUILD_DIR       "${PROJECT_BINARY_DIR}/build_boost")
 
+#set(PRINT_BOOST_DEBUG OFF)  # Extra debug info from 'b2' tool.
+
 # Library specific vars.
+#set(B2_PROGRAM_PATH "/bin/b2")  # Use 'b2' in specified path.
 set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
 set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
 

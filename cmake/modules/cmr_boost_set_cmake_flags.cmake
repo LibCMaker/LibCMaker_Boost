@@ -43,14 +43,22 @@ function(cmr_boost_set_cmake_flags)
   endif()
 
   set(cppflags "")
-
+  
   if(ANDROID)
     # --sysroot=/path/to/sysroot do not added by CMake 3.7+
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
     set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
 
     if(NOT x_SKIP_INCLUDES)
+      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})
+        # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
+        # https://stackoverflow.com/a/6274608
+        set(CMAKE_C_FLAGS
+          "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
+        )
+      endforeach()
       foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
         set(CMAKE_CXX_FLAGS
           "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
@@ -59,16 +67,15 @@ function(cmr_boost_set_cmake_flags)
           "${cppflags} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
         )
       endforeach()
-      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})
-        # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
-        # https://stackoverflow.com/a/6274608
-        set(CMAKE_C_FLAGS
-          "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
+      foreach(x ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES})
+        set(CMAKE_ASM_FLAGS
+          "${CMAKE_ASM_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_ASM} ${x}"
         )
       endforeach()
     endif()
 
     # TODO: work with CMAKE_C_IMPLICIT_LINK_LIBRARIES
+    # TODO: work with CMAKE_ASM_IMPLICIT_LINK_LIBRARIES
     foreach(x ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
       if(EXISTS "${x}")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${x}")
@@ -96,24 +103,16 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT}")
   endif()
 
-  cmr_boost_get_lang_standard_flag(CXX flag)
-  string(COMPARE NOTEQUAL "${flag}" "" has_flag)
-  if(has_flag)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
-  endif()
-
   cmr_boost_get_lang_standard_flag(C flag)
   string(COMPARE NOTEQUAL "${flag}" "" has_flag)
   if(has_flag)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
   endif()
 
-  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_TARGET}" "" has_value)
-  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_TARGET}" "" has_option)
-  if(has_value AND has_option)
-    set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_TARGET}${CMAKE_CXX_COMPILER_TARGET}"
-    )
+  cmr_boost_get_lang_standard_flag(CXX flag)
+  string(COMPARE NOTEQUAL "${flag}" "" has_flag)
+  if(has_flag)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILER_TARGET}" "" has_value)
@@ -124,11 +123,19 @@ function(cmr_boost_set_cmake_flags)
     )
   endif()
 
-  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}" "" has_value)
-  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}" "" has_option)
+  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_TARGET}" "" has_value)
+  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_TARGET}" "" has_option)
   if(has_value AND has_option)
     set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}"
+      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_TARGET}${CMAKE_CXX_COMPILER_TARGET}"
+    )
+  endif()
+
+  string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILER_TARGET}" "" has_value)
+  string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILE_OPTIONS_TARGET}" "" has_option)
+  if(has_value AND has_option)
+    set(CMAKE_ASM_FLAGS
+      "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_TARGET}${CMAKE_ASM_COMPILER_TARGET}"
     )
   endif()
 
@@ -140,14 +147,35 @@ function(cmr_boost_set_cmake_flags)
     )
   endif()
 
-  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_PIC}" "" has_pic)
-  if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_PIC}")
+  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}" "" has_value)
+  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}" "" has_option)
+  if(has_value AND has_option)
+    set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}"
+    )
+  endif()
+
+  string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILER_EXTERNAL_TOOLCHAIN}" "" has_value)
+  string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}" "" has_option)
+  if(has_value AND has_option)
+    set(CMAKE_ASM_FLAGS
+      "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN}${CMAKE_ASM_COMPILER_EXTERNAL_TOOLCHAIN}"
+    )
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILE_OPTIONS_PIC}" "" has_pic)
   if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_COMPILE_OPTIONS_PIC}")
+  endif()
+
+  string(COMPARE NOTEQUAL "${CMAKE_CXX_COMPILE_OPTIONS_PIC}" "" has_pic)
+  if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_COMPILE_OPTIONS_PIC}")
+  endif()
+
+  string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILE_OPTIONS_PIC}" "" has_pic)
+  if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_PIC}")
   endif()
 
   string(COMPARE EQUAL "${x_CPPFLAGS}" "" is_empty)
@@ -161,7 +189,8 @@ function(cmr_boost_set_cmake_flags)
 
   #TODO: work with CMAKE_SHARED_LINKER_FLAGS and CMAKE_STATIC_LINKER_FLAGS.
   
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+  set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}" PARENT_SCOPE)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)
 endfunction()
