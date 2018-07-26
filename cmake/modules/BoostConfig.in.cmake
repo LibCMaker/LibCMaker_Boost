@@ -108,7 +108,7 @@ endif()
 # Set the header path
 #
 get_filename_component(
-  Boost_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_FULL_INCLUDEDIR@"
+  Boost_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@"
   ABSOLUTE CACHE
 )
 # Add type and description to cached variable.
@@ -123,7 +123,7 @@ set(Boost_INCLUDE_DIRS "${Boost_INCLUDE_DIR}")
 # Set the library path
 #
 get_filename_component(
-  Boost_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_FULL_LIBDIR@"
+  Boost_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@"
   ABSOLUTE CACHE
 )
 # Add type and description to cached variable.
