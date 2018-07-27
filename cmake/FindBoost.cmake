@@ -235,7 +235,8 @@
 
 # Save project's policies
 cmake_policy(PUSH)
-cmake_policy(SET CMP0057 NEW) # if IN_LIST
+# Work with CMake 3.2.
+#cmake_policy(SET CMP0057 NEW) # if IN_LIST
 
 #-------------------------------------------------------------------------------
 # Before we go searching, check whether boost-cmake is available, unless the
@@ -951,7 +952,11 @@ function(_Boost_MISSING_DEPENDENCIES componentvar extravar)
       set(_Boost_${uppercomponent}_DEPENDENCIES ${_Boost_${uppercomponent}_DEPENDENCIES} PARENT_SCOPE)
       set(_Boost_IMPORTED_TARGETS ${_Boost_IMPORTED_TARGETS} PARENT_SCOPE)
       foreach(componentdep ${_Boost_${uppercomponent}_DEPENDENCIES})
-        if (NOT ("${componentdep}" IN_LIST _boost_processed_components OR "${componentdep}" IN_LIST _boost_new_components))
+# Work with CMake 3.2.
+#        if (NOT ("${componentdep}" IN_LIST _boost_processed_components OR "${componentdep}" IN_LIST _boost_new_components))
+        list(FIND _boost_processed_components "${componentdep}" _boost_component_found)
+        list(FIND _boost_new_components "${componentdep}" _boost_component_new)
+        if (_boost_component_found EQUAL -1 AND _boost_component_new EQUAL -1)
           list(APPEND _boost_new_components ${componentdep})
         endif()
       endforeach()
@@ -1324,8 +1329,11 @@ if(Boost_INCLUDE_DIR)
   math(EXPR Boost_MINOR_VERSION "${Boost_VERSION} / 100 % 1000")
   math(EXPR Boost_SUBMINOR_VERSION "${Boost_VERSION} % 100")
 
-  string(APPEND Boost_ERROR_REASON
-    "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
+# Work with CMake 3.2.
+#  string(APPEND Boost_ERROR_REASON
+#    "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
+  set(Boost_ERROR_REASON
+    "${Boost_ERROR_REASON}Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
   if(Boost_DEBUG)
     message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
                    "version.hpp reveals boost "
@@ -1347,16 +1355,26 @@ if(Boost_INCLUDE_DIR)
     endif()
     if(NOT Boost_FOUND)
       # State that we found a version of Boost that is too new or too old.
-      string(APPEND Boost_ERROR_REASON
-        "\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON
+#        "\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
+      set(Boost_ERROR_REASON
+        "${Boost_ERROR_REASON}\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
       if (Boost_FIND_VERSION_PATCH)
-        string(APPEND Boost_ERROR_REASON
-          ".${Boost_FIND_VERSION_PATCH}")
+# Work with CMake 3.2.
+#        string(APPEND Boost_ERROR_REASON
+#          ".${Boost_FIND_VERSION_PATCH}")
+        set(Boost_ERROR_REASON
+          "${Boost_ERROR_REASON}.${Boost_FIND_VERSION_PATCH}")
       endif ()
       if (NOT Boost_FIND_VERSION_EXACT)
-        string(APPEND Boost_ERROR_REASON " (or newer)")
+# Work with CMake 3.2.
+#        string(APPEND Boost_ERROR_REASON " (or newer)")
+        set(Boost_ERROR_REASON "${Boost_ERROR_REASON} (or newer)")
       endif ()
-      string(APPEND Boost_ERROR_REASON ".")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON ".")
+      set(Boost_ERROR_REASON "${Boost_ERROR_REASON}.")
     endif ()
   else()
     # Caller will accept any Boost version.
@@ -1364,8 +1382,11 @@ if(Boost_INCLUDE_DIR)
   endif()
 else()
   set(Boost_FOUND 0)
-  string(APPEND Boost_ERROR_REASON
-    "Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
+# Work with CMake 3.2.
+#  string(APPEND Boost_ERROR_REASON
+#    "Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
+  set(Boost_ERROR_REASON
+    "${Boost_ERROR_REASON}Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
 endif()
 
 # ------------------------------------------------------------------------
@@ -1448,27 +1469,39 @@ if(WIN32 AND Boost_USE_DEBUG_RUNTIME)
   if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC"
           OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang"
           OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
-    string(APPEND _boost_DEBUG_ABI_TAG "g")
+# Work with CMake 3.2.
+#    string(APPEND _boost_DEBUG_ABI_TAG "g")
+    set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}g")
   endif()
 endif()
 #  y        using special debug build of python
 if(Boost_USE_DEBUG_PYTHON)
-  string(APPEND _boost_DEBUG_ABI_TAG "y")
+# Work with CMake 3.2.
+#  string(APPEND _boost_DEBUG_ABI_TAG "y")
+  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}y")
 endif()
 #  d        using a debug version of your code
-string(APPEND _boost_DEBUG_ABI_TAG "d")
+# Work with CMake 3.2.
+#string(APPEND _boost_DEBUG_ABI_TAG "d")
+set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}d")
 #  p        using the STLport standard library rather than the
 #           default one supplied with your compiler
 if(Boost_USE_STLPORT)
-  string(APPEND _boost_RELEASE_ABI_TAG "p")
-  string(APPEND _boost_DEBUG_ABI_TAG "p")
+# Work with CMake 3.2.
+#  string(APPEND _boost_RELEASE_ABI_TAG "p")
+#  string(APPEND _boost_DEBUG_ABI_TAG "p")
+  set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}p")
+  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}p")
 endif()
 #  n        using the STLport deprecated "native iostreams" feature
 #           removed from the documentation in 1.43.0 but still present in
 #           boost/config/auto_link.hpp
 if(Boost_USE_STLPORT_DEPRECATED_NATIVE_IOSTREAMS)
-  string(APPEND _boost_RELEASE_ABI_TAG "n")
-  string(APPEND _boost_DEBUG_ABI_TAG "n")
+# Work with CMake 3.2.
+#  string(APPEND _boost_RELEASE_ABI_TAG "n")
+#  string(APPEND _boost_DEBUG_ABI_TAG "n")
+  set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}n")
+  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}n")
 endif()
 
 #  -x86     Architecture and address model tag
@@ -1477,24 +1510,38 @@ endif()
 set(_boost_ARCHITECTURE_TAG "")
 # {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
 if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
-  string(APPEND _boost_ARCHITECTURE_TAG "-")
+# Work with CMake 3.2.
+#  string(APPEND _boost_ARCHITECTURE_TAG "-")
+  set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}-")
   # This needs to be kept in-sync with the section of CMakePlatformId.h.in
   # inside 'defined(_WIN32) && defined(_MSC_VER)'
   if(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "IA64")
-    string(APPEND _boost_ARCHITECTURE_TAG "i")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "i")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}i")
   elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "X86"
             OR ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "x64")
-    string(APPEND _boost_ARCHITECTURE_TAG "x")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "x")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}x")
   elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "^ARM")
-    string(APPEND _boost_ARCHITECTURE_TAG "a")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "a")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}a")
   elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "MIPS")
-    string(APPEND _boost_ARCHITECTURE_TAG "m")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "m")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}m")
   endif()
 
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    string(APPEND _boost_ARCHITECTURE_TAG "64")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "64")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}64")
   else()
-    string(APPEND _boost_ARCHITECTURE_TAG "32")
+# Work with CMake 3.2.
+#    string(APPEND _boost_ARCHITECTURE_TAG "32")
+    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}32")
   endif()
 endif()
 
@@ -1618,7 +1665,10 @@ endif()
 _Boost_MISSING_DEPENDENCIES(Boost_FIND_COMPONENTS _Boost_EXTRA_FIND_COMPONENTS)
 
 # If thread is required, get the thread libs as a dependency
-if("thread" IN_LIST Boost_FIND_COMPONENTS)
+# Work with CMake 3.2.
+#if("thread" IN_LIST Boost_FIND_COMPONENTS)
+list(FIND Boost_FIND_COMPONENTS "thread" _Boost_THREAD_DEPENDENCY_LIBS)
+if(NOT _Boost_THREAD_DEPENDENCY_LIBS EQUAL -1)
   if(Boost_FIND_QUIETLY)
     set(_Boost_find_quiet QUIET)
   else()
@@ -1887,27 +1937,44 @@ if(Boost_FOUND)
     set(Boost_FOUND 0)
     # We were unable to find some libraries, so generate a sensible
     # error message that lists the libraries we were unable to find.
-    string(APPEND Boost_ERROR_REASON
-      "\nCould not find the following")
+# Work with CMake 3.2.
+#    string(APPEND Boost_ERROR_REASON
+#      "\nCould not find the following")
+    set(Boost_ERROR_REASON
+      "${Boost_ERROR_REASON}\nCould not find the following")
     if(Boost_USE_STATIC_LIBS)
-      string(APPEND Boost_ERROR_REASON " static")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON " static")
+      set(Boost_ERROR_REASON "${Boost_ERROR_REASON} static")
     endif()
-    string(APPEND Boost_ERROR_REASON
-      " Boost libraries:\n")
+# Work with CMake 3.2.
+#    string(APPEND Boost_ERROR_REASON
+#      " Boost libraries:\n")
+    set(Boost_ERROR_REASON
+      "${Boost_ERROR_REASON} Boost libraries:\n")
     foreach(COMPONENT ${_Boost_MISSING_COMPONENTS})
       string(TOUPPER ${COMPONENT} UPPERCOMPONENT)
-      string(APPEND Boost_ERROR_REASON
-        "        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON
+#        "        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
+      set(Boost_ERROR_REASON
+        "${Boost_ERROR_REASON}        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
     endforeach()
 
     list(LENGTH Boost_FIND_COMPONENTS Boost_NUM_COMPONENTS_WANTED)
     list(LENGTH _Boost_MISSING_COMPONENTS Boost_NUM_MISSING_COMPONENTS)
     if (${Boost_NUM_COMPONENTS_WANTED} EQUAL ${Boost_NUM_MISSING_COMPONENTS})
-      string(APPEND Boost_ERROR_REASON
-        "No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON
+#        "No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+      set(Boost_ERROR_REASON
+        "${Boost_ERROR_REASON}No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
     else ()
-      string(APPEND Boost_ERROR_REASON
-        "Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+# Work with CMake 3.2.
+#      string(APPEND Boost_ERROR_REASON
+#        "Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+      set(Boost_ERROR_REASON
+        "${Boost_ERROR_REASON}Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
     endif ()
   endif ()
 
@@ -1930,9 +1997,13 @@ if(Boost_FOUND)
     endif()
 
     if(EXISTS "${_boost_LIB_DIR}/lib")
-      string(APPEND _boost_LIB_DIR /lib)
+# Work with CMake 3.2.
+#      string(APPEND _boost_LIB_DIR /lib)
+      set(_boost_LIB_DIR "${_boost_LIB_DIR}/lib")
     elseif(EXISTS "${_boost_LIB_DIR}/stage/lib")
-      string(APPEND _boost_LIB_DIR "/stage/lib")
+# Work with CMake 3.2.
+#      string(APPEND _boost_LIB_DIR "/stage/lib")
+      set(_boost_LIB_DIR "${_boost_LIB_DIR}/stage/lib")
     else()
       set(_boost_LIB_DIR "")
     endif()
