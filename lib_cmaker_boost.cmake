@@ -79,6 +79,8 @@ function(lib_cmaker_boost)
     BOOST_BUILD_STAGE
     BOOST_BUILD_STAGE_DIR
     BOOST_LAYOUT_TYPE
+    BOOST_WITHOUT_ICU
+    BOOST_WITH_ICU_DIR
   )
 
   foreach(d ${cmr_LIB_VARS})

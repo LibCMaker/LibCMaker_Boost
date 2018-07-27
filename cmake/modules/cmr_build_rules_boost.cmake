@@ -107,6 +107,23 @@
 
 
   #-----------------------------------------------------------------------
+  # Unicode/ICU support in Regex
+  #
+  if(BOOST_WITHOUT_ICU)
+    # Disable Unicode/ICU support in Regex.
+    list(APPEND bootstrap_ARGS
+      "--without-icu"
+    )
+  elseif(BOOST_WITH_ICU_DIR)
+    # Specify the root of the ICU library installation
+    # and enable Unicode/ICU support in Regex.
+    list(APPEND bootstrap_ARGS
+      "--with-icu=${BOOST_WITH_ICU_DIR}"
+    )
+  endif()
+
+
+  #-----------------------------------------------------------------------
   # common_b2_ARGS
   #
   set(common_b2_ARGS)
