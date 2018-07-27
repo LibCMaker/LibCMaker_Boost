@@ -88,8 +88,8 @@
   #
   include(cmr_boost_get_lib_list)
   cmr_boost_get_lib_list(
-    boost_LIB_LIST Boost_COMPONENTS
-    VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS})
+    boost_LIB_LIST VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS}
+  )
 
 
   #-----------------------------------------------------------------------
@@ -420,101 +420,6 @@
 
 
   #-----------------------------------------------------------------------
-  # Create and install CMake support files.
-  #
-  include(cmr_get_version_parts)
-  cmr_get_version_parts(${lib_VERSION}
-    Boost_MAJOR_VERSION
-    Boost_MINOR_VERSION
-    Boost_SUBMINOR_VERSION
-    Boost_TWEAK_VERSION  # Unused.
-  )
-
-  set(config_TEMPLATE_DIR "${boost_modules_DIR}")
-  set(config_BINARY_DIR
-    "${lib_VERSION_BUILD_DIR}/cmake/Boost-${lib_VERSION}"
-  )
-  set(config_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake")
-  set(config_INSTALL_VER_DIR "${config_INSTALL_CMAKE_DIR}/Boost-${lib_VERSION}")
-  
-  set(config_PACKAGE_TEMPLATE
-    "${config_TEMPLATE_DIR}/BoostConfig.in.cmake"
-  )
-  set(config_PACKAGE
-    "${config_BINARY_DIR}/BoostConfig.cmake"
-  )
-  set(config_PACKAGE_VERSION
-    "${config_BINARY_DIR}/BoostConfigVersion.cmake"
-  )
-
-  include(CMakePackageConfigHelpers)
-  # Add functions:
-  # -> configure_package_config_file()
-  # -> write_basic_package_version_file()
-  
-  # Use:
-  # * PROJECT_NAME
-  # * BUILD_SHARED_LIBS
-  # * CMAKE_INSTALL_INCLUDEDIR
-  # * CMAKE_INSTALL_LIBDIR
-  # * config_INSTALL_VER_DIR
-  # * Boost_MAJOR_VERSION
-  # * Boost_MINOR_VERSION
-  # * Boost_SUBMINOR_VERSION
-  # * Boost_USE_MULTITHREADED
-  configure_package_config_file(
-    "${config_PACKAGE_TEMPLATE}"
-    "${config_PACKAGE}"
-    PATH_VARS
-      CMAKE_INSTALL_INCLUDEDIR
-      CMAKE_INSTALL_LIBDIR
-    INSTALL_DESTINATION "${config_INSTALL_VER_DIR}"
-  )
-
-  write_basic_package_version_file(
-    "${config_PACKAGE_VERSION}"
-    VERSION
-      ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}
-    COMPATIBILITY SameMajorVersion
-  )
-
-  # Use:
-  # * BoostLibraryDepends.in.cmake
-  set(config_IMPORTS
-    "${config_TEMPLATE_DIR}/cmr_boost_generate_cmake_import_files.cmake"
-  )
-  set(config_IMPORTS_STAMP "${lib_VERSION_BUILD_DIR}/config_imports_stamp")
-  string(REPLACE ";" " " string_COMPONENTS "${Boost_COMPONENTS}")
-  
-  add_custom_command(OUTPUT ${config_IMPORTS_STAMP}
-    COMMAND ${CMAKE_COMMAND}
-      -DCMAKE_SHARED_LIBRARY_PREFIX=${CMAKE_SHARED_LIBRARY_PREFIX}
-      -DCMAKE_SHARED_LIBRARY_SUFFIX=${CMAKE_SHARED_LIBRARY_SUFFIX}
-      -DCMAKE_STATIC_LIBRARY_PREFIX=${CMAKE_STATIC_LIBRARY_PREFIX}
-      -DCMAKE_STATIC_LIBRARY_SUFFIX=${CMAKE_STATIC_LIBRARY_SUFFIX}
-      -Dtemplates_DIR=${config_TEMPLATE_DIR}
-      -Dgenerate_DIR=${config_BINARY_DIR}
-      -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-      -DBoost_USE_MULTITHREADED=${Boost_USE_MULTITHREADED}
-      -DBoost_BUILD_VARIANT=$<CONFIG>
-      -DBoost_COMPONENTS=${string_COMPONENTS}
-      -P ${config_IMPORTS}
-    COMMAND ${CMAKE_COMMAND} -E touch ${config_IMPORTS_STAMP}
-    WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
-    DEPENDS
-      ${bootstrap_STAMP}
-      ${config_IMPORTS}
-      ${config_TEMPLATE_DIR}/BoostTargets.in.cmake
-    COMMENT "Generate CMake config files."
-  )
-
-  install(
-    DIRECTORY ${config_BINARY_DIR}
-    DESTINATION ${config_INSTALL_CMAKE_DIR}
-  )
-
-
-  #-----------------------------------------------------------------------
   # Build boost library
   #
   if(cmr_PRINT_DEBUG)
@@ -532,9 +437,7 @@
     COMMAND ${b2_FILE} ${b2_ARGS}
     COMMAND ${CMAKE_COMMAND} -E touch ${boost_STAMP}
     WORKING_DIRECTORY ${lib_SRC_DIR}
-    DEPENDS
-      ${bootstrap_STAMP} ${bcp_FILE}
-      ${user_jam_FILE} ${config_IMPORTS_STAMP}
+    DEPENDS ${bootstrap_STAMP} ${bcp_FILE} ${user_jam_FILE}
     COMMENT "Build Boost library."
   )
   

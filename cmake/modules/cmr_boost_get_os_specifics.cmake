@@ -22,14 +22,23 @@
 # ****************************************************************************
 
 function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
+  list(APPEND os_specifics "--layout=${BOOST_LAYOUT_TYPE}")
+  
+  if(DEFINED Boost_USE_STATIC_RUNTIME)
+    if(Boost_USE_STATIC_RUNTIME)
+      set(runtime_link_type "static")
+    else()
+      set(runtime_link_type "shared")
+    endif()
+    list(APPEND os_specifics "runtime-link=${runtime_link_type}")
+  endif()
+
   if(ANDROID)
-    # TODO: set --layout=system for link=shared for Android
-    #list(APPEND os_specifics "--layout=system")
-    list(APPEND os_specifics "--layout=tagged")
+    #list(APPEND os_specifics "--layout=tagged")
 
     # Whether to link to static or shared C and C++ runtime.
     # TODO: see BUILD_SHARED_LIBS and ANDROID_STL=c++_static/c++_shared
-    list(APPEND os_specifics "runtime-link=shared")
+    #list(APPEND os_specifics "runtime-link=shared")
 
     # Legal values for 'target-os':
     # "aix" "android" "appletv" "bsd" "cygwin" "darwin" "freebsd" "haiku" "hpux"
@@ -85,7 +94,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     #  list(APPEND os_specifics "address-model=64")
     #endif()
 
-    list(APPEND os_specifics "--layout=tagged")
+    #list(APPEND os_specifics "--layout=tagged")
   endif()
 
   set(${out_OS_SPECIFICS} ${os_specifics} PARENT_SCOPE)

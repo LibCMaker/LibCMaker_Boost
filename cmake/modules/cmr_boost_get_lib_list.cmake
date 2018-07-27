@@ -35,7 +35,7 @@ include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_print_fatal_error)
 
-function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
+function(cmr_boost_get_lib_list out_LIB_LIST)
 
   # --without-<library>   Do not build, stage, or install the specified
   #                       <library>. By default, all libraries are built.
@@ -171,20 +171,10 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
           endif()
         endif()
       endif()  # if(ANDROID)
-  
-      # These libraries do not need to be compiled,
-      # so these have not CMake targets.
-      if(NOT name STREQUAL "coroutine2" AND NOT name STREQUAL "metaparse")
-        # Add the <library> to the installed component list.
-        list(APPEND installed_components ${name})
-      endif()
     endforeach()
     
     if(without_args)
       set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
-    endif()
-    if(installed_components)
-      set(${out_INSTALLED_COMPONENTS} ${installed_components} PARENT_SCOPE)
     endif()
     return()  # if all libs.
   endif()
@@ -242,14 +232,9 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
 
     # Second, add the <library> to the 'with'-list.
     list(APPEND with_args "--with-${name}")
-    # Add the <library> to the installed component list.
-    list(APPEND installed_components ${name})
   endforeach()
 
   if(with_args)
     set(${out_LIB_LIST} ${with_args} PARENT_SCOPE)
-  endif()
-  if(installed_components)
-    set(${out_INSTALLED_COMPONENTS} ${installed_components} PARENT_SCOPE)
   endif()
 endfunction()

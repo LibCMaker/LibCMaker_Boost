@@ -21,8 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-# TODO: Android builds (shared, static).
-# TODO: add deps lib list.
+
 # TODO: work with ICU.
 
 
@@ -32,6 +31,7 @@ project(LibCMaker_Boost_Compile_Test CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(cmr_PRINT_DEBUG ON)
+#set(PRINT_BOOST_DEBUG ON)  # Extra debug info from 'b2' tool.
 
 
 #-----------------------------------------------------------------------
@@ -73,18 +73,42 @@ set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
 
 # Vars to lib_cmaker_boost().
 set(BOOST_lib_VERSION     "1.64.0")
-set(BOOST_lib_COMPONENTS  filesystem system)
+set(BOOST_lib_COMPONENTS  filesystem)  # 'system' will also be compiled. 
 #set(BOOST_lib_COMPONENTS  all)
 set(BOOST_DOWNLOAD_DIR    "${PROJECT_BINARY_DIR}")
 set(BOOST_UNPACKED_DIR    "${PROJECT_BINARY_DIR}")
 set(BOOST_BUILD_DIR       "${PROJECT_BINARY_DIR}/build_boost")
 
-#set(PRINT_BOOST_DEBUG OFF)  # Extra debug info from 'b2' tool.
+#set(PRINT_BOOST_DEBUG ON)  # Extra debug info from 'b2' tool.
 
 # Library specific vars.
 #set(B2_PROGRAM_PATH "/bin/b2")  # Use 'b2' in specified path.
 set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
 set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
+# Whether to link to static or shared C and C++ runtime.
+# If DEFINED then add 'runtime-link' to 'b2' tool with value
+# 'static' for 'ON' or 'shared' for OFF.
+#set(Boost_USE_STATIC_RUNTIME ON)
+
+# Determine whether to choose library names and header locations.
+set(BOOST_LAYOUT_TYPE "tagged")  # "versioned", "tagged" or "system", 
+# From 'b2 --help':
+# Determine whether to choose library names and header locations
+# such that multiple versions of Boost or multiple compilers
+# can be used on the same system.
+# -- versioned -- Names of boost binaries include the Boost version number,
+# name and version of the compiler and encoded build properties.
+# Boost headers are installed in a subdirectory of <HDRDIR>
+# whose name contains the Boost version number.
+# -- tagged -- Names of boost binaries include the encoded build properties
+# such as variant and threading, but do not including compiler name and
+# version, or Boost version. This option is useful if you build several
+# variants of Boost, using the same compiler.
+# -- system -- Binaries names do not include the Boost version number or
+# the name and version number of the compiler. Boost headers are installed
+# directly into <HDRDIR>. This option is intended for system integrators
+# building distribution packages.
+
 # Build and install only compiled library files to the stage directory.
 set(BOOST_BUILD_STAGE OFF)
 # Install library files here.
@@ -131,9 +155,14 @@ lib_cmaker_boost(
 # find_package()
 #-----------------------------------------------------------------------
 
+# Build test executables.
+
 # Vars to find_project() only. Use to select installed Boost configuration.
+# For more vars see in 'cmake/FindBoost.cmake' file.
+
 #set(Boost_USE_MULTITHREADED ON)  # Set above.
-#set(Boost_USE_STATIC_LIBS OFF)
+#set(Boost_USE_STATIC_RUNTIME ON)  # Set above.
+
 # Here we depend to BUILD_SHARED_LIBS for Boost_USE_STATIC_LIBS.
 if(BUILD_SHARED_LIBS)
   set(Boost_USE_STATIC_LIBS OFF)
@@ -141,20 +170,11 @@ else()
   set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# Use newly got boost library.
-find_package(
-  Boost ${lib_VERSION} REQUIRED COMPONENTS ${BOOST_lib_COMPONENTS} CONFIG)
+#set(BOOST_ROOT ${CMAKE_INSTALL_PREFIX})
+set(Boost_NO_SYSTEM_PATHS ON)
 
-# QUIET suppresses the big warning issued, and allows fallback
-#find_package(Boost 1.63 QUIET CONFIG COMPONENTS filesystem system)
-#if(NOT Boost_FOUND)
-#  # Do warn about falling back to system, but can make message more
-#  # explicit/informative
-#  message(STATUS
-#    "No BoostConfig.cmake config file found, falling back to FindBoost...")
-#  # Use REQUIRED flag to fail if not found
-#  find_package(Boost 1.63 REQUIRED COMPONENTS filesystem system)
-#endif()
+# 'system' will also be found.
+find_package(Boost ${lib_VERSION} REQUIRED COMPONENTS filesystem)
 
 
 #-----------------------------------------------------------------------
@@ -191,6 +211,6 @@ set_property(TARGET ${PROJECT_NAME}_2 PROPERTY CXX_STANDARD 11)
 # Boost
 #target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME}_2 ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}_2
-  Boost::boost Boost::filesystem Boost::system
-)
+
+# 'system' will also be added as IMPORT library.
+target_link_libraries(${PROJECT_NAME}_2 Boost::filesystem)

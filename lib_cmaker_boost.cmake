@@ -74,9 +74,11 @@ function(lib_cmaker_boost)
     B2_PROGRAM_PATH
     BUILD_BCP_TOOL
     Boost_USE_MULTITHREADED
+    Boost_USE_STATIC_RUNTIME
     PRINT_BOOST_DEBUG
     BOOST_BUILD_STAGE
     BOOST_BUILD_STAGE_DIR
+    BOOST_LAYOUT_TYPE
   )
 
   foreach(d ${cmr_LIB_VARS})
