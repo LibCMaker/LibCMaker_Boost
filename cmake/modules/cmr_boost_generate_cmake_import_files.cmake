@@ -96,12 +96,18 @@ function(write_boost_libdepfile _dir _link _thread _variant)
   set(_filename "BoostTargets-${_link}-${_thread}-${_variant}.cmake")
   message(STATUS "Writing ${_filename}")
 
+  set(_libprefix_shared "${CMAKE_SHARED_LIBRARY_PREFIX}boost_")
+  set(_libsuffix_shared "${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+  set(_libprefix_static "${CMAKE_STATIC_LIBRARY_PREFIX}boost_")
+  set(_libsuffix_static "${CMAKE_STATIC_LIBRARY_SUFFIX}")
+
   if("${_link}" STREQUAL "shared")
-    set(_libsuffix "${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    set(_libprefix "${CMAKE_SHARED_LIBRARY_PREFIX}boost_")
+    set(_libprefix "${_libprefix_shared}")
+    set(_libsuffix "${_libsuffix_shared}")
   else()
-    set(_libsuffix "${CMAKE_STATIC_LIBRARY_SUFFIX}")
-    set(_libprefix "${CMAKE_STATIC_LIBRARY_PREFIX}boost_")
+    set(_libprefix "${_libprefix_static}")
+    set(_libsuffix "${_libsuffix_static}")
   endif()
 
   if("${_thread}" STREQUAL "multithread")
@@ -124,9 +130,24 @@ function(write_boost_libdepfile _dir _link _thread _variant)
         "${_libprefix}${_comp}-mt${_libvrtag}${_libsuffix}"
       )
     endif()
+    if(_comp STREQUAL "exception")
+      set(lib_file_name
+        "${_libprefix_static}${_comp}${_libmttag}${_libvrtag}${_libsuffix_static}"
+      )
+    endif()
     make_import_target(_text ${_comp} "${lib_file_name}" ${_variant})
     set(_addimports "${_addimports}${_text}")
   endforeach()
+
+# TODO: if shared add IMPORTED_LOCATION for all static libs.
+#  set(static_imports 
+#    "chrono"
+#    "exception"
+#    "system"
+#    "test_exec_monitor"
+#    "timer"
+#    "unit_test_framework"
+#  )
 
   # Write the file.
   file(WRITE "${_dir}/${_filename}" "${_addimports}")

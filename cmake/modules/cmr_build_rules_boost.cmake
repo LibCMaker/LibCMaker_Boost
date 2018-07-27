@@ -292,32 +292,32 @@
   #-----------------------------------------------------------------------
   # Install options and directories
   #
-  if(lib_BUILD AND NOT lib_INSTALL)
-    # Build and install only compiled library files to the stage directory.
-    list(APPEND b2_ARGS "stage")
-
-    # Install library files here.
-    list(APPEND b2_ARGS
-      "--stagedir=${CMAKE_INSTALL_FULL_LIBDIR}"
-    )
-  endif()
-
-  if(lib_INSTALL)
-    # Install headers and compiled library files to the configured locations.
-    list(APPEND b2_ARGS "install")
-
-    # Install architecture independent files here
-    list(APPEND b2_ARGS
-      "--prefix=${CMAKE_INSTALL_PREFIX}"
-    )
-    # Install header files here
-    list(APPEND b2_ARGS
-      "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
-    )
-    # Install library files here
-    list(APPEND b2_ARGS
-      "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
-    )
+  if(lib_BUILD)
+    if(BOOST_BUILD_STAGE AND BOOST_BUILD_STAGE_DIR)
+      # Build and install only compiled library files to the stage directory.
+      list(APPEND b2_ARGS "stage")
+  
+      # Install library files here.
+      list(APPEND b2_ARGS
+        "--stagedir=${BOOST_BUILD_STAGE_DIR}"
+      )
+    else()
+      # Install headers and compiled library files to the configured locations.
+      list(APPEND b2_ARGS "install")
+  
+      # Install architecture independent files here
+      list(APPEND b2_ARGS
+        "--prefix=${CMAKE_INSTALL_PREFIX}"
+      )
+      # Install header files here
+      list(APPEND b2_ARGS
+        "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+      )
+      # Install library files here
+      list(APPEND b2_ARGS
+        "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
+      )
+    endif()
   endif()
 
 
@@ -374,7 +374,13 @@
   # -> CMAKE_C_FLAGS
   # -> CMAKE_CXX_FLAGS
   # -> CMAKE_ASM_FLAGS
-  # -> CMAKE_EXE_LINKER_FLAGS
+  # -> CMAKE_SHARED_LINKER_FLAGS
+  
+  if(BUILD_SHARED_LIBS)
+    set(jam_link_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+  else()
+    set(jam_link_FLAGS ${CMAKE_STATIC_LINKER_FLAGS})
+  endif()
 
 
   #-----------------------------------------------------------------------
@@ -400,7 +406,7 @@
       -Djam_c_FLAGS="\"${CMAKE_C_FLAGS}\""
       -Djam_cxx_FLAGS="\"${CMAKE_CXX_FLAGS}\""
       -Djam_asm_FLAGS="\"${CMAKE_ASM_FLAGS}\""
-      -Djam_link_FLAGS="\"${CMAKE_EXE_LINKER_FLAGS}\""
+      -Djam_link_FLAGS="\"${jam_link_FLAGS}\""
       -Djam_AR=${CMAKE_AR}
       -Djam_RANLIB=${CMAKE_RANLIB}
       -Dcmr_PRINT_DEBUG=${cmr_PRINT_DEBUG}

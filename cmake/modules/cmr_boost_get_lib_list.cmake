@@ -27,6 +27,10 @@
 # Based on the hunter:
 # https://github.com/ruslo/hunter
 
+# The complete list of libraries provided by Boost can be found by
+# running the bootstrap.sh script supplied with Boost as:
+#   ./bootstrap.sh --with-libraries=all --show-libraries
+
 include(CMakeParseArguments) # cmake_parse_arguments
 
 include(cmr_print_fatal_error)
@@ -63,8 +67,9 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
   boost_component_list(chrono 1.47.0)
   boost_component_list(container 1.48.0)
   boost_component_list(context 1.51.0)
+  boost_component_list(contract 1.67.0)
   boost_component_list(coroutine 1.53.0)
-  boost_component_list(coroutine2 1.59.0)
+  boost_component_list(coroutine2 1.59.0)  # Header only lib.
   boost_component_list(date_time 1.29.0)
   boost_component_list(exception 1.36.0)
   boost_component_list(fiber 1.62.0)
@@ -75,7 +80,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
   boost_component_list(locale 1.48.0)
   boost_component_list(log 1.54.0)
   boost_component_list(math 1.23.0)
-  boost_component_list(metaparse 1.61.0)
+  boost_component_list(metaparse 1.61.0)  # Header only lib.
   boost_component_list(mpi 1.35.0)
   boost_component_list(program_options 1.32.0)
   boost_component_list(python 1.19.0)
@@ -83,6 +88,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
   boost_component_list(regex 1.18.0)
   boost_component_list(serialization 1.32.0)
   boost_component_list(signals 1.29.0)
+  boost_component_list(stacktrace 1.65.0)
   boost_component_list(system 1.35.0)
   boost_component_list(test 1.21.0)
   boost_component_list(thread 1.25.0)
@@ -166,8 +172,12 @@ function(cmr_boost_get_lib_list out_LIB_LIST out_INSTALLED_COMPONENTS)
         endif()
       endif()  # if(ANDROID)
   
-      # Add the <library> to the installed component list.
-      list(APPEND installed_components ${name})
+      # These libraries do not need to be compiled,
+      # so these have not CMake targets.
+      if(NOT name STREQUAL "coroutine2" AND NOT name STREQUAL "metaparse")
+        # Add the <library> to the installed component list.
+        list(APPEND installed_components ${name})
+      endif()
     endforeach()
     
     if(without_args)

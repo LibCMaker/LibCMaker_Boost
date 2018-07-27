@@ -25,7 +25,12 @@ set_target_properties(Boost::boost PROPERTIES
 # Create imported targets "Boost::<component>" for compiled libs.
 set(Boost_INSTALLED_COMPONENTS @Boost_COMPONENTS@)
 foreach(_boost_comp ${Boost_INSTALLED_COMPONENTS})
-  add_library(Boost::${_boost_comp} @Boost_LINK_MODEL@ IMPORTED)
+  set(lib_type @Boost_LINK_MODEL@)
+  if(_boost_comp STREQUAL "exception")
+    set(lib_type STATIC)
+  endif()
+
+  add_library(Boost::${_boost_comp} ${lib_type} IMPORTED)
   set_target_properties(Boost::${_boost_comp} PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${Boost_INCLUDE_DIR}"
   )

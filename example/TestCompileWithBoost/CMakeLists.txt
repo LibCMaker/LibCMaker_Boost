@@ -85,6 +85,10 @@ set(BOOST_BUILD_DIR       "${PROJECT_BINARY_DIR}/build_boost")
 #set(B2_PROGRAM_PATH "/bin/b2")  # Use 'b2' in specified path.
 set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
 set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
+# Build and install only compiled library files to the stage directory.
+set(BOOST_BUILD_STAGE OFF)
+# Install library files here.
+set(BOOST_BUILD_STAGE_DIR "${CMAKE_INSTALL_PREFIX}/stage")
 
 
 #-----------------------------------------------------------------------
