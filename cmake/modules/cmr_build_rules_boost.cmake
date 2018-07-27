@@ -34,17 +34,20 @@
   
   
   # CMake build/bundle script for Boost Libraries.
-  # Automates build of Boost, allowing optional builds of library
-  # components plus CMake support files.
-  #
-  # In current form, install Boost libraries in "tagged" layout so that
-  # Release/Debug/Profile Single/Multithread variants can be installed
-  # alongside each other.
+  # Automates build of Boost, allowing optional builds of library components.
   
   
   # Useful vars:
   #   BUILD_SHARED_LIBS         -- build shared libs.
   #   Boost_USE_MULTITHREADED   -- build multithread (-mt) libs, default is ON.
+  #   Boost_USE_STATIC_RUNTIME  -- link to static or shared C and C++ runtime.
+  #   BOOST_LAYOUT_TYPE         -- choose library names and header locations,
+  #                                "versioned", "tagged" or "system",
+  #   BOOST_WITHOUT_ICU         -- disable Unicode/ICU support in Regex.
+  #   BOOST_WITH_ICU_DIR        -- root of the ICU library installation.
+  #
+  #   BOOST_BUILD_STAGE       -- build and install only compiled library files.
+  #   BOOST_BUILD_STAGE_DIR   -- Install library files here.
   #
   #   cmr_PRINT_DEBUG
   #
@@ -54,6 +57,7 @@
   #
   #   lib_BUILD_HOST_TOOLS -- build only 'b2' program and 'bcp' if specified.
   #   BUILD_BCP_TOOL       -- build 'bcp' program.
+  #   B2_PROGRAM_PATH      -- Use 'b2' in specified path.
   #
   #   lib_VERSION "1.64.0"
   #     Version of boost library.
@@ -66,6 +70,10 @@
   #     The complete list of libraries provided by Boost can be found by
   #     running the bootstrap.sh script supplied with Boost as:
   #       ./bootstrap.sh --with-libraries=all --show-libraries
+
+
+  # "Boost.Build User Manual"
+  # https://boostorg.github.io/build/manual/develop/
 
 
   #-----------------------------------------------------------------------
