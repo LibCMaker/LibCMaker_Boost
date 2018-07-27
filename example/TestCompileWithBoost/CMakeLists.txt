@@ -155,7 +155,7 @@ lib_cmaker_boost(
 # find_package()
 #-----------------------------------------------------------------------
 
-# Build test executables.
+# Use newly got library.
 
 # Vars to find_project() only. Use to select installed Boost configuration.
 # For more vars see in 'cmake/FindBoost.cmake' file.
