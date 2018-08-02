@@ -21,7 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.3)
 
 project(LibCMaker_Boost_Compile_Test CXX)
 
@@ -106,7 +106,7 @@ set(BOOST_LAYOUT_TYPE "tagged")  # "versioned", "tagged" or "system",
 # building distribution packages.
 
 # Disable Unicode/ICU support in Regex.
-#set(BOOST_WITHOUT_ICU ON)
+set(BOOST_WITHOUT_ICU ON)
 
 # Specify the root of the ICU library installation
 # and enable Unicode/ICU support in Regex.
@@ -122,75 +122,74 @@ set(BOOST_BUILD_STAGE_DIR "${CMAKE_INSTALL_PREFIX}/stage")
 # Build and install the ICU
 #-----------------------------------------------------------------------
 
-set(ICU_lib_VERSION   "61.1")
-set(ICU_DOWNLOAD_DIR  "${PROJECT_BINARY_DIR}")
-set(ICU_UNPACKED_DIR  "${PROJECT_BINARY_DIR}")
-set(ICU_BUILD_DIR     "${PROJECT_BINARY_DIR}/build_icu")
-
-set(COPY_ICU_CMAKE_BUILD_SCRIPTS ON)
-
-set(ICU_DIR "${CMAKE_INSTALL_PREFIX}")
-set(ENV{ICU_DIR} "${ICU_DIR}")
-
-# Library specific vars and options.
-
-# Enable cross compiling
-set(ICU_CROSS_COMPILING OFF)
-if(NOT ICU_CROSS_BUILDROOT)
-  # Specify an absolute path to the build directory of an ICU built for the current platform
-  set(ICU_CROSS_BUILDROOT "")
+if(NOT BOOST_WITHOUT_ICU)
+  set(ICU_lib_VERSION   "61.1")
+  set(ICU_DOWNLOAD_DIR  "${PROJECT_BINARY_DIR}")
+  set(ICU_UNPACKED_DIR  "${PROJECT_BINARY_DIR}")
+  set(ICU_BUILD_DIR     "${PROJECT_BINARY_DIR}/build_icu")
+  
+  set(COPY_ICU_CMAKE_BUILD_SCRIPTS ON)
+  
+  # Library specific vars and options.
+  
+  # Enable cross compiling
+  set(ICU_CROSS_COMPILING OFF)
+  if(NOT ICU_CROSS_BUILDROOT)
+    # Specify an absolute path to the build directory of an ICU built for the current platform
+    set(ICU_CROSS_BUILDROOT "")
+  endif()
+  # Compile with strict compiler options
+  set(ICU_ENABLE_STRICT ON)
+  # Enable auto cleanup of libraries
+  set(ICU_ENABLE_AUTO_CLEANUP OFF)
+  # Enable draft APIs (and internal APIs)
+  set(ICU_ENABLE_DRAFT ON)
+  # Add a version suffix to symbols
+  set(ICU_ENABLE_RENAMING ON)
+  # Enable function and data tracing
+  set(ICU_ENABLE_TRACING OFF)
+  # Enable plugins
+  set(ICU_ENABLE_PLUGINS OFF)
+  # Disable dynamic loading
+  set(ICU_DISABLE_DYLOAD OFF)
+  # Use rpath when linking
+  set(ICU_ENABLE_RPATH OFF)
+  # Build ICU extras
+  set(ICU_ENABLE_EXTRAS OFF) # TODO: not released
+  # Build ICU's icuio library
+  set(ICU_ENABLE_ICUIO ON)
+  # Build ICU's Paragraph Layout library. icu-le-hb must be available via find_package(icu-le-hb). See http://harfbuzz.org
+  set(ICU_ENABLE_LAYOUTEX OFF) # TODO: not released
+  # ...
+  #set(ICU_ENABLE_LAYOUT OFF)
+  # Build ICU's tools
+  set(ICU_ENABLE_TOOLS ON)
+  # Specify how to package ICU data. Possible values: files, archive, library, static, auto. See http://userguide.icu-project.org/icudata for more info
+  set(ICU_DATA_PACKAGING "auto") # TODO: 'files' mode is not released
+  # Tag a suffix to the library names
+  set(ICU_LIBRARY_SUFFIX "")
+  # Build ICU tests
+  set(ICU_ENABLE_TESTS OFF) # TODO: not released
+  # Build ICU samples
+  set(ICU_ENABLE_SAMPLES OFF) # TODO: not released
+  
+  set(LIBCMAKER_ICU_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker_ICU")
+  
+  include(${LIBCMAKER_ICU_SRC_DIR}/lib_cmaker_icu.cmake)
+  lib_cmaker_icu(
+    VERSION       ${ICU_lib_VERSION}
+    DOWNLOAD_DIR  ${ICU_DOWNLOAD_DIR}
+    UNPACKED_DIR  ${ICU_UNPACKED_DIR}
+    BUILD_DIR     ${ICU_BUILD_DIR}
+  )
+  
+  # To use our FindICU.cmake.
+  list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_ICU_SRC_DIR}/cmake")
+  
+  find_package(ICU ${ICU_lib_VERSION} REQUIRED CONFIG)
+  
+  set(BOOST_WITH_ICU_DIR "${CMAKE_INSTALL_PREFIX}")  # See description above.
 endif()
-# Compile with strict compiler options
-set(ICU_ENABLE_STRICT ON)
-# Enable auto cleanup of libraries
-set(ICU_ENABLE_AUTO_CLEANUP OFF)
-# Enable draft APIs (and internal APIs)
-set(ICU_ENABLE_DRAFT ON)
-# Add a version suffix to symbols
-set(ICU_ENABLE_RENAMING ON)
-# Enable function and data tracing
-set(ICU_ENABLE_TRACING OFF)
-# Enable plugins
-set(ICU_ENABLE_PLUGINS OFF)
-# Disable dynamic loading
-set(ICU_DISABLE_DYLOAD OFF)
-# Use rpath when linking
-set(ICU_ENABLE_RPATH OFF)
-# Build ICU extras
-set(ICU_ENABLE_EXTRAS OFF) # TODO: not released
-# Build ICU's icuio library
-set(ICU_ENABLE_ICUIO ON)
-# Build ICU's Paragraph Layout library. icu-le-hb must be available via find_package(icu-le-hb). See http://harfbuzz.org
-set(ICU_ENABLE_LAYOUTEX OFF) # TODO: not released
-# ...
-#set(ICU_ENABLE_LAYOUT OFF)
-# Build ICU's tools
-set(ICU_ENABLE_TOOLS ON)
-# Specify how to package ICU data. Possible values: files, archive, library, static, auto. See http://userguide.icu-project.org/icudata for more info
-set(ICU_DATA_PACKAGING "auto") # TODO: 'files' mode is not released
-# Tag a suffix to the library names
-set(ICU_LIBRARY_SUFFIX "")
-# Build ICU tests
-set(ICU_ENABLE_TESTS OFF) # TODO: not released
-# Build ICU samples
-set(ICU_ENABLE_SAMPLES OFF) # TODO: not released
-
-set(LIBCMAKER_ICU_SRC_DIR "${PROJECT_SOURCE_DIR}/cmake/LibCMaker_ICU")
-
-include(${LIBCMAKER_ICU_SRC_DIR}/lib_cmaker_icu.cmake)
-lib_cmaker_icu(
-  VERSION       ${ICU_lib_VERSION}
-  DOWNLOAD_DIR  ${ICU_DOWNLOAD_DIR}
-  UNPACKED_DIR  ${ICU_UNPACKED_DIR}
-  BUILD_DIR     ${ICU_BUILD_DIR}
-)
-
-# To use our FindICU.cmake.
-list(APPEND CMAKE_MODULE_PATH "${LIBCMAKER_ICU_SRC_DIR}/cmake")
-
-find_package(ICU ${ICU_lib_VERSION} REQUIRED CONFIG)
-
-set(BOOST_WITH_ICU_DIR "${CMAKE_INSTALL_PREFIX}")  # See description above.
 
 
 #-----------------------------------------------------------------------
@@ -270,7 +269,7 @@ find_package(Boost ${lib_VERSION} REQUIRED COMPONENTS filesystem)
 # Get an example sources from the lib sources.
 set(BOOST_version_underscore "1_64_0")
 set(lib_SRC_DIR
-  "${BOOST_UNPACKED_DIR}/boost-${BOOST_lib_VERSION}/boost_${BOOST_version_underscore}/"
+  "${BOOST_UNPACKED_DIR}/boost-${BOOST_lib_VERSION}/boost_${BOOST_version_underscore}"
 )
 set(lib_EXAMPLES_SRC_DIR ${lib_SRC_DIR}/libs/filesystem/example)
 

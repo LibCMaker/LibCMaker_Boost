@@ -26,10 +26,10 @@
 
 
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
-set(lib_NAME "Boost")
+set(cmr_lib_NAME "Boost")
 
 # To find library's LibCMaker source dir.
-set(lcm_${lib_NAME}_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(lcm_${cmr_lib_NAME}_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 if(NOT LIBCMAKER_SRC_DIR)
   message(FATAL_ERROR
@@ -97,6 +97,8 @@ function(lib_cmaker_boost)
   # Building
   #-----------------------------------------------------------------------
 
+  set(lib_BUILD_MODE INSTALL)
+  
   # Build tools for cross building if need
   if(IOS OR ANDROID OR WINDOWS_STORE)
 
@@ -113,10 +115,10 @@ function(lib_cmaker_boost)
         cmr_print_message("-------- Build tools for cross building --------")
     
         cmr_lib_cmaker_main(
-          NAME          ${lib_NAME}
+          NAME          ${cmr_lib_NAME}
           VERSION       ${arg_VERSION}
           COMPONENTS    ${arg_COMPONENTS}
-          BASE_DIR      ${lcm_${lib_NAME}_SRC_DIR}
+          BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
           DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
           UNPACKED_DIR  ${arg_UNPACKED_DIR}/host_tools_sources
           BUILD_DIR     ${arg_BUILD_DIR}_host_tools
@@ -138,29 +140,18 @@ function(lib_cmaker_boost)
       "-------- Cross building with 'b2' tool in ${B2_PROGRAM_PATH} --------"
     )
     
-    cmr_lib_cmaker_main(
-      NAME          ${lib_NAME}
-      VERSION       ${arg_VERSION}
-      COMPONENTS    ${arg_COMPONENTS}
-      BASE_DIR      ${lcm_${lib_NAME}_SRC_DIR}
-      DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
-      UNPACKED_DIR  ${arg_UNPACKED_DIR}
-      BUILD_DIR     ${arg_BUILD_DIR}
-      CMAKE_ARGS    ${lcm_CMAKE_ARGS}
-      BUILD
-    )
-
-  else()  # if(NOT (IOS OR ANDROID OR WINDOWS_STORE))
-    cmr_lib_cmaker_main(
-      NAME          ${lib_NAME}
-      VERSION       ${arg_VERSION}
-      COMPONENTS    ${arg_COMPONENTS}
-      BASE_DIR      ${lcm_${lib_NAME}_SRC_DIR}
-      DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
-      UNPACKED_DIR  ${arg_UNPACKED_DIR}
-      BUILD_DIR     ${arg_BUILD_DIR}
-      CMAKE_ARGS    ${lcm_CMAKE_ARGS}
-      INSTALL
-    )
+    set(lib_BUILD_MODE BUILD)
   endif()
+
+  cmr_lib_cmaker_main(
+    NAME          ${cmr_lib_NAME}
+    VERSION       ${arg_VERSION}
+    COMPONENTS    ${arg_COMPONENTS}
+    BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
+    DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
+    UNPACKED_DIR  ${arg_UNPACKED_DIR}
+    BUILD_DIR     ${arg_BUILD_DIR}
+    CMAKE_ARGS    ${lcm_CMAKE_ARGS}
+    ${lib_BUILD_MODE}
+  )
 endfunction()

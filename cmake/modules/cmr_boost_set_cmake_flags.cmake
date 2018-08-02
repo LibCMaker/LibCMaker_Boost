@@ -52,14 +52,14 @@ function(cmr_boost_set_cmake_flags)
     set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
 
     if(NOT x_SKIP_INCLUDES)
-      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})
+      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
         # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
         # https://stackoverflow.com/a/6274608
         set(CMAKE_C_FLAGS
           "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
         )
       endforeach()
-      foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
+      foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
         set(CMAKE_CXX_FLAGS
           "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
         )
@@ -67,7 +67,7 @@ function(cmr_boost_set_cmake_flags)
           "${cppflags} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
         )
       endforeach()
-      foreach(x ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES})
+      foreach(x ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
         set(CMAKE_ASM_FLAGS
           "${CMAKE_ASM_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_ASM} ${x}"
         )
