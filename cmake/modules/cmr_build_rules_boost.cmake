@@ -200,7 +200,7 @@
       PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH
     )
     if(NOT b2_FILE)
-      if(WIN32)
+      if(CMAKE_HOST_WIN32)
         set(b2_FILE_NAME "b2.exe")
       endif()
       set(b2_FILE "${lib_SRC_DIR}/${b2_FILE_NAME}")
@@ -218,7 +218,7 @@
   endif()
 
   set(bootstrap_FILE_NAME "bootstrap.sh")
-  if(WIN32)
+  if(CMAKE_HOST_WIN32)
     set(bootstrap_FILE_NAME "bootstrap.bat")
   endif()
   set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
@@ -267,7 +267,7 @@
     endif()
 
     set(bcp_FILE_NAME "bcp")
-    if(WIN32)
+    if(CMAKE_HOST_WIN32)
       set(bcp_FILE_NAME "bcp.exe")
     endif()
     set(bcp_FILE "${lib_SRC_DIR}/dist/bin/${bcp_FILE_NAME}")
