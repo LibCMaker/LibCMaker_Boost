@@ -29,7 +29,7 @@
 
 include(CMakeParseArguments) # cmake_parse_arguments
 
-include(cmr_print_fatal_error)
+include(cmr_print_error)
 include(cmr_boost_get_lang_standard_flag)
 
 function(cmr_boost_set_cmake_flags)
@@ -39,7 +39,7 @@ function(cmr_boost_set_cmake_flags)
 
   string(COMPARE NOTEQUAL "${x_UNPARSED_ARGUMENTS}" "" has_unparsed)
   if(has_unparsed)
-    cmr_print_fatal_error("Unparsed arguments: ${x_UNPARSED_ARGUMENTS}")
+    cmr_print_error("Unparsed arguments: ${x_UNPARSED_ARGUMENTS}")
   endif()
 
   set(cppflags "")

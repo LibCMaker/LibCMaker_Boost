@@ -27,8 +27,8 @@
 # Copyright (c) 2017 Pawel Bylica
 # All rights reserved.
 
-include(cmr_print_fatal_error)
-include(cmr_print_debug_message)
+include(cmr_print_error)
+include(cmr_print_debug)
 
 function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   set(C_standards 11 99 90)
@@ -37,13 +37,13 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   # This maps the logic in the CMake code:
   # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1433-L1467
 
-  cmr_print_debug_message(
+  cmr_print_debug(
     "CMAKE_${LANG}_STANDARD_DEFAULT: ${CMAKE_${LANG}_STANDARD_DEFAULT}")
-  cmr_print_debug_message(
+  cmr_print_debug(
     "CMAKE_${LANG}_STANDARD: ${CMAKE_${LANG}_STANDARD}")
-  cmr_print_debug_message(
+  cmr_print_debug(
     "CMAKE_${LANG}_EXTENSIONS: ${CMAKE_${LANG}_EXTENSIONS}")
-  cmr_print_debug_message(
+  cmr_print_debug(
     "CMAKE_${LANG}_STANDARD_REQUIRED: ${CMAKE_${LANG}_STANDARD_REQUIRED}")
 
   set("${OUTPUT}" "" PARENT_SCOPE)  # Reset output in case of quick return.
@@ -52,7 +52,7 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   if(no_default)
     # This compiler has no notion of language standard levels.
     # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1427-L1432
-    cmr_print_debug_message(
+    cmr_print_debug(
       "This compiler has no notion of language standard levels.")
     return()
   endif()
@@ -62,7 +62,7 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   if(no_standard)
     # The standard not defined by user.
     # https://github.com/Kitware/CMake/blob/3bccdd89c88864839a0c8d4ea56bd069c90fa02b/Source/cmLocalGenerator.cxx#L1433-L1437
-    cmr_print_debug_message("The standard not defined by user.")
+    cmr_print_debug("The standard not defined by user.")
     return()
   endif()
 
@@ -77,7 +77,7 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
   set(standards "${${LANG}_standards}")
   list(FIND standards "${standard}" begin)
   if("${begin}" EQUAL "-1")
-    cmr_print_fatal_error("${LANG} standard ${standard} not known")
+    cmr_print_error("${LANG} standard ${standard} not known")
     return()
   endif()
 
@@ -88,7 +88,7 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
     list(GET standards ${idx} standard)
     set(option_name "CMAKE_${LANG}${standard}_${ext}_COMPILE_OPTION")
     set(flag "${${option_name}}")
-    cmr_print_debug_message("${option_name}: '${flag}'")
+    cmr_print_debug("${option_name}: '${flag}'")
     string(COMPARE NOTEQUAL "${flag}" "" has_flag)
     if(has_flag OR CMAKE_${LANG}_STANDARD_REQUIRED)
       # Break if flag found or standard is required and we don't want to
@@ -96,7 +96,7 @@ function(cmr_boost_get_lang_standard_flag LANG OUTPUT)
       break()
     endif()
   endforeach()
-  cmr_print_debug_message(
+  cmr_print_debug(
     "cmr_boost_get_lang_standard_flag(${LANG}): '${flag}'")
   set("${OUTPUT}" "${flag}" PARENT_SCOPE)
 endfunction()

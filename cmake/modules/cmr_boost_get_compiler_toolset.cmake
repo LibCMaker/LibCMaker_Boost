@@ -38,7 +38,7 @@ function(cmr_boost_get_compiler_toolset)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(toolset_name "msvc")
   elseif()
-    cmr_print_fatal_error("Unsupported compiler system.")
+    cmr_print_error("Unsupported compiler system.")
   endif()
 
   if(ANDROID)

@@ -112,7 +112,7 @@ function(lib_cmaker_boost)
       set(_b2_program_path "${CMAKE_INSTALL_FULL_BINDIR}/${b2_FILE_NAME}")
   
       if(NOT EXISTS ${_b2_program_path})
-        cmr_print_message("-------- Build tools for cross building --------")
+        cmr_print_status("-------- Build tools for cross building --------")
     
         cmr_lib_cmaker_main(
           NAME          ${cmr_lib_NAME}
@@ -136,7 +136,7 @@ function(lib_cmaker_boost)
       )
     endif()
 
-    cmr_print_message(
+    cmr_print_status(
       "-------- Cross building with 'b2' tool in ${B2_PROGRAM_PATH} --------"
     )
     

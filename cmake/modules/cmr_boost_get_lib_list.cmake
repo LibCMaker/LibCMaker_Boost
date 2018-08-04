@@ -33,7 +33,7 @@
 
 include(CMakeParseArguments) # cmake_parse_arguments
 
-include(cmr_print_fatal_error)
+include(cmr_print_error)
 
 function(cmr_boost_get_lib_list out_LIB_LIST)
 
@@ -118,7 +118,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
     list(FIND lib_COMPONENTS "all" all_index)
     if(NOT all_index EQUAL -1)
       if(NOT components_length EQUAL 1)
-        cmr_print_fatal_error(
+        cmr_print_error(
           "COMPONENTS can not contain 'all' keyword with something others.")
       endif()
       set(build_all_libs ON)
@@ -183,7 +183,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   foreach(name IN LISTS lib_COMPONENTS)
     # First, make the required checks.
     if(${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
-      cmr_print_fatal_error(
+      cmr_print_error(
         "Boost of version ${lib_VERSION} don't have the component '${name}'."
       )
     endif()
@@ -192,7 +192,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       string(COMPARE EQUAL "${name}" "python" bad_component)
       if(bad_component)
         # TODO: CrystaX NDK has Python.
-        cmr_print_fatal_error("Android NDK don't have Python for Boost.Python.")
+        cmr_print_error("Android NDK don't have Python for Boost.Python.")
       endif()
 
       # Boost.Context in 1.57.0 and earlier don't support arm64.
@@ -204,14 +204,14 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
               AND NOT lib_VERSION VERSION_GREATER "1.61.0"))
         string(COMPARE EQUAL "${name}" "context" bad_component)
         if(bad_component)
-          cmr_print_fatal_error(
+          cmr_print_error(
             "Boost.Context in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()
 
         string(COMPARE EQUAL "${name}" "coroutine" bad_component)
         if(bad_component)
-          cmr_print_fatal_error(
+          cmr_print_error(
             "Boost.Coroutine in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()
@@ -223,7 +223,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
               AND NOT lib_VERSION VERSION_GREATER "1.61.0")
         string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
         if(bad_component)
-          cmr_print_fatal_error(
+          cmr_print_error(
             "Boost.Coroutine2 in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()

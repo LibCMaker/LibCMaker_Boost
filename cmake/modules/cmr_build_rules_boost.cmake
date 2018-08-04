@@ -83,7 +83,7 @@
   
   set(boost_modules_DIR "${lib_BASE_DIR}/cmake/modules")
 
-  cmr_print_message("Copy 'boost/config/user.hpp' to unpacked sources.")
+  cmr_print_status("Copy 'boost/config/user.hpp' to unpacked sources.")
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different 
       ${lib_BASE_DIR}/boost/config/user.hpp
@@ -185,7 +185,7 @@
   # Run bootstrap script and build b2 (bjam) if required
   #
   if(DEFINED B2_PROGRAM_PATH AND NOT EXISTS ${B2_PROGRAM_PATH})
-    cmr_print_fatal_error(
+    cmr_print_error(
       "B2_PROGRAM_PATH is defined as\n'${B2_PROGRAM_PATH}'\n and there is not 'b2' tool in this path."
     )
   endif()
@@ -208,13 +208,13 @@
   endif()
 
   if(cmr_PRINT_DEBUG)
-    cmr_print_debug_message(
+    cmr_print_debug(
       "bootstrap.sh options:")
-    cmr_print_debug_message("------")
+    cmr_print_debug("------")
     foreach(opt ${bootstrap_ARGS})
-      cmr_print_debug_message("  ${opt}")
+      cmr_print_debug("  ${opt}")
     endforeach()
-    cmr_print_debug_message("------")
+    cmr_print_debug("------")
   endif()
 
   set(bootstrap_FILE_NAME "bootstrap.sh")
@@ -258,12 +258,12 @@
   #
   if(BUILD_BCP_TOOL)
     if(cmr_PRINT_DEBUG)
-      cmr_print_debug_message("b2 options for 'bcp' tool building:")
-      cmr_print_debug_message("------")
+      cmr_print_debug("b2 options for 'bcp' tool building:")
+      cmr_print_debug("------")
       foreach(opt ${bcp_b2_ARGS})
-        cmr_print_debug_message("  ${opt}")
+        cmr_print_debug("  ${opt}")
       endforeach()
-      cmr_print_debug_message("------")
+      cmr_print_debug("------")
     endif()
 
     set(bcp_FILE_NAME "bcp")
@@ -448,12 +448,12 @@
   # Build boost library
   #
   if(cmr_PRINT_DEBUG)
-    cmr_print_debug_message("b2 options for Boost library building:")
-    cmr_print_debug_message("------")
+    cmr_print_debug("b2 options for Boost library building:")
+    cmr_print_debug("------")
     foreach(opt ${b2_ARGS})
-      cmr_print_debug_message("  ${opt}")
+      cmr_print_debug("  ${opt}")
     endforeach()
-    cmr_print_debug_message("------")
+    cmr_print_debug("------")
   endif()
 
   set(boost_STAMP "${lib_VERSION_BUILD_DIR}/boost_stamp")

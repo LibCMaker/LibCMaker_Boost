@@ -21,7 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-include(${LIBCMAKER_SRC_DIR}/cmake/modules/cmr_print_debug_message.cmake)
+include(${LIBCMAKER_SRC_DIR}/cmake/modules/cmr_print_debug.cmake)
 
 set(jam_c_FLAGS "${CMAKE_C_FLAGS_${build_TYPE}} ${jam_c_FLAGS}")
 set(jam_cxx_FLAGS "${CMAKE_CXX_FLAGS_${build_TYPE}} ${jam_cxx_FLAGS}")
@@ -83,9 +83,9 @@ file(APPEND ${user_jam_FILE}
 )
 
 if(cmr_PRINT_DEBUG)
-  cmr_print_debug_message("------")
-  cmr_print_debug_message("Boost user jam config:")
+  cmr_print_debug("------")
+  cmr_print_debug("Boost user jam config:")
   file(READ "${user_jam_FILE}" user_jam_CONTENT)
-  cmr_print_debug_message("------\n${user_jam_CONTENT}")
-  cmr_print_debug_message("------")
+  cmr_print_debug("------\n${user_jam_CONTENT}")
+  cmr_print_debug("------")
 endif()
