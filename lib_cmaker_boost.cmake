@@ -66,8 +66,6 @@ function(lib_cmaker_boost)
   #-----------------------------------------------------------------------
   # Library specific build arguments
   #-----------------------------------------------------------------------
-  
-  set(lib_LANGUAGES CXX C ASM)
 
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
   set(cmr_LIB_VARS
@@ -97,8 +95,9 @@ function(lib_cmaker_boost)
   # Building
   #-----------------------------------------------------------------------
 
+  set(lib_LANGUAGES CXX C ASM)
   set(lib_BUILD_MODE INSTALL)
-  
+
   # Build tools for cross building if need
   if(IOS OR ANDROID OR WINDOWS_STORE)
 
@@ -108,16 +107,17 @@ function(lib_cmaker_boost)
       if(WIN32)
         set(b2_FILE_NAME "b2.exe")
       endif()
-      
+
       set(_b2_program_path "${CMAKE_INSTALL_FULL_BINDIR}/${b2_FILE_NAME}")
-  
+
       if(NOT EXISTS ${_b2_program_path})
         cmr_print_status("-------- Build tools for cross building --------")
-    
+
         cmr_lib_cmaker_main(
           NAME          ${cmr_lib_NAME}
           VERSION       ${arg_VERSION}
           COMPONENTS    ${arg_COMPONENTS}
+          LANGUAGES     ${lib_LANGUAGES}
           BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
           DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
           UNPACKED_DIR  ${arg_UNPACKED_DIR}/host_tools_sources
@@ -127,7 +127,7 @@ function(lib_cmaker_boost)
           INSTALL
         )
       endif()
-  
+
       set(B2_PROGRAM_PATH "${_b2_program_path}"
         CACHE PATH "Specify an absolute path to the 'b2' tool."
       )
@@ -139,7 +139,7 @@ function(lib_cmaker_boost)
     cmr_print_status(
       "-------- Cross building with 'b2' tool in ${B2_PROGRAM_PATH} --------"
     )
-    
+
     set(lib_BUILD_MODE BUILD)
   endif()
 
@@ -147,6 +147,7 @@ function(lib_cmaker_boost)
     NAME          ${cmr_lib_NAME}
     VERSION       ${arg_VERSION}
     COMPONENTS    ${arg_COMPONENTS}
+    LANGUAGES     ${lib_LANGUAGES}
     BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
     DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
     UNPACKED_DIR  ${arg_UNPACKED_DIR}
