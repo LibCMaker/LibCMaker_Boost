@@ -21,54 +21,16 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
+# Part of "LibCMaker/cmake/cmr_find_package.cmake".
 
 # See description for "cmr_boost_cmaker()" for params and vars.
-
-
-## +++ Common part of the lib_cmaker_<lib_name> function +++
-set(cmr_lib_NAME "Boost")
-
-# To find library's LibCMaker source dir.
-set(lcm_${cmr_lib_NAME}_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
-
-if(NOT LIBCMAKER_SRC_DIR)
-  message(FATAL_ERROR
-    "Please set LIBCMAKER_SRC_DIR with path to LibCMaker root.")
-endif()
-
-include(${LIBCMAKER_SRC_DIR}/cmake/modules/lib_cmaker_init.cmake)
-
-function(lib_cmaker_boost)
-
-  # Make the required checks.
-  # Add library's and common LibCMaker module paths to CMAKE_MODULE_PATH.
-  # Unset lcm_CMAKE_ARGS.
-  # Set vars:
-  #   cmr_CMAKE_MIN_VER
-  #   cmr_lib_cmaker_main_PATH
-  #   cmr_printers_PATH
-  #   lower_lib_NAME
-  # Parce args and set vars:
-  #   arg_VERSION
-  #   arg_COMPONENTS
-  #   arg_DOWNLOAD_DIR
-  #   arg_UNPACKED_DIR
-  #   arg_BUILD_DIR
-  lib_cmaker_init(${ARGN})
-
-  include(${cmr_lib_cmaker_main_PATH})
-  include(${cmr_printers_PATH})
-
-  cmake_minimum_required(VERSION ${cmr_CMAKE_MIN_VER})
-## --- Common part of the lib_cmaker_<lib_name> function ---
-
 
   #-----------------------------------------------------------------------
   # Library specific build arguments
   #-----------------------------------------------------------------------
 
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
-  set(cmr_LIB_VARS
+  set(find_LIB_VARS
     B2_PROGRAM_PATH
     BUILD_BCP_TOOL
     Boost_USE_MULTITHREADED
@@ -81,9 +43,9 @@ function(lib_cmaker_boost)
     BOOST_WITH_ICU_DIR
   )
 
-  foreach(d ${cmr_LIB_VARS})
+  foreach(d ${find_LIB_VARS})
     if(DEFINED ${d})
-      list(APPEND lcm_CMAKE_ARGS
+      list(APPEND find_CMAKE_ARGS
         -D${d}=${${d}}
       )
     endif()
@@ -98,61 +60,31 @@ function(lib_cmaker_boost)
   set(lib_LANGUAGES CXX C ASM)
   set(lib_BUILD_MODE INSTALL)
 
-  # Build tools for cross building if need
-  if(IOS OR ANDROID OR WINDOWS_STORE)
-
-    if(NOT B2_PROGRAM_PATH)
-      include(GNUInstallDirs)
-      set(b2_FILE_NAME "b2")
-      if(WIN32)
-        set(b2_FILE_NAME "b2.exe")
-      endif()
-
-      set(_b2_program_path "${CMAKE_INSTALL_FULL_BINDIR}/${b2_FILE_NAME}")
-
-      if(NOT EXISTS ${_b2_program_path})
-        cmr_print_status("-------- Build tools for cross building --------")
-
-        cmr_lib_cmaker_main(
-          NAME          ${cmr_lib_NAME}
-          VERSION       ${arg_VERSION}
-          COMPONENTS    ${arg_COMPONENTS}
-          LANGUAGES     ${lib_LANGUAGES}
-          BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
-          DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
-          UNPACKED_DIR  ${arg_UNPACKED_DIR}/host_tools_sources
-          BUILD_DIR     ${arg_BUILD_DIR}_host_tools
-          CMAKE_ARGS    ${lcm_CMAKE_ARGS}
-          BUILD_HOST_TOOLS
-          INSTALL
-        )
-      endif()
-
-      set(B2_PROGRAM_PATH "${_b2_program_path}"
-        CACHE PATH "Specify an absolute path to the 'b2' tool."
+  if(BUILD_HOST_TOOLS)
+    cmr_print_status("======== Build host tools for cross building ========")
+    set(lib_BUILD_MODE BUILD_HOST_TOOLS INSTALL)
+  else()
+    if(B2_PROGRAM_PATH)
+      cmr_print_status(
+        "======== Cross building with 'b2' tool in ${B2_PROGRAM_PATH} ========"
       )
-      list(APPEND lcm_CMAKE_ARGS
+      list(APPEND find_CMAKE_ARGS
         -DB2_PROGRAM_PATH=${B2_PROGRAM_PATH}
       )
+      set(lib_BUILD_MODE BUILD)
     endif()
-
-    cmr_print_status(
-      "-------- Cross building with 'b2' tool in ${B2_PROGRAM_PATH} --------"
-    )
-
-    set(lib_BUILD_MODE BUILD)
   endif()
 
   cmr_lib_cmaker_main(
-    NAME          ${cmr_lib_NAME}
-    VERSION       ${arg_VERSION}
-    COMPONENTS    ${arg_COMPONENTS}
+    LibCMaker_DIR ${find_LibCMaker_DIR}
+    NAME          ${find_NAME}
+    VERSION       ${find_VERSION}
+    COMPONENTS    ${find_COMPONENTS}
     LANGUAGES     ${lib_LANGUAGES}
-    BASE_DIR      ${lcm_${cmr_lib_NAME}_SRC_DIR}
-    DOWNLOAD_DIR  ${arg_DOWNLOAD_DIR}
-    UNPACKED_DIR  ${arg_UNPACKED_DIR}
-    BUILD_DIR     ${arg_BUILD_DIR}
-    CMAKE_ARGS    ${lcm_CMAKE_ARGS}
+    BASE_DIR      ${find_LIB_DIR}
+    DOWNLOAD_DIR  ${cmr_DOWNLOAD_DIR}
+    UNPACKED_DIR  ${cmr_UNPACKED_DIR}
+    BUILD_DIR     ${lib_BUILD_DIR}
+    CMAKE_ARGS    ${find_CMAKE_ARGS}
     ${lib_BUILD_MODE}
   )
-endfunction()

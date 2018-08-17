@@ -21,7 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-# Part of "LibCMaker/cmake/modules/cmr_build_rules.cmake".
+# Part of "LibCMaker/cmake/cmr_build_rules.cmake".
 
 
   # Based on the BoostBuilder:
@@ -31,12 +31,12 @@
   # https://github.com/crystax/android-platform-ndk/blob/master/build/tools/build-boost.sh
   # Based on the Hunter:
   # https://github.com/ruslo/hunter
-  
-  
+
+
   # CMake build/bundle script for Boost Libraries.
   # Automates build of Boost, allowing optional builds of library components.
-  
-  
+
+
   # Useful vars:
   #   BUILD_SHARED_LIBS         -- build shared libs.
   #   Boost_USE_MULTITHREADED   -- build multithread (-mt) libs, default is ON.
@@ -80,16 +80,16 @@
   # Initialization
   #
   include(GNUInstallDirs)
-  
-  set(boost_modules_DIR "${lib_BASE_DIR}/cmake/modules")
+
+  set(boost_modules_DIR "${lib_BASE_DIR}/cmake")
 
   cmr_print_status("Copy 'boost/config/user.hpp' to unpacked sources.")
   execute_process(
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${lib_BASE_DIR}/boost/config/user.hpp
       ${lib_SRC_DIR}/boost/config/user.hpp
   )
-  
+
 
   #-----------------------------------------------------------------------
   # Check COMPONENTS and get lib list
@@ -108,10 +108,6 @@
   #if(MINGW)
   #  list(APPEND bootstrap_ARGS "gcc")
   #endif()
-  if(ANDROID)
-    # TODO: add work with ICU
-    list(APPEND bootstrap_ARGS "--without-icu")
-  endif()
 
 
   #-----------------------------------------------------------------------
@@ -137,7 +133,7 @@
   set(common_b2_ARGS)
   list(APPEND common_b2_ARGS "-a") # Rebuild everything
   list(APPEND common_b2_ARGS "-q") # Stop at first error
-  
+
   if(cmr_PRINT_DEBUG AND PRINT_BOOST_DEBUG)
     # Show commands as they are executed
     list(APPEND common_b2_ARGS "-d+2")
@@ -151,7 +147,7 @@
     # Suppress all informational messages
     list(APPEND common_b2_ARGS "-d0")
   endif()
-  
+
   # Parallelize build if possible
   if(NOT DEFINED cmr_BUILD_MULTIPROC)
     set(cmr_BUILD_MULTIPROC ON)
@@ -165,7 +161,7 @@
     endif()
     list(APPEND common_b2_ARGS "-j" "${cmr_BUILD_MULTIPROC_CNT}")
   endif()
-  
+
   # Build in this location instead of building within the distribution tree.
   list(APPEND common_b2_ARGS
     "--build-dir=${lib_VERSION_BUILD_DIR}"
@@ -223,7 +219,7 @@
   endif()
   set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
   set(bootstrap_STAMP "${lib_VERSION_BUILD_DIR}/bootstrap_stamp")
-  
+
   # Add the files in the source tree:
   #   <boost sources>/b2
   #   <boost sources>/bjam
@@ -281,20 +277,20 @@
       DEPENDS ${bootstrap_STAMP}
       COMMENT "Build 'bcp' tool."
     )
-    
+
     if(lib_BUILD_HOST_TOOLS)
       add_custom_target(build_bcp ALL
         DEPENDS ${bcp_FILE}
       )
     endif()
-    
+
     install(
       PROGRAMS ${bcp_FILE}
       DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
   endif()
 
-  
+
   #-----------------------------------------------------------------------
   # Return if build tools only
   #
@@ -308,7 +304,7 @@
   #
   set(b2_ARGS)
   list(APPEND b2_ARGS ${common_b2_ARGS})
-  
+
   if(boost_LIB_LIST)
     list(APPEND b2_ARGS ${boost_LIB_LIST})
   endif()
@@ -321,7 +317,7 @@
     if(BOOST_BUILD_STAGE AND BOOST_BUILD_STAGE_DIR)
       # Build and install only compiled library files to the stage directory.
       list(APPEND b2_ARGS "stage")
-  
+
       # Install library files here.
       list(APPEND b2_ARGS
         "--stagedir=${BOOST_BUILD_STAGE_DIR}"
@@ -329,7 +325,7 @@
     else()
       # Install headers and compiled library files to the configured locations.
       list(APPEND b2_ARGS "install")
-  
+
       # Install architecture independent files here
       list(APPEND b2_ARGS
         "--prefix=${CMAKE_INSTALL_PREFIX}"
@@ -371,7 +367,7 @@
   # Use:
   # -> BUILD_SHARED_LIBS
   # -> Boost_USE_MULTITHREADED  # Set to ON by default.
-  
+
   list(APPEND b2_ARGS ${build_variants})
 
 
@@ -392,7 +388,7 @@
   # So disable it.
   set(CMAKE_C_EXTENSIONS OFF)
   set(CMAKE_CXX_EXTENSIONS OFF)
-  
+
   include(cmr_boost_set_cmake_flags)
   cmr_boost_set_cmake_flags()
   # Out vars:
@@ -400,7 +396,7 @@
   # -> CMAKE_CXX_FLAGS
   # -> CMAKE_ASM_FLAGS
   # -> CMAKE_SHARED_LINKER_FLAGS
-  
+
   if(BUILD_SHARED_LIBS)
     set(jam_link_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
   else()
@@ -417,10 +413,10 @@
     "${boost_modules_DIR}/cmr_boost_generate_user_config_jam.cmake"
   )
   set(user_jam_FILE "${lib_VERSION_BUILD_DIR}/user-config.jam")
-  
+
   add_custom_command(OUTPUT ${user_jam_FILE}
     COMMAND ${CMAKE_COMMAND}
-      -DLIBCMAKER_SRC_DIR=${LIBCMAKER_SRC_DIR}
+      -DLibCMaker_DIR=${lib_LibCMaker_DIR}
       -Duser_jam_FILE=${user_jam_FILE}
       -Dtoolset_name=${toolset_name}
       -Dtoolset_version=${toolset_version}
@@ -465,7 +461,7 @@
     DEPENDS ${bootstrap_STAMP} ${bcp_FILE} ${user_jam_FILE}
     COMMENT "Build Boost library."
   )
-  
+
   add_custom_target(build_boost ALL
     DEPENDS ${boost_STAMP}
   )

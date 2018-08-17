@@ -21,7 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-# Part of "LibCMaker/cmake/modules/cmr_get_download_params.cmake".
+# Part of "LibCMaker/cmake/cmr_get_download_params.cmake".
 
   include(cmr_get_version_parts)
   cmr_get_version_parts(${version} major minor patch tweak)
@@ -53,13 +53,14 @@
     )
   endif()
 
-  set(base_url "https://downloads.sourceforge.net/project/boost/boost")
+  set(base_url "https://dl.bintray.com/boostorg/release")
   set(src_dir_name    "boost-${version}")
   set(arch_file_name  "${src_dir_name}.tar.bz2")
   set(unpack_to_dir   "${unpacked_dir}/${src_dir_name}")
 
   set(${out_ARCH_SRC_URL}
-    "${base_url}/${version}/boost_${version_underscore}.tar.bz2" PARENT_SCOPE
+    "${base_url}/${version}/source/boost_${version_underscore}.tar.bz2"
+    PARENT_SCOPE
   )
   set(${out_ARCH_DST_FILE}  "${download_dir}/${arch_file_name}" PARENT_SCOPE)
   set(${out_ARCH_FILE_SHA}  "${arch_file_sha}" PARENT_SCOPE)

@@ -23,7 +23,7 @@
 
 cmake_minimum_required(VERSION 3.3)
 
-project(LibCMaker_Boost_Compile_Test CXX)
+project(LibCMaker_Boost_Cross_Compile_Test C CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(cmr_PRINT_DEBUG ON)
@@ -52,20 +52,12 @@ set(LibCMaker_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker")
 
 
 #-----------------------------------------------------------------------
-# Set vars to LibCMaker_Boost and FindBoost
+# Set common vars to LibCMaker_Boost
 #-----------------------------------------------------------------------
 
 set(BOOST_lib_NAME        "Boost")
 set(BOOST_lib_VERSION     "1.64.0")
-set(BOOST_lib_COMPONENTS  filesystem)  # 'system' will also be compiled.
-#set(BOOST_lib_COMPONENTS  all)
 set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_Boost")
-
-# To use below for sample sources.
-set(cmr_UNPACKED_DIR ${CMAKE_CURRENT_BINARY_DIR}/download/unpacked)
-
-# To use our FindBoost.cmake.
-list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
 
 # Set required compiler language standards.
 set(CMAKE_C_STANDARD 99)    # 11 99 90
@@ -75,10 +67,38 @@ set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
 
 
 #-----------------------------------------------------------------------
-# Library specific vars and options
+# Library specific common vars and options
 #-----------------------------------------------------------------------
 
-#set(B2_PROGRAM_PATH "/bin/b2")  # Use 'b2' in specified path.
+
+#-----------------------------------------------------------------------
+# Set vars to LibCMaker_Boost to cross build
+#-----------------------------------------------------------------------
+
+set(BOOST_lib_COMPONENTS  regex)
+#set(BOOST_lib_COMPONENTS  filesystem)  # 'system' will also be compiled.
+#set(BOOST_lib_COMPONENTS  all)
+
+# To use below for sample sources.
+set(cmr_UNPACKED_DIR ${CMAKE_CURRENT_BINARY_DIR}/download/unpacked)
+
+# To use our FindBoost.cmake.
+list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
+
+
+#-----------------------------------------------------------------------
+# Library specific vars and options to cross build
+#-----------------------------------------------------------------------
+
+set(b2_FILE_NAME "b2")
+if(CMAKE_HOST_WIN32)
+  set(b2_FILE_NAME "b2.exe")
+endif()
+set(_b2_program_path
+  "${PROJECT_BINARY_DIR}/@_host_tools/inst/bin/${b2_FILE_NAME}"
+)
+
+set(B2_PROGRAM_PATH ${_b2_program_path})  # Use 'b2' in specified path.
 set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
 set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
 # Whether to link to static or shared C and C++ runtime.
@@ -106,7 +126,7 @@ set(BOOST_LAYOUT_TYPE "tagged")  # "versioned", "tagged" or "system",
 # building distribution packages.
 
 # Disable Unicode/ICU support in Regex.
-set(BOOST_WITHOUT_ICU ON)
+set(BOOST_WITHOUT_ICU OFF)
 
 # Specify the root of the ICU library installation
 # and enable Unicode/ICU support in Regex.
@@ -123,6 +143,10 @@ set(BOOST_BUILD_STAGE_DIR "${CMAKE_INSTALL_PREFIX}/stage")
 #-----------------------------------------------------------------------
 
 if(NOT BOOST_WITHOUT_ICU)
+  #-----------------------------------------------------------------------
+  # Set common vars to LibCMaker_ICU
+  #-----------------------------------------------------------------------
+
   set(ICU_lib_NAME     "ICU")
   set(ICU_lib_VERSION  "61.1")
   set(ICU_lib_DIR      "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_ICU")
@@ -132,14 +156,11 @@ if(NOT BOOST_WITHOUT_ICU)
 
   set(COPY_ICU_CMAKE_BUILD_SCRIPTS ON)
 
-  # Library specific vars and options.
 
-  # Enable cross compiling
-  set(ICU_CROSS_COMPILING OFF)
-  if(NOT ICU_CROSS_BUILDROOT)
-    # Specify an absolute path to the build directory of an ICU built for the current platform
-    set(ICU_CROSS_BUILDROOT "")
-  endif()
+  #-----------------------------------------------------------------------
+  # Library specific common vars and options
+  #-----------------------------------------------------------------------
+
   # Compile with strict compiler options
   set(ICU_ENABLE_STRICT ON)
   # Enable auto cleanup of libraries
@@ -156,16 +177,14 @@ if(NOT BOOST_WITHOUT_ICU)
   set(ICU_DISABLE_DYLOAD OFF)
   # Use rpath when linking
   set(ICU_ENABLE_RPATH OFF)
-  # Build ICU extras
-  set(ICU_ENABLE_EXTRAS OFF) # TODO: not released
+
   # Build ICU's icuio library
   set(ICU_ENABLE_ICUIO ON)
   # Build ICU's Paragraph Layout library. icu-le-hb must be available via find_package(icu-le-hb). See http://harfbuzz.org
   set(ICU_ENABLE_LAYOUTEX OFF) # TODO: not released
   # ...
   #set(ICU_ENABLE_LAYOUT OFF)
-  # Build ICU's tools
-  set(ICU_ENABLE_TOOLS ON)
+
   # Specify how to package ICU data. Possible values: files, archive, library, static, auto. See http://userguide.icu-project.org/icudata for more info
   set(ICU_DATA_PACKAGING "auto") # TODO: 'files' mode is not released
   # Tag a suffix to the library names
@@ -175,16 +194,44 @@ if(NOT BOOST_WITHOUT_ICU)
   # Build ICU samples
   set(ICU_ENABLE_SAMPLES OFF) # TODO: not released
 
+
+  #-----------------------------------------------------------------------
+  # Set vars to LibCMaker_ICU to cross build
+  #-----------------------------------------------------------------------
+
+  # Enable cross compiling
+  set(ICU_CROSS_COMPILING ON)
+  # Specify an absolute path to the build directory of an ICU built for the current platform
+  set(ICU_CROSS_BUILDROOT
+    "${PROJECT_BINARY_DIR}/@_host_tools/build_icu_host_tools/build_ICU/icu-${ICU_lib_VERSION}/source"
+  )
+
+
+  # Build ICU extras
+  set(ICU_ENABLE_EXTRAS OFF) # TODO: not released
+
+  # Build ICU's tools
+  set(ICU_ENABLE_TOOLS OFF)
+
+
+  #-----------------------------------------------------------------------
+  # Cross build, install and find the ICU
+  #-----------------------------------------------------------------------
+
+  # TODO: build by COMPONENTS in find_package()
+
+  # Make build and install the library at a config CMake phase.
   include(${LibCMaker_DIR}/cmake/cmr_find_package.cmake)
   cmr_find_package(
     LibCMaker_DIR   ${LibCMaker_DIR}
     NAME            ${ICU_lib_NAME}
     VERSION         ${ICU_lib_VERSION}
-    #COMPONENTS      TODO
+  #  COMPONENTS      TODO
     LIB_DIR         ${ICU_lib_DIR}
     REQUIRED
     CONFIG
   )
+
 
   set(BOOST_WITH_ICU_DIR "${CMAKE_INSTALL_PREFIX}")  # See description above.
 endif()

@@ -21,7 +21,7 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-include(${LIBCMAKER_SRC_DIR}/cmake/modules/cmr_print_debug.cmake)
+include(${LibCMaker_DIR}/cmake/cmr_print_debug.cmake)
 
 set(jam_c_FLAGS "${CMAKE_C_FLAGS_${build_TYPE}} ${jam_c_FLAGS}")
 set(jam_cxx_FLAGS "${CMAKE_CXX_FLAGS_${build_TYPE}} ${jam_cxx_FLAGS}")
