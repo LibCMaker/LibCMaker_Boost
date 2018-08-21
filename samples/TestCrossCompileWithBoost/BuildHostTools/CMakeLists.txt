@@ -119,6 +119,8 @@ if(NOT BOOST_WITHOUT_ICU)
 
   # Compile with strict compiler options
   set(ICU_ENABLE_STRICT ON)
+  # Compile with 'm' library.
+  set(ICU_USE_LIB_M OFF)
   # Enable auto cleanup of libraries
   set(ICU_ENABLE_AUTO_CLEANUP OFF)
   # Enable draft APIs (and internal APIs)
@@ -130,9 +132,11 @@ if(NOT BOOST_WITHOUT_ICU)
   # Enable plugins
   set(ICU_ENABLE_PLUGINS OFF)
   # Disable dynamic loading
-  set(ICU_DISABLE_DYLOAD OFF)
+  set(ICU_DISABLE_DYLOAD ON)
   # Use rpath when linking
   set(ICU_ENABLE_RPATH OFF)
+  # Compile with 'wxs' or 'w' libraries.
+  set(ICU_USE_WCS_OR_W_LIB OFF)
 
   # Build ICU's icuio library
   set(ICU_ENABLE_ICUIO ON)
@@ -177,6 +181,8 @@ if(NOT BOOST_WITHOUT_ICU)
   #-----------------------------------------------------------------------
   # Build and find the ICU host tools
   #-----------------------------------------------------------------------
+
+  find_package(Threads REQUIRED)
 
   # TODO: build by COMPONENTS in find_package()
 

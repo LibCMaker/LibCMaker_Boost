@@ -167,6 +167,25 @@
     "--build-dir=${lib_VERSION_BUILD_DIR}"
   )
 
+  if(BUILD_FOR_WINXP OR CMAKE_GENERATOR_TOOLSET STREQUAL "v141_xp")
+    # From https://www.boost.org/users/history/version_1_68_0.html
+    # Boost.WinAPI has been updated to target Windows 7 by default,
+    # where possible. In previous releases Windows Vista was the default.
+    # Boost.WinAPI is used internally as the Windows SDK abstraction layer
+    # in a number of Boost libraries, including Boost.Beast, Boost.Chrono,
+    # Boost.DateTime, Boost.Dll, Boost.Log, Boost.Process, Boost.Stacktrace,
+    # Boost.System, Boost.Thread and Boost.UUID.
+    # To select the target Windows version define BOOST_USE_WINAPI_VERSION
+    # to the numeric version similar to _WIN32_WINNT while compiling Boost
+    # and user's code. For example:
+    #  b2 release define=BOOST_USE_WINAPI_VERSION=0x0501 stage
+    # The list of Windows API version numbers can be seen on this page:
+    # https://msdn.microsoft.com/en-us/library/6sehtctf.aspx
+    list(APPEND common_b2_ARGS
+      "define=BOOST_USE_WINAPI_VERSION=0x0501"
+    )
+  endif()
+
 
   #-----------------------------------------------------------------------
   # bcp_b2_ARGS
