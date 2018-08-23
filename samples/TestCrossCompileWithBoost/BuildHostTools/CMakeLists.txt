@@ -103,9 +103,10 @@ if(NOT BOOST_WITHOUT_ICU)
   # Set common vars to LibCMaker_ICU
   #-----------------------------------------------------------------------
 
-  set(ICU_lib_NAME     "ICU")
-  set(ICU_lib_VERSION  "61.1")
-  set(ICU_lib_DIR      "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_ICU")
+  set(ICU_lib_NAME        "ICU")
+  set(ICU_lib_VERSION     "61.1")
+  set(ICU_lib_COMPONENTS  i18n uc data)
+  set(ICU_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_ICU")
 
   # To use our FindICU.cmake.
   list(APPEND CMAKE_MODULE_PATH "${ICU_lib_DIR}/cmake/modules")
@@ -192,10 +193,9 @@ if(NOT BOOST_WITHOUT_ICU)
     LibCMaker_DIR   ${LibCMaker_DIR}
     NAME            ${ICU_lib_NAME}
     VERSION         ${ICU_lib_VERSION}
-    #COMPONENTS      TODO
+    COMPONENTS      ${ICU_lib_COMPONENTS}
     LIB_DIR         ${ICU_lib_DIR}
     REQUIRED
-    CONFIG
     CUSTOM_LOGIC_FILE
       ${ICU_lib_DIR}/cmake/cmr_find_package_icu_host_tools_custom.cmake
   )
