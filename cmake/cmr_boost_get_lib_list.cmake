@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -52,17 +52,16 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   set(multiValueArgs
     COMPONENTS
   )
-  cmake_parse_arguments(lib
+  cmake_parse_arguments(bgll
       "${options}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
-  # -> lib_VERSION
-  # -> lib_COMPONENTS
-
+  # -> bgll_VERSION
+  # -> bgll_COMPONENTS
 
   macro(boost_component_list name version)
     list(APPEND BOOST_COMPONENT_NAMES ${name})
     set(BOOST_COMPONENT_${name}_VERSION ${version})
   endmacro()
-  
+
   boost_component_list(atomic 1.53.0)
   boost_component_list(chrono 1.47.0)
   boost_component_list(container 1.48.0)
@@ -97,13 +96,13 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   boost_component_list(wave 1.33.0)
 
 
-  if(NOT lib_COMPONENTS)
+  if(NOT bgll_COMPONENTS)
     set(build_only_headers ON)
   endif()
 
   if(build_only_headers)
     foreach(name IN LISTS BOOST_COMPONENT_NAMES)
-      if(NOT ${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
+      if(NOT ${bgll_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
         # Add the <library> to the 'without'-list.
         list(APPEND without_args "--without-${name}")
       endif()
@@ -112,10 +111,10 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
     endif()
     return()  # if only headers.
-  
+
   else()  # if(NOT build_only_headers)
-    list(LENGTH lib_COMPONENTS components_length)
-    list(FIND lib_COMPONENTS "all" all_index)
+    list(LENGTH bgll_COMPONENTS components_length)
+    list(FIND bgll_COMPONENTS "all" all_index)
     if(NOT all_index EQUAL -1)
       if(NOT components_length EQUAL 1)
         cmr_print_error(
@@ -124,14 +123,14 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       set(build_all_libs ON)
     endif()
   endif()
-  
-  
+
+
   if(build_all_libs)
     foreach(name IN LISTS BOOST_COMPONENT_NAMES)
-      if(${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
+      if(${bgll_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
         continue()
       endif()
-  
+
       if(ANDROID)
         string(COMPARE EQUAL "${name}" "python" without_component)
         if(without_component)
@@ -139,31 +138,31 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
           list(APPEND without_args "--without-${name}")
           continue()
         endif()
-  
+
         # Boost.Context in 1.57.0 and earlier don't support arm64.
         # Boost.Context in 1.61.0 and earlier don't support mips64.
         # Boost.Coroutine depends on Boost.Context.
         if((ANDROID_SYSROOT_ABI STREQUAL arm64
-                AND NOT lib_VERSION VERSION_GREATER "1.57.0")
+                AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
             OR (ANDROID_SYSROOT_ABI STREQUAL mips64
-                AND NOT lib_VERSION VERSION_GREATER "1.61.0"))
+                AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
           string(COMPARE EQUAL "${name}" "context" without_component)
           if(without_component)
             list(APPEND without_args "--without-${name}")
             continue()
           endif()
-  
+
           string(COMPARE EQUAL "${name}" "coroutine" without_component)
           if(without_component)
             list(APPEND without_args "--without-${name}")
             continue()
           endif()
         endif()
-        
+
         # Starting from 1.59.0, there is Boost.Coroutine2 library,
         # which depends on Boost.Context too.
         if(ANDROID_SYSROOT_ABI STREQUAL mips64
-                AND NOT lib_VERSION VERSION_GREATER "1.61.0")
+                AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
           string(COMPARE EQUAL "${name}" "coroutine2" without_component)
           if(without_component)
             list(APPEND without_args "--without-${name}")
@@ -172,7 +171,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
         endif()
       endif()  # if(ANDROID)
     endforeach()
-    
+
     if(without_args)
       set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
     endif()
@@ -180,11 +179,11 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   endif()
 
 
-  foreach(name IN LISTS lib_COMPONENTS)
+  foreach(name IN LISTS bgll_COMPONENTS)
     # First, make the required checks.
-    if(${lib_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
+    if(${bgll_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
       cmr_print_error(
-        "Boost of version ${lib_VERSION} don't have the component '${name}'."
+        "Boost of version ${bgll_VERSION} don't have the component '${name}'."
       )
     endif()
 
@@ -199,32 +198,32 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       # Boost.Context in 1.61.0 and earlier don't support mips64.
       # Boost.Coroutine depends on Boost.Context.
       if((ANDROID_SYSROOT_ABI STREQUAL arm64
-              AND NOT lib_VERSION VERSION_GREATER "1.57.0")
+              AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
           OR (ANDROID_SYSROOT_ABI STREQUAL mips64
-              AND NOT lib_VERSION VERSION_GREATER "1.61.0"))
+              AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
         string(COMPARE EQUAL "${name}" "context" bad_component)
         if(bad_component)
           cmr_print_error(
-            "Boost.Context in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
+            "Boost.Context in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()
 
         string(COMPARE EQUAL "${name}" "coroutine" bad_component)
         if(bad_component)
           cmr_print_error(
-            "Boost.Coroutine in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
+            "Boost.Coroutine in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()
       endif()
-      
+
       # Starting from 1.59.0, there is Boost.Coroutine2 library,
       # which depends on Boost.Context too.
       if(ANDROID_SYSROOT_ABI STREQUAL mips64
-              AND NOT lib_VERSION VERSION_GREATER "1.61.0")
+              AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
         string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
         if(bad_component)
           cmr_print_error(
-            "Boost.Coroutine2 in boost of version ${lib_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
+            "Boost.Coroutine2 in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
           )
         endif()
       endif()

@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -33,25 +33,27 @@ include(cmr_print_error)
 include(cmr_boost_get_lang_standard_flag)
 
 function(cmr_boost_set_cmake_flags)
-  cmake_parse_arguments(x "SKIP_INCLUDES" "CPPFLAGS" "" "${ARGV}")
-  # -> x_SKIP_INCLUDES
-  # -> x_CPPFLAGS
+  cmake_parse_arguments(bscf "SKIP_INCLUDES" "CPPFLAGS" "" "${ARGV}")
+  # -> bscf_SKIP_INCLUDES
+  # -> bscf_CPPFLAGS
 
-  string(COMPARE NOTEQUAL "${x_UNPARSED_ARGUMENTS}" "" has_unparsed)
+  string(COMPARE NOTEQUAL "${bscf_UNPARSED_ARGUMENTS}" "" has_unparsed)
   if(has_unparsed)
-    cmr_print_error("Unparsed arguments: ${x_UNPARSED_ARGUMENTS}")
+    cmr_print_error("Unparsed arguments: ${bscf_UNPARSED_ARGUMENTS}")
   endif()
 
   set(cppflags "")
-  
+
   if(ANDROID)
     # --sysroot=/path/to/sysroot do not added by CMake 3.7+
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-    set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
+    if(CMAKE_SYSROOT)
+      set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+      set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+      set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
+    endif()
 
-    if(NOT x_SKIP_INCLUDES)
+    if(NOT bscf_SKIP_INCLUDES)
       foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
         # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
         # https://stackoverflow.com/a/6274608
@@ -84,10 +86,10 @@ function(cmr_boost_set_cmake_flags)
     # Disable auto-linking
     # TODO: check with BOOST_ALL_DYN_LINK == OFF
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DBOOST_ALL_NO_LIB=1")
-  
+
     # Fix some compile errors
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DNOMINMAX")
-  
+
     # Fix boost.python:
     # include\pymath.h: warning C4273: 'round': inconsistent dll linkage
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHAVE_ROUND")
@@ -179,9 +181,9 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_PIC}")
   endif()
 
-  string(COMPARE EQUAL "${x_CPPFLAGS}" "" is_empty)
+  string(COMPARE EQUAL "${bscf_CPPFLAGS}" "" is_empty)
   if(NOT is_empty)
-    set("${x_CPPFLAGS}" "${${x_CPPFLAGS}} ${cppflags}" PARENT_SCOPE)
+    set("${bscf_CPPFLAGS}" "${${bscf_CPPFLAGS}} ${cppflags}" PARENT_SCOPE)
   endif()
 
   # Need to find out how to add flags on a per variant mode
@@ -189,7 +191,7 @@ function(cmr_boost_set_cmake_flags)
   # https://cdcvs.fnal.gov/redmine/projects/build-framework/repository/boost-ssi-build/revisions/master/entry/build_boost.sh
 
   #TODO: work with CMAKE_SHARED_LINKER_FLAGS and CMAKE_STATIC_LINKER_FLAGS.
-  
+
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
   set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}" PARENT_SCOPE)

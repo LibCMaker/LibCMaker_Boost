@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -31,7 +31,6 @@
   # https://github.com/crystax/android-platform-ndk/blob/master/build/tools/build-boost.sh
   # Based on the Hunter:
   # https://github.com/ruslo/hunter
-
 
   # CMake build/bundle script for Boost Libraries.
   # Automates build of Boost, allowing optional builds of library components.
@@ -83,12 +82,37 @@
 
   set(boost_modules_DIR "${lib_BASE_DIR}/cmake")
 
-  cmr_print_status("Copy 'boost/config/user.hpp' to unpacked sources.")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${lib_BASE_DIR}/boost/config/user.hpp
-      ${lib_SRC_DIR}/boost/config/user.hpp
+  set(android_user_config_STAMP
+    "${lib_VERSION_BUILD_DIR}/android_user_config_stamp"
   )
+  if(ANDROID AND NOT EXISTS ${android_user_config_STAMP})
+    cmr_print_status("Patch 'boost/config/user.hpp' in unpacked sources.")
+
+    file(APPEND ${lib_SRC_DIR}/boost/config/user.hpp
+"
+#if defined __USE_FILE_OFFSET64 && defined(__ANDROID__) && defined(__ANDROID_API__) && __ANDROID_API__ < 21
+#undef _FILE_OFFSET_BITS
+#undef __USE_FILE_OFFSET64
+#endif
+"
+    )
+    file(WRITE ${android_user_config_STAMP} "stamp")
+  endif()
+
+  set(regex_user_config_STAMP
+    "${lib_VERSION_BUILD_DIR}/regex_user_config_stamp"
+  )
+  if(NOT BOOST_WITHOUT_ICU AND NOT EXISTS ${regex_user_config_STAMP})
+    cmr_print_status("Patch 'boost/regex/user.hpp' in unpacked sources.")
+
+    file(APPEND ${lib_SRC_DIR}/boost/regex/user.hpp
+"
+// define this if you want to enable support for Unicode via ICU.
+#define BOOST_HAS_ICU
+"
+    )
+    file(WRITE ${regex_user_config_STAMP} "stamp")
+  endif()
 
 
   #-----------------------------------------------------------------------

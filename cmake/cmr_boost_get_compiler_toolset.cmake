@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -60,7 +60,7 @@ function(cmr_boost_get_compiler_toolset)
     # * https://travis-ci.org/ingenue/bcm/jobs/204617507
     set(use_cmake_archiver FALSE)
   endif()
-  
+
   set(boost_compiler "${CMAKE_CXX_COMPILER}")
   if(MSVC)
     string(REPLACE "/" "\\" boost_compiler "${boost_compiler}")

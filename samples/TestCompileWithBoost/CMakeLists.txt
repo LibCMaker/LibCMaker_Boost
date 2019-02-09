@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -25,9 +25,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project(LibCMaker_Boost_Compile_Test CXX)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-set(cmr_PRINT_DEBUG ON)
-#set(PRINT_BOOST_DEBUG ON)  # Extra debug info from 'b2' tool.
+option(CMAKE_VERBOSE_MAKEFILE "CMAKE_VERBOSE_MAKEFILE" OFF)
+option(cmr_PRINT_DEBUG "cmr_PRINT_DEBUG" OFF)
 
 
 #-----------------------------------------------------------------------
@@ -43,255 +42,106 @@ endif()
 
 
 #-----------------------------------------------------------------------
-# Set path to LibCMaker root
+# Set path vars
 #-----------------------------------------------------------------------
 
-set(LibCMaker_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker")
-# Uncomment it if need functions from LibCMaker
-#list(APPEND CMAKE_MODULE_PATH "${LibCMaker_DIR}/cmake")
+set(LibCMaker_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/libs")
+set(cmr_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 
-
-#-----------------------------------------------------------------------
-# Set vars to LibCMaker_Boost and FindBoost
-#-----------------------------------------------------------------------
-
-set(BOOST_lib_NAME        "Boost")
-set(BOOST_lib_VERSION     "1.64.0")
-set(BOOST_lib_COMPONENTS  filesystem)  # 'system' will also be compiled.
-#set(BOOST_lib_COMPONENTS  all)
-set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_Boost")
-
-# To use below for sample sources.
-set(cmr_UNPACKED_DIR ${CMAKE_CURRENT_BINARY_DIR}/download/unpacked)
-
-# To use our FindBoost.cmake.
-list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
-
-# Set required compiler language standards.
-set(CMAKE_C_STANDARD 99)    # 11 99 90
-set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
-
-#set(PRINT_BOOST_DEBUG ON)  # Extra debug info from 'b2' tool.
+if(NOT cmr_UNPACKED_DIR)
+  set(cmr_UNPACKED_DIR "${PROJECT_BINARY_DIR}/download/unpacked")
+endif()
 
 
 #-----------------------------------------------------------------------
-# Library specific vars and options
+# LibCMaker settings
 #-----------------------------------------------------------------------
 
-#set(B2_PROGRAM_PATH "/bin/b2")  # Use 'b2' in specified path.
-set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
-set(Boost_USE_MULTITHREADED ON)  # Use to build lib and for find_project().
-# Whether to link to static or shared C and C++ runtime.
-# If DEFINED then add 'runtime-link' to 'b2' tool with value
-# 'static' for 'ON' or 'shared' for OFF.
-#set(Boost_USE_STATIC_RUNTIME ON)
-
-# Determine whether to choose library names and header locations.
-set(BOOST_LAYOUT_TYPE "tagged")  # "versioned", "tagged" or "system",
-# From 'b2 --help':
-# Determine whether to choose library names and header locations
-# such that multiple versions of Boost or multiple compilers
-# can be used on the same system.
-# -- versioned -- Names of boost binaries include the Boost version number,
-# name and version of the compiler and encoded build properties.
-# Boost headers are installed in a subdirectory of <HDRDIR>
-# whose name contains the Boost version number.
-# -- tagged -- Names of boost binaries include the encoded build properties
-# such as variant and threading, but do not including compiler name and
-# version, or Boost version. This option is useful if you build several
-# variants of Boost, using the same compiler.
-# -- system -- Binaries names do not include the Boost version number or
-# the name and version number of the compiler. Boost headers are installed
-# directly into <HDRDIR>. This option is intended for system integrators
-# building distribution packages.
-
-# Disable Unicode/ICU support in Regex.
-set(BOOST_WITHOUT_ICU ON)
-
-# Specify the root of the ICU library installation
-# and enable Unicode/ICU support in Regex.
-#set(BOOST_WITH_ICU_DIR "DIR")  # See setting below.
-
-# Build and install only compiled library files to the stage directory.
-set(BOOST_BUILD_STAGE OFF)
-# Install library files here.
-set(BOOST_BUILD_STAGE_DIR "${CMAKE_INSTALL_PREFIX}/stage")
+set(LibCMaker_DIR "${LibCMaker_LIB_DIR}/LibCMaker")
+list(APPEND CMAKE_MODULE_PATH "${LibCMaker_DIR}/cmake")
+include(cmr_find_package)
 
 
 #-----------------------------------------------------------------------
-# Build and install the ICU
+# Download, configure, build, install and find the required libraries
 #-----------------------------------------------------------------------
+
+option(BUILD_TESTING "Build the testing tree." OFF)
+if(BUILD_TESTING)
+  enable_testing()
+  include(${LibCMaker_LIB_DIR}/LibCMaker_GoogleTest/cmr_build_googletest.cmake)
+endif()
 
 if(NOT BOOST_WITHOUT_ICU)
-  set(ICU_lib_NAME        "ICU")
-  set(ICU_lib_VERSION     "61.1")
-  set(ICU_lib_COMPONENTS  i18n uc data)
-  set(ICU_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}/cmake/LibCMaker_ICU")
-
-  # To use our FindICU.cmake.
-  list(APPEND CMAKE_MODULE_PATH "${ICU_lib_DIR}/cmake/modules")
-
-  set(COPY_ICU_CMAKE_BUILD_SCRIPTS ON)
-
-  # Library specific vars and options.
-
-  # Enable cross compiling
-  set(ICU_CROSS_COMPILING OFF)
-  if(NOT ICU_CROSS_BUILDROOT)
-    # Specify an absolute path to the build directory of an ICU built for the current platform
-    set(ICU_CROSS_BUILDROOT "")
-  endif()
-  # Compile with strict compiler options
-  set(ICU_ENABLE_STRICT ON)
-  # Compile with 'm' library.
-  set(ICU_USE_LIB_M OFF)
-  # Enable auto cleanup of libraries
-  set(ICU_ENABLE_AUTO_CLEANUP OFF)
-  # Enable draft APIs (and internal APIs)
-  set(ICU_ENABLE_DRAFT ON)
-  # Add a version suffix to symbols
-  set(ICU_ENABLE_RENAMING ON)
-  # Enable function and data tracing
-  set(ICU_ENABLE_TRACING OFF)
-  # Enable plugins
-  set(ICU_ENABLE_PLUGINS OFF)
-  # Disable dynamic loading
-  set(ICU_DISABLE_DYLOAD ON)
-  # Use rpath when linking
-  set(ICU_ENABLE_RPATH OFF)
-  # Compile with 'wxs' or 'w' libraries.
-  set(ICU_USE_WCS_OR_W_LIB OFF)
-  # Build ICU extras
-  set(ICU_ENABLE_EXTRAS OFF) # TODO: not released
-  # Build ICU's icuio library
-  set(ICU_ENABLE_ICUIO ON)
-  # Build ICU's Paragraph Layout library. icu-le-hb must be available via find_package(icu-le-hb). See http://harfbuzz.org
-  set(ICU_ENABLE_LAYOUTEX OFF) # TODO: not released
-  # ...
-  #set(ICU_ENABLE_LAYOUT OFF)
-  # Build ICU's tools
-  set(ICU_ENABLE_TOOLS ON)
-  # Specify how to package ICU data. Possible values: files, archive, library, static, auto. See http://userguide.icu-project.org/icudata for more info
-  set(ICU_DATA_PACKAGING "auto") # TODO: 'files' mode is not released
-  # Tag a suffix to the library names
-  set(ICU_LIBRARY_SUFFIX "")
-  # Build ICU tests
-  set(ICU_ENABLE_TESTS OFF) # TODO: not released
-  # Build ICU samples
-  set(ICU_ENABLE_SAMPLES OFF) # TODO: not released
-
-  find_package(Threads REQUIRED)
-
-  include(${LibCMaker_DIR}/cmake/cmr_find_package.cmake)
-  cmr_find_package(
-    LibCMaker_DIR   ${LibCMaker_DIR}
-    NAME            ${ICU_lib_NAME}
-    VERSION         ${ICU_lib_VERSION}
-    COMPONENTS      ${ICU_lib_COMPONENTS}
-    LIB_DIR         ${ICU_lib_DIR}
-    REQUIRED
-  )
-
-  set(BOOST_WITH_ICU_DIR "${CMAKE_INSTALL_PREFIX}")  # See description above.
+  include(${LibCMaker_LIB_DIR}/LibCMaker_ICU/cmr_build_icu.cmake)
 endif()
+include(${LibCMaker_LIB_DIR}/LibCMaker_Boost/cmr_build_boost.cmake)
 
 
 #-----------------------------------------------------------------------
-# Vars to find_project(Boost) only
+# Build the executable of the example
 #-----------------------------------------------------------------------
-
-# Use to select installed Boost configuration.
-# For more vars see in 'cmake/FindBoost.cmake' file.
-
-#set(Boost_USE_MULTITHREADED ON)  # Set above.
-#set(Boost_USE_STATIC_RUNTIME ON)  # Set above.
-
-# Here we depend to BUILD_SHARED_LIBS for Boost_USE_STATIC_LIBS.
-if(BUILD_SHARED_LIBS)
-  set(Boost_USE_STATIC_LIBS OFF)
-else()
-  set(Boost_USE_STATIC_LIBS ON)
-endif()
-
-#set(BOOST_ROOT ${CMAKE_INSTALL_PREFIX})
-set(Boost_NO_SYSTEM_PATHS ON)
-
-
-#-----------------------------------------------------------------------
-# Build, install and find the Boost
-#-----------------------------------------------------------------------
-
-# 'system' will also be built and found.
-
-# Make build and install the library at a config CMake phase.
-# For specified boost components dependence components will builded too.
-include(${LibCMaker_DIR}/cmake/cmr_find_package.cmake)
-
-# Install specified library version and components.
-cmr_find_package(
-  LibCMaker_DIR   ${LibCMaker_DIR}
-  NAME            ${BOOST_lib_NAME}
-  VERSION         ${BOOST_lib_VERSION}
-  COMPONENTS      ${BOOST_lib_COMPONENTS}
-  LIB_DIR         ${BOOST_lib_DIR}
-  REQUIRED
-)
-
-# Install specified library version and only headers.
-#cmr_find_package(
-#  LibCMaker_DIR   ${LibCMaker_DIR}
-#  NAME            ${BOOST_lib_NAME}
-#  VERSION         ${BOOST_lib_VERSION}
-#  LIB_DIR         ${BOOST_lib_DIR}
-#  REQUIRED
-#)
-
-# Install specified library version and all libs.
-#cmr_find_package(
-#  LibCMaker_DIR   ${LibCMaker_DIR}
-#  NAME            ${BOOST_lib_NAME}
-#  VERSION         ${BOOST_lib_VERSION}
-#  COMPONENTS      all
-#  LIB_DIR         ${BOOST_lib_DIR}
-#  REQUIRED
-#)
-
-
-#-----------------------------------------------------------------------
-# Link to the library
-#-----------------------------------------------------------------------
-
-# Build test executables.
 
 # To run it on Linux with the shared libs
 # which are built with non standard path in CMAKE_INSTALL_PREFIX use:
-# LD_LIBRARY_PATH="<${CMAKE_INSTALL_PREFIX}>/lib:.:$LD_LIBRARY_PATH" ./LibCMaker_Boost_Compile_Test_2
+# LD_LIBRARY_PATH="<${CMAKE_INSTALL_PREFIX}>/lib:.:$LD_LIBRARY_PATH" ./LibCMaker_ICU_Compile_Test
 # where <${CMAKE_INSTALL_PREFIX}> is path which is used
 # as value for CMAKE_INSTALL_PREFIX.
 
-# Get an example sources from the lib sources.
-set(BOOST_version_underscore "1_64_0")
-set(lib_SRC_DIR
-  "${cmr_UNPACKED_DIR}/boost-${BOOST_lib_VERSION}/boost_${BOOST_version_underscore}"
-)
-set(lib_EXAMPLES_SRC_DIR ${lib_SRC_DIR}/libs/filesystem/example)
-# TODO: add compilation of filesystem example.
+set(example_src_DIR "${CMAKE_CURRENT_LIST_DIR}/src")
 
-# Example #1
-add_executable(${PROJECT_NAME} test_header.cpp)
+# Example #1, with compiled Boost regex ...
+if(NOT BOOST_WITHOUT_ICU)
+  # ... and with ICU
+  add_executable(${PROJECT_NAME}
+    ${example_src_DIR}/example_regex_with_icu.cpp
+  )
+else()
+  # ... and without ICU
+  add_executable(${PROJECT_NAME}
+    ${example_src_DIR}/example_regex.cpp
+  )
+endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
-# Boost
-#target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} Boost::boost)
-
-# Example #2
-add_executable(${PROJECT_NAME}_2 test_compiled.cpp)
+# Example #2, only with Boost headers
+add_executable(${PROJECT_NAME}_2
+  ${example_src_DIR}/test_boost_headers.cpp
+)
 set_property(TARGET ${PROJECT_NAME}_2 PROPERTY CXX_STANDARD 11)
 
-# Boost
-#target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
-#target_link_libraries(${PROJECT_NAME}_2 ${Boost_LIBRARIES})
+# Example #3, with compiled Boost filesystem
+add_executable(${PROJECT_NAME}_3
+  ${example_src_DIR}/test_boost_compiled.cpp
+)
+set_property(TARGET ${PROJECT_NAME}_3 PROPERTY CXX_STANDARD 11)
 
+
+#-----------------------------------------------------------------------
+# Link to the libraries
+#-----------------------------------------------------------------------
+
+# Boost
+target_link_libraries(${PROJECT_NAME} PRIVATE Boost::regex)
+target_link_libraries(${PROJECT_NAME}_2 PRIVATE Boost::boost)
 # 'system' will also be added as IMPORT library.
-target_link_libraries(${PROJECT_NAME}_2 Boost::filesystem)
+target_link_libraries(${PROJECT_NAME}_3 PRIVATE Boost::filesystem)
+
+#target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+#target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
+#target_include_directories(${PROJECT_NAME}_2 PRIVATE ${Boost_INCLUDE_DIRS})
+#target_include_directories(${PROJECT_NAME}_3 PRIVATE ${Boost_INCLUDE_DIRS})
+#target_link_libraries(${PROJECT_NAME}_3 PRIVATE ${Boost_LIBRARIES})
+
+if(NOT BOOST_WITHOUT_ICU)
+  # ICU
+  target_link_libraries(${PROJECT_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
+endif()
+
+
+#-----------------------------------------------------------------------
+# Testing
+#-----------------------------------------------------------------------
+
+set(test_src_DIR "${CMAKE_CURRENT_LIST_DIR}/src")
+add_subdirectory(test)

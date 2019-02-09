@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -23,7 +23,7 @@
 
 function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
   list(APPEND os_specifics "--layout=${BOOST_LAYOUT_TYPE}")
-  
+
   if(DEFINED Boost_USE_STATIC_RUNTIME)
     if(Boost_USE_STATIC_RUNTIME)
       set(runtime_link_type "static")
@@ -80,7 +80,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     else()
       set(cmr_BJAM_ADDR_MODEL 32)
     endif()
-    
+
     list(APPEND os_specifics "address-model=${cmr_BJAM_ADDR_MODEL}")
     list(APPEND os_specifics "architecture=${cmr_BJAM_ARCH}")
     list(APPEND os_specifics "abi=${cmr_BJAM_ABI}")

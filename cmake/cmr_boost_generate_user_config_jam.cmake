@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2018 NikitaFeodonit
+#    Copyright (c) 2017-2019 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -76,7 +76,7 @@ foreach(link_flag ${link_flags_list})
     " <linkflags>${link_flag}\n"
   )
 endforeach()
-  
+
 file(APPEND ${user_jam_FILE}
   ";\n"
   "${using_mpi}\n"
