@@ -31,6 +31,8 @@
   # https://github.com/crystax/android-platform-ndk/blob/master/build/tools/build-boost.sh
   # Based on the Hunter:
   # https://github.com/ruslo/hunter
+  # Based on the code from cget:
+  # https://github.com/pfultz2/cget/blob/master/cget/cmake/boost.cmake
 
   # CMake build/bundle script for Boost Libraries.
   # Automates build of Boost, allowing optional builds of library components.
@@ -80,49 +82,6 @@
   #
   include(GNUInstallDirs)
 
-  set(boost_modules_DIR "${lib_BASE_DIR}/cmake")
-
-  set(android_user_config_STAMP
-    "${lib_VERSION_BUILD_DIR}/android_user_config_stamp"
-  )
-  if(ANDROID AND NOT EXISTS ${android_user_config_STAMP})
-    cmr_print_status("Patch 'boost/config/user.hpp' in unpacked sources.")
-
-    file(APPEND ${lib_SRC_DIR}/boost/config/user.hpp
-"
-#if defined __USE_FILE_OFFSET64 && defined(__ANDROID__) && defined(__ANDROID_API__) && __ANDROID_API__ < 21
-#undef _FILE_OFFSET_BITS
-#undef __USE_FILE_OFFSET64
-#endif
-"
-    )
-    file(WRITE ${android_user_config_STAMP} "stamp")
-  endif()
-
-  set(regex_user_config_STAMP
-    "${lib_VERSION_BUILD_DIR}/regex_user_config_stamp"
-  )
-  if(NOT BOOST_WITHOUT_ICU AND NOT EXISTS ${regex_user_config_STAMP})
-    cmr_print_status("Patch 'boost/regex/user.hpp' in unpacked sources.")
-
-    file(APPEND ${lib_SRC_DIR}/boost/regex/user.hpp
-"
-// define this if you want to enable support for Unicode via ICU.
-#define BOOST_HAS_ICU
-"
-    )
-    file(WRITE ${regex_user_config_STAMP} "stamp")
-  endif()
-
-
-  #-----------------------------------------------------------------------
-  # Check COMPONENTS and get lib list
-  #
-  include(cmr_boost_get_lib_list)
-  cmr_boost_get_lib_list(
-    boost_LIB_LIST VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS}
-  )
-
 
   #-----------------------------------------------------------------------
   # bootstrap_ARGS
@@ -135,56 +94,118 @@
 
 
   #-----------------------------------------------------------------------
-  # Unicode/ICU support in Regex
+  # Run bootstrap script and build b2 (bjam) if required
   #
-  if(BOOST_WITHOUT_ICU)
-    # Disable Unicode/ICU support in Regex.
-    list(APPEND bootstrap_ARGS
-      "--without-icu"
-    )
-  elseif(BOOST_WITH_ICU_DIR)
-    # Specify the root of the ICU library installation
-    # and enable Unicode/ICU support in Regex.
-    list(APPEND bootstrap_ARGS
-      "--with-icu=${BOOST_WITH_ICU_DIR}"
+  if(DEFINED B2_PROGRAM_PATH AND NOT EXISTS ${B2_PROGRAM_PATH})
+    cmr_print_error(
+      "B2_PROGRAM_PATH is defined as\n'${B2_PROGRAM_PATH}'\n and there is not 'b2' tool in this path."
     )
   endif()
+
+  set(bootstrap_SRC_DIR "${lib_SRC_DIR}/tools/build")
+
+  if(B2_PROGRAM_PATH)
+    set(b2_FILE ${B2_PROGRAM_PATH})
+  else()
+    set(b2_FILE_NAME "b2")
+    unset(b2_FILE CACHE)
+    find_program(b2_FILE NAMES ${b2_FILE_NAME}
+      PATHS ${bootstrap_SRC_DIR} NO_DEFAULT_PATH
+    )
+  endif()
+
+  if(NOT B2_PROGRAM_PATH AND NOT b2_FILE)  # Need to build b2.
+    set(bootstrap_FILE_NAME "bootstrap.sh")
+    if(CMAKE_HOST_WIN32)
+      set(bootstrap_FILE_NAME "bootstrap.bat")
+    endif()
+    set(bootstrap_FILE "${bootstrap_SRC_DIR}/${bootstrap_FILE_NAME}")
+    set(bootstrap_STAMP "${lib_VERSION_BUILD_DIR}/bootstrap_stamp")
+
+    cmr_print_value(bootstrap_FILE)
+
+    if(cmr_PRINT_DEBUG)
+      cmr_print_debug(
+        "bootstrap.sh options:")
+      cmr_print_debug("------")
+      foreach(opt ${bootstrap_ARGS})
+        cmr_print_debug("  ${opt}")
+      endforeach()
+      cmr_print_debug("------")
+    endif()
+
+    # Will add the files in the source tree:
+    #   <boost sources>/b2
+    #   <boost sources>/bjam
+    #   <boost sources>/bootstrap.log
+    #   <boost sources>/project-config.jam
+    #   <boost sources>/tools/build/src/engine/bin.*/*
+    #   <boost sources>/tools/build/src/engine/bootstrap/*
+    add_custom_command(OUTPUT ${bootstrap_STAMP}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_VERSION_BUILD_DIR}
+      COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
+      COMMAND ${CMAKE_COMMAND} -E touch ${bootstrap_STAMP}
+      VERBATIM  # TODO: needed?
+      WORKING_DIRECTORY ${bootstrap_SRC_DIR}
+      COMMENT "Run bootstrap script, build 'b2' program."
+    )
+
+    if(lib_BUILD_HOST_TOOLS AND NOT BUILD_BCP_TOOL)
+      add_custom_target(run_bootstrap ALL
+        DEPENDS ${bootstrap_STAMP}
+      )
+    endif()
+
+    # Prepare the file path to install it.
+    if(CMAKE_HOST_WIN32)
+      set(b2_FILE_NAME "b2.exe")
+    endif()
+    set(b2_FILE "${bootstrap_SRC_DIR}/${b2_FILE_NAME}")
+
+    # Install compiled b2.
+    install(
+      PROGRAMS ${b2_FILE}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endif()
+
+  cmr_print_value(b2_FILE)
 
 
   #-----------------------------------------------------------------------
   # common_b2_ARGS
   #
   set(common_b2_ARGS)
-  list(APPEND common_b2_ARGS "-a") # Rebuild everything
   list(APPEND common_b2_ARGS "-q") # Stop at first error
 
-  if(cmr_PRINT_DEBUG AND PRINT_BOOST_DEBUG)
-    # Show commands as they are executed
-    list(APPEND common_b2_ARGS "-d+2")
-    # Diagnose configuration
-    list(APPEND common_b2_ARGS "--debug-configuration")
-    # Report which targets are built with what properties
-    list(APPEND common_b2_ARGS "--debug-building")
-    # Diagnose generator search/execution
-    list(APPEND common_b2_ARGS "--debug-generator")
+  if(cmr_PRINT_DEBUG)
+    if(BOOST_DEBUG_SHOW_COMMANDS)
+      # Show commands as they are executed
+      list(APPEND common_b2_ARGS "-d+2")
+    endif()
+    if(BOOST_DEBUG_CONFIGURATION)
+      # Diagnose configuration
+      list(APPEND common_b2_ARGS "--debug-configuration")
+    endif()
+    if(BOOST_DEBUG_BUILDING)
+      # Report which targets are built with what properties
+      list(APPEND common_b2_ARGS "--debug-building")
+    endif()
+    if(BOOST_DEBUG_GENERATOR)
+      # Diagnose generator search/execution
+      list(APPEND common_b2_ARGS "--debug-generator")
+    endif()
   else()
     # Suppress all informational messages
     list(APPEND common_b2_ARGS "-d0")
   endif()
 
   # Parallelize build if possible
-  if(NOT DEFINED cmr_BUILD_MULTIPROC)
-    set(cmr_BUILD_MULTIPROC ON)
-  endif()
-  if(cmr_BUILD_MULTIPROC AND NOT DEFINED cmr_BUILD_MULTIPROC_CNT)
+  if(NOT cmr_BUILD_MULTIPROC
+        OR cmr_BUILD_MULTIPROC AND NOT cmr_BUILD_MULTIPROC_CNT)
     set(cmr_BUILD_MULTIPROC_CNT "1")
-    include(ProcessorCount) # ProcessorCount
-    ProcessorCount(CPU_CNT)
-    if(CPU_CNT GREATER 0)
-      set(cmr_BUILD_MULTIPROC_CNT ${CPU_CNT})
-    endif()
-    list(APPEND common_b2_ARGS "-j" "${cmr_BUILD_MULTIPROC_CNT}")
   endif()
+  list(APPEND common_b2_ARGS "-j" "${cmr_BUILD_MULTIPROC_CNT}")
 
   # Build in this location instead of building within the distribution tree.
   list(APPEND common_b2_ARGS
@@ -219,76 +240,8 @@
   set(bcp_b2_ARGS)
   list(APPEND bcp_b2_ARGS ${common_b2_ARGS})
 
-
-  #-----------------------------------------------------------------------
-  # Run bootstrap script and build b2 (bjam) if required
-  #
-  if(DEFINED B2_PROGRAM_PATH AND NOT EXISTS ${B2_PROGRAM_PATH})
-    cmr_print_error(
-      "B2_PROGRAM_PATH is defined as\n'${B2_PROGRAM_PATH}'\n and there is not 'b2' tool in this path."
-    )
-  endif()
-
-  if(B2_PROGRAM_PATH)
-    set(b2_FILE ${B2_PROGRAM_PATH})
-    list(APPEND bootstrap_ARGS "--with-bjam=${b2_FILE}")
-  else()
-    set(b2_FILE_NAME "b2")
-    unset(b2_FILE CACHE)
-    find_program(b2_FILE NAMES ${b2_FILE_NAME}
-      PATHS ${lib_SRC_DIR} NO_DEFAULT_PATH
-    )
-    if(NOT b2_FILE)
-      if(CMAKE_HOST_WIN32)
-        set(b2_FILE_NAME "b2.exe")
-      endif()
-      set(b2_FILE "${lib_SRC_DIR}/${b2_FILE_NAME}")
-    endif()
-  endif()
-
-  if(cmr_PRINT_DEBUG)
-    cmr_print_debug(
-      "bootstrap.sh options:")
-    cmr_print_debug("------")
-    foreach(opt ${bootstrap_ARGS})
-      cmr_print_debug("  ${opt}")
-    endforeach()
-    cmr_print_debug("------")
-  endif()
-
-  set(bootstrap_FILE_NAME "bootstrap.sh")
-  if(CMAKE_HOST_WIN32)
-    set(bootstrap_FILE_NAME "bootstrap.bat")
-  endif()
-  set(bootstrap_FILE "${lib_SRC_DIR}/${bootstrap_FILE_NAME}")
-  set(bootstrap_STAMP "${lib_VERSION_BUILD_DIR}/bootstrap_stamp")
-
-  # Add the files in the source tree:
-  #   <boost sources>/b2
-  #   <boost sources>/bjam
-  #   <boost sources>/bootstrap.log
-  #   <boost sources>/project-config.jam
-  #   <boost sources>/tools/build/src/engine/bin.*/*
-  #   <boost sources>/tools/build/src/engine/bootstrap/*
-  add_custom_command(OUTPUT ${bootstrap_STAMP}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_VERSION_BUILD_DIR}
-    COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
-    COMMAND ${CMAKE_COMMAND} -E touch ${bootstrap_STAMP}
-    WORKING_DIRECTORY ${lib_SRC_DIR}
-    COMMENT "Run bootstrap script."
-  )
-
-  if(lib_BUILD_HOST_TOOLS AND NOT BUILD_BCP_TOOL)
-    add_custom_target(run_bootstrap ALL
-      DEPENDS ${bootstrap_STAMP}
-    )
-  endif()
-
-  if(NOT B2_PROGRAM_PATH)
-    install(
-      PROGRAMS ${b2_FILE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
+  if(BOOST_REBUILD_OPTION)
+    list(APPEND bcp_b2_ARGS "-a") # Rebuild everything
   endif()
 
 
@@ -311,14 +264,16 @@
     endif()
     set(bcp_FILE "${lib_SRC_DIR}/dist/bin/${bcp_FILE_NAME}")
 
-    # Add the files in the source tree:
+    cmr_print_value(bcp_FILE)
+
+    # Will add the files in the source tree:
     #   <boost sources>/dist/*
     add_custom_command(OUTPUT ${bcp_FILE}
-      COMMAND
-        ${b2_FILE} ${bcp_b2_ARGS} "${lib_SRC_DIR}/tools/bcp"
+      COMMAND ${b2_FILE} ${bcp_b2_ARGS} "${lib_SRC_DIR}/tools/bcp"
+      VERBATIM  # TODO: needed?
       WORKING_DIRECTORY ${lib_SRC_DIR}
       DEPENDS ${bootstrap_STAMP}
-      COMMENT "Build 'bcp' tool."
+      COMMENT "Build 'bcp' program."
     )
 
     if(lib_BUILD_HOST_TOOLS)
@@ -343,7 +298,61 @@
 
 
   #-----------------------------------------------------------------------
-  # b2_args
+  # Check COMPONENTS and get lib list
+  #
+  include(cmr_boost_get_lib_list)
+  cmr_boost_get_lib_list(
+    boost_LIB_LIST VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS}
+  )
+
+
+  #-----------------------------------------------------------------------
+  # Patch 'boost/<...>/user.hpp' files
+  #
+  set(android_user_config_STAMP
+    "${lib_VERSION_BUILD_DIR}/android_user_config_stamp"
+  )
+  if(ANDROID AND NOT EXISTS ${android_user_config_STAMP})
+    cmr_print_status("Patch 'boost/config/user.hpp' in unpacked sources.")
+    file(APPEND ${lib_SRC_DIR}/boost/config/user.hpp
+"
+#if defined __USE_FILE_OFFSET64 && defined(__ANDROID__) && defined(__ANDROID_API__) && __ANDROID_API__ < 21
+#undef _FILE_OFFSET_BITS
+#undef __USE_FILE_OFFSET64
+#endif
+"
+    )
+    file(WRITE ${android_user_config_STAMP} "stamp")
+  endif()
+
+  set(regex_user_config_STAMP
+    "${lib_VERSION_BUILD_DIR}/regex_user_config_stamp"
+  )
+  if(NOT BOOST_WITHOUT_ICU)
+    if(ANDROID)
+      cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${lib_BASE_DIR}/patch/boost-${lib_VERSION}/libs/regex/build/Jamfile.v2
+          ${lib_SRC_DIR}/libs/regex/build/Jamfile.v2
+      )
+    endif()
+
+    if(NOT EXISTS ${regex_user_config_STAMP})
+      cmr_print_status("Patch 'boost/regex/user.hpp' in unpacked sources.")
+      file(APPEND ${lib_SRC_DIR}/boost/regex/user.hpp
+"
+// define this if you want to enable support for Unicode via ICU.
+#define BOOST_HAS_ICU
+"
+      )
+      file(WRITE ${regex_user_config_STAMP} "stamp")
+    endif()
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # b2_ARGS
   #
   set(b2_ARGS)
   list(APPEND b2_ARGS ${common_b2_ARGS})
@@ -354,24 +363,37 @@
 
 
   #-----------------------------------------------------------------------
+  # OS specifics
+  #
+  include(cmr_boost_get_os_specifics)
+  cmr_boost_get_os_specifics(os_specifics)
+  list(APPEND b2_ARGS ${os_specifics})
+
+
+  #-----------------------------------------------------------------------
   # Install options and directories
   #
   if(lib_BUILD)
-    if(BOOST_BUILD_STAGE AND BOOST_BUILD_STAGE_DIR)
+    if(BOOST_BUILD_STAGE)
       # Build and install only compiled library files to the stage directory.
       list(APPEND b2_ARGS "stage")
-
-      # Install library files here.
-      list(APPEND b2_ARGS
-        "--stagedir=${BOOST_BUILD_STAGE_DIR}"
+      if(BOOST_BUILD_STAGE_DIR)
+        # Install library files here.
+        list(APPEND b2_ARGS
+          "--stagedir=${BOOST_BUILD_STAGE_DIR}"
+        )
+      endif()
+      install(CODE
+        "message(\"Compiled library files in the stage directory is installed.\")"
       )
     else()
-      # Install headers and compiled library files to the configured locations.
-      list(APPEND b2_ARGS "install")
-
       # Install architecture independent files here
       list(APPEND b2_ARGS
         "--prefix=${CMAKE_INSTALL_PREFIX}"
+      )
+      # Install architecture dependent files here
+      list(APPEND b2_ARGS
+        "--exec-prefix=${CMAKE_INSTALL_FULL_BINDIR}"
       )
       # Install header files here
       list(APPEND b2_ARGS
@@ -381,7 +403,44 @@
       list(APPEND b2_ARGS
         "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
       )
+      list(APPEND b2_ARGS
+        "--stagedir=${lib_VERSION_BUILD_DIR}/stage"
+      )
+
+      # See below the command 'add_custom_target(boost_install ...)'.
+      install(CODE
+        "
+          execute_process(
+            COMMAND ${CMAKE_COMMAND} --build . --target boost_install
+            WORKING_DIRECTORY ${lib_BUILD_DIR}
+          )
+        "
+      )
     endif()
+  endif()
+
+
+  #-----------------------------------------------------------------------
+  # Unicode/ICU support in Regex
+  #
+  if(BOOST_WITHOUT_ICU)
+    # Disable Unicode/ICU support in Regex.
+    list(APPEND b2_ARGS
+      "--disable-icu"
+    )
+  else()
+    if(BOOST_WITH_ICU_DIR)
+      # Specify the root of the ICU library installation.
+      list(APPEND b2_ARGS
+        "-sICU_PATH=${BOOST_WITH_ICU_DIR}"
+      )
+    endif()
+    # If ICU has been built with non-standard names for it's binaries.
+    # Will use "linker-options-for-icu" when linking the library
+    # rather than the default ICU binary names.
+#    list(APPEND b2_ARGS
+#      "\"-sICU_LINK=-licui18n -licuuc -licudata\""
+#    )
   endif()
 
 
@@ -405,21 +464,43 @@
   #-----------------------------------------------------------------------
   # Build variants
   #
-  include(cmr_boost_get_build_variants)
-  cmr_boost_get_build_variants(build_variants)
-  # Use:
-  # -> BUILD_SHARED_LIBS
-  # -> Boost_USE_MULTITHREADED  # Set to ON by default.
+  if(BUILD_SHARED_LIBS)
+    list(APPEND b2_ARGS "link=shared")
+  else()
+    list(APPEND b2_ARGS "link=static")
+  endif()
 
-  list(APPEND b2_ARGS ${build_variants})
+  option(
+    Boost_USE_MULTITHREADED "Build Boost multi threaded library variants" ON
+  )
+  if(Boost_USE_MULTITHREADED)
+    list(APPEND b2_ARGS "threading=multi")
 
+    #if(CMAKE_CXX_STANDARD EQUAL 98)  # TODO: is checking needed?
+      find_package(Threads REQUIRED)
+      if(CMAKE_USE_PTHREADS_INIT)
+        list(APPEND b2_ARGS "threadapi=pthread")
+      elseif(CMAKE_USE_WIN32_THREADS_INIT)
+        list(APPEND b2_ARGS "threadapi=win32")
+      endif()
+    #endif()
 
-  #-----------------------------------------------------------------------
-  # OS specifics
-  #
-  include(cmr_boost_get_os_specifics)
-  cmr_boost_get_os_specifics(os_specifics)
-  list(APPEND b2_ARGS ${os_specifics})
+  else()
+    list(APPEND b2_ARGS "threading=single")
+  endif()
+
+  # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
+  # https://stackoverflow.com/a/24470998
+  list(APPEND b2_ARGS "variant=$<LOWER_CASE:$<CONFIG>>")
+
+  set(BOOST_DEFAULT_LAYOUT_TYPE "system")
+  if(CMAKE_CONFIGURATION_TYPES)
+    set(BOOST_DEFAULT_LAYOUT_TYPE "tagged")
+  endif()
+  set(BOOST_LAYOUT_TYPE ${BOOST_DEFAULT_LAYOUT_TYPE} CACHE STRING
+    "Determine whether to choose library names and header locations, may be 'versioned', 'tagged' or 'system'"
+  )
+  list(APPEND b2_ARGS "--layout=${BOOST_LAYOUT_TYPE}")
 
 
   #-----------------------------------------------------------------------
@@ -440,47 +521,142 @@
   # -> CMAKE_ASM_FLAGS
   # -> CMAKE_SHARED_LINKER_FLAGS
 
+  get_directory_property(B2_COMPILE_FLAGS COMPILE_OPTIONS)
+  string(REPLACE ";" " " B2_COMPILE_FLAGS "${B2_COMPILE_FLAGS}")
+
+  get_directory_property(B2_INCLUDE_DIRECTORIES INCLUDE_DIRECTORIES)
+  foreach(DIR ${B2_INCLUDE_DIRECTORIES})
+    if(MSVC)  # TODO: check it for other compilers.
+      string(APPEND B2_COMPILE_FLAGS " /I ${DIR}")
+    else()
+      string(APPEND B2_COMPILE_FLAGS " -isystem ${DIR}")
+    endif()
+  endforeach()
+
+  get_directory_property(B2_COMPILE_DEFINITIONS COMPILE_DEFINITIONS)
+  foreach(DEF ${B2_COMPILE_DEFINITIONS})
+    if(MSVC)
+      string(APPEND B2_COMPILE_FLAGS " /D ${DEF}")
+    else()
+      string(APPEND B2_COMPILE_FLAGS " -D${DEF}")
+    endif()
+  endforeach()
+
+  get_directory_property(B2_LINK_FLAGS LINK_FLAGS)
+  string(REPLACE ";" " " B2_LINK_FLAGS "${B2_LINK_FLAGS}")
+
   if(BUILD_SHARED_LIBS)
-    set(jam_link_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+    string(APPEND B2_LINK_FLAGS " ${CMAKE_SHARED_LINKER_FLAGS}")
   else()
-    set(jam_link_FLAGS ${CMAKE_STATIC_LINKER_FLAGS})
+    string(APPEND B2_LINK_FLAGS " ${CMAKE_STATIC_LINKER_FLAGS}")
   endif()
+
+  # TODO: is it hack?
+  if(ANDROID AND ANDROID_STL)
+    string(APPEND B2_LINK_FLAGS " -l${ANDROID_STL}")
+  endif()
+
+  set(B2_C_FLAGS "${CMAKE_C_FLAGS} ${B2_COMPILE_FLAGS}")
+  set(B2_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${B2_COMPILE_FLAGS}")
+
+  # Compensate for extra spaces in the flags, which can cause build failures
+  foreach(_b2_flags B2_C_FLAGS B2_CXX_FLAGS B2_LINK_FLAGS)
+    string(REGEX REPLACE "  +" " " ${_b2_flags} "${${_b2_flags}}")
+    string(STRIP "${${_b2_flags}}" ${_b2_flags})
+  endforeach()
+
+  set(cmr_PATH_SEP ":")
+  if(CMAKE_HOST_WIN32)
+    set(cmr_PATH_SEP ";")
+  endif()
+
+  set(B2_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SYSTEM_PREFIX_PATH})
+  set(B2_SYSTEM_PATH)
+  foreach(P ${B2_PATH})
+    list(APPEND B2_SYSTEM_PATH "${P}/bin")
+  endforeach()
+  string(REPLACE ";" "${cmr_PATH_SEP}" B2_SYSTEM_PATH "${B2_SYSTEM_PATH}")
+
+  # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
+  # https://stackoverflow.com/a/24470998
+  set(B2_BUILD_TYPE "$<UPPER_CASE:$<CONFIG>>")
+  set(B2_C_FLAGS "${CMAKE_C_FLAGS_${B2_BUILD_TYPE}} ${B2_C_FLAGS}")
+  set(B2_CXX_FLAGS "${CMAKE_CXX_FLAGS_${B2_BUILD_TYPE}} ${B2_CXX_FLAGS}")
+
+  # Only add these arguments if they are not empty
+  if(NOT "${B2_C_FLAGS}" STREQUAL "")
+    list(APPEND b2_ARGS "cflags=${B2_C_FLAGS}")
+  endif()
+  if(NOT "${B2_CXX_FLAGS}" STREQUAL "")
+    list(APPEND b2_ARGS "cxxflags=${B2_CXX_FLAGS}")
+  endif()
+  if(NOT "${B2_LINK_FLAGS}" STREQUAL "")
+    list(APPEND b2_ARGS "linkflags=${B2_LINK_FLAGS}")
+  endif()
+
+  set(B2_ENV_COMMAND ${CMAKE_COMMAND} -E env
+    "PATH=${B2_SYSTEM_PATH}${cmr_PATH_SEP}$ENV{PATH}"
+    "CC=${CMAKE_C_COMPILER}"
+    "CXX=${CMAKE_CXX_COMPILER}"
+    "CFLAGS=${B2_C_FLAGS}"
+    "CXXFLAGS=${B2_CXX_FLAGS}"
+    "LDFLAGS=${B2_LINK_FLAGS}"
+  )
 
 
   #-----------------------------------------------------------------------
   # Generate 'user-config.jam' file
   #
-  # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
-  # https://stackoverflow.com/a/24470998
-  set(jam_CMAKE_FILE
-    "${boost_modules_DIR}/cmr_boost_generate_user_config_jam.cmake"
-  )
+  cmr_print_status("Generate 'user-config.jam' file.")
+
   set(user_jam_FILE "${lib_VERSION_BUILD_DIR}/user-config.jam")
 
-  add_custom_command(OUTPUT ${user_jam_FILE}
-    COMMAND ${CMAKE_COMMAND}
-      -DLibCMaker_DIR=${lib_LibCMaker_DIR}
-      -Duser_jam_FILE=${user_jam_FILE}
-      -Dtoolset_name=${toolset_name}
-      -Dtoolset_version=${toolset_version}
-      -Dboost_compiler=${boost_compiler}
-      -Duse_cmake_archiver=${use_cmake_archiver}
-      -Dusing_mpi=${using_mpi}
-      -Dbuild_TYPE="$<UPPER_CASE:$<CONFIG>>"
-      -Djam_c_FLAGS="\"${CMAKE_C_FLAGS}\""
-      -Djam_cxx_FLAGS="\"${CMAKE_CXX_FLAGS}\""
-      -Djam_asm_FLAGS="\"${CMAKE_ASM_FLAGS}\""
-      -Djam_link_FLAGS="\"${jam_link_FLAGS}\""
-      -Djam_AR=${CMAKE_AR}
-      -Djam_RANLIB=${CMAKE_RANLIB}
-      -Dcmr_PRINT_DEBUG=${cmr_PRINT_DEBUG}
-      -P ${jam_CMAKE_FILE}
-    WORKING_DIRECTORY ${lib_VERSION_BUILD_DIR}
-    DEPENDS ${bootstrap_STAMP}
-    COMMENT "Generate 'user-config.jam' file."
-  )
+  include(cmr_boost_generate_user_config_jam)
+  cmr_boost_generate_user_config_jam()
+  # Used vars:
+  #   user_jam_FILE
+  #   toolset_name
+  #   toolset_version
+  #   boost_compiler
+  #   CMAKE_RC_COMPILER
+  #   CMAKE_AR
+  #   CMAKE_RANLIB
+  #   use_cmake_archiver
+  #   using_mpi
+  #   cmr_PRINT_DEBUG
+
+  if(cmr_PRINT_DEBUG)
+    cmr_print_debug("------")
+    cmr_print_debug("Boost user jam config:")
+    file(READ "${user_jam_FILE}" user_jam_CONTENT)
+    cmr_print_debug("------\n${user_jam_CONTENT}")
+    cmr_print_debug("------")
+  endif()
 
   list(APPEND b2_ARGS "--user-config=${user_jam_FILE}")
+
+
+  #-----------------------------------------------------------------------
+  # Additional flags
+  #
+  list(APPEND b2_ARGS "--ignore-site-config")
+  list(APPEND b2_ARGS "pch=off")
+
+  set(BOOST_BUILD_FLAGS "" CACHE STRING
+    "Additional flags to pass to the b2 tool"
+  )
+  list(APPEND b2_ARGS ${BOOST_BUILD_FLAGS})
+
+
+  #-----------------------------------------------------------------------
+  # b2_ARGS_BUILD
+  #
+  set(b2_ARGS_BUILD)
+  list(APPEND b2_ARGS_BUILD ${b2_ARGS})
+
+  if(BOOST_REBUILD_OPTION)
+    list(APPEND b2_ARGS_BUILD "-a") # Rebuild everything
+  endif()
 
 
   #-----------------------------------------------------------------------
@@ -489,7 +665,7 @@
   if(cmr_PRINT_DEBUG)
     cmr_print_debug("b2 options for Boost library building:")
     cmr_print_debug("------")
-    foreach(opt ${b2_ARGS})
+    foreach(opt ${b2_ARGS_BUILD})
       cmr_print_debug("  ${opt}")
     endforeach()
     cmr_print_debug("------")
@@ -498,13 +674,44 @@
   set(boost_STAMP "${lib_VERSION_BUILD_DIR}/boost_stamp")
 
   add_custom_command(OUTPUT ${boost_STAMP}
-    COMMAND ${b2_FILE} ${b2_ARGS}
+    COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_BUILD}
     COMMAND ${CMAKE_COMMAND} -E touch ${boost_STAMP}
+    VERBATIM  # TODO: needed?
     WORKING_DIRECTORY ${lib_SRC_DIR}
-    DEPENDS ${bootstrap_STAMP} ${bcp_FILE} ${user_jam_FILE}
+    DEPENDS ${bootstrap_STAMP} ${bcp_FILE}
     COMMENT "Build Boost library."
   )
 
   add_custom_target(build_boost ALL
     DEPENDS ${boost_STAMP}
+  )
+
+
+  #-----------------------------------------------------------------------
+  # b2_ARGS_INSTALL
+  #
+  set(b2_ARGS_INSTALL)
+  list(APPEND b2_ARGS_INSTALL ${b2_ARGS})
+
+  # Install headers and compiled library files to the configured locations.
+  list(APPEND b2_ARGS_INSTALL "install")
+
+
+  #-----------------------------------------------------------------------
+  # Install boost library
+  #
+  if(cmr_PRINT_DEBUG)
+    cmr_print_debug("b2 options for Boost library installing:")
+    cmr_print_debug("------")
+    foreach(opt ${b2_ARGS_INSTALL})
+      cmr_print_debug("  ${opt}")
+    endforeach()
+    cmr_print_debug("------")
+  endif()
+
+  # See above the command 'install(CODE ...)'.
+  add_custom_target(boost_install
+    COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_INSTALL}
+    WORKING_DIRECTORY ${lib_SRC_DIR}
+    COMMENT "Install Boost library."
   )

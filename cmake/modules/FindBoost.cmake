@@ -147,6 +147,9 @@
 #                              used if multiple compatible suffixes should
 #                              be tested for, in decreasing order of
 #                              preference.
+#   Boost_ARCHITECTURE       - Set to the architecture-specific library suffix
+#                              (e.g. "-x64").  Default is auto-computed for the
+#                              C++ compiler in use.
 #   Boost_THREADAPI          - Suffix for "thread" component library name,
 #                              such as "pthread" or "win32".  Names with
 #                              and without this suffix will both be tried.
@@ -235,8 +238,7 @@
 
 # Save project's policies
 cmake_policy(PUSH)
-# Work with CMake 3.2.
-#cmake_policy(SET CMP0057 NEW) # if IN_LIST
+cmake_policy(SET CMP0057 NEW) # if IN_LIST
 
 #-------------------------------------------------------------------------------
 # Before we go searching, check whether boost-cmake is available, unless the
@@ -408,14 +410,22 @@ endmacro()
 #-------------------------------------------------------------------------------
 
 #
+# Convert CMAKE_CXX_COMPILER_VERSION to boost compiler suffix version.
 # Runs compiler with "-dumpversion" and parses major/minor
 # version with a regex.
 #
-function(_Boost_COMPILER_DUMPVERSION _OUTPUT_VERSION)
-  string(REGEX REPLACE "([0-9]+)\\.([0-9]+)(\\.[0-9]+)?" "\\1\\2"
-    _boost_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+
+function(_Boost_COMPILER_DUMPVERSION _OUTPUT_VERSION _OUTPUT_VERSION_MAJOR _OUTPUT_VERSION_MINOR)
+  string(REGEX REPLACE "([0-9]+)\\.([0-9]+)(\\.[0-9]+)?" "\\1"
+    _boost_COMPILER_VERSION_MAJOR "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX REPLACE "([0-9]+)\\.([0-9]+)(\\.[0-9]+)?" "\\2"
+    _boost_COMPILER_VERSION_MINOR "${CMAKE_CXX_COMPILER_VERSION}")
+
+  set(_boost_COMPILER_VERSION "${_boost_COMPILER_VERSION_MAJOR}${_boost_COMPILER_VERSION_MINOR}")
 
   set(${_OUTPUT_VERSION} ${_boost_COMPILER_VERSION} PARENT_SCOPE)
+  set(${_OUTPUT_VERSION_MAJOR} ${_boost_COMPILER_VERSION_MAJOR} PARENT_SCOPE)
+  set(${_OUTPUT_VERSION_MINOR} ${_boost_COMPILER_VERSION_MINOR} PARENT_SCOPE)
 endfunction()
 
 #
@@ -490,25 +500,35 @@ function(_Boost_GUESS_COMPILER_PREFIX _ret)
     if(${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION} VERSION_LESS 1.34)
         set(_boost_COMPILER "-mgw") # no GCC version encoding prior to 1.34
     else()
-      _Boost_COMPILER_DUMPVERSION(_boost_COMPILER_VERSION)
+      _Boost_COMPILER_DUMPVERSION(_boost_COMPILER_VERSION _boost_COMPILER_VERSION_MAJOR _boost_COMPILER_VERSION_MINOR)
       set(_boost_COMPILER "-mgw${_boost_COMPILER_VERSION}")
     endif()
   elseif (UNIX)
-    if (CMAKE_COMPILER_IS_GNUCXX)
+    _Boost_COMPILER_DUMPVERSION(_boost_COMPILER_VERSION _boost_COMPILER_VERSION_MAJOR _boost_COMPILER_VERSION_MINOR)
+    if(NOT Boost_VERSION VERSION_LESS 106900)
+      # From GCC 5 and clang 4, versioning changes and minor becomes patch.
+      # For those compilers, patch is exclude from compiler tag in Boost 1.69+ library naming.
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND _boost_COMPILER_VERSION_MAJOR VERSION_GREATER 4)
+        set(_boost_COMPILER_VERSION "${_boost_COMPILER_VERSION_MAJOR}")
+      elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND _boost_COMPILER_VERSION_MAJOR VERSION_GREATER 3)
+        set(_boost_COMPILER_VERSION "${_boost_COMPILER_VERSION_MAJOR}")
+      endif()
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       if(${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION} VERSION_LESS 1.34)
         set(_boost_COMPILER "-gcc") # no GCC version encoding prior to 1.34
       else()
-        _Boost_COMPILER_DUMPVERSION(_boost_COMPILER_VERSION)
         # Determine which version of GCC we have.
         if(APPLE)
           if(Boost_MINOR_VERSION)
             if(${Boost_MINOR_VERSION} GREATER 35)
               # In Boost 1.36.0 and newer, the mangled compiler name used
-              # on Mac OS X/Darwin is "xgcc".
+              # on macOS/Darwin is "xgcc".
               set(_boost_COMPILER "-xgcc${_boost_COMPILER_VERSION}")
             else()
               # In Boost <= 1.35.0, there is no mangled compiler name for
-              # the Mac OS X/Darwin version of GCC.
+              # the macOS/Darwin version of GCC.
               set(_boost_COMPILER "")
             endif()
           else()
@@ -520,7 +540,10 @@ function(_Boost_GUESS_COMPILER_PREFIX _ret)
           set(_boost_COMPILER "-gcc${_boost_COMPILER_VERSION}")
         endif()
       endif()
-    endif ()
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      # TODO: Find out any Boost version constraints vs clang support.
+      set(_boost_COMPILER "-clang${_boost_COMPILER_VERSION}")
+    endif()
   else()
     # TODO at least Boost_DEBUG here?
     set(_boost_COMPILER "")
@@ -584,7 +607,7 @@ function(_Boost_COMPONENT_DEPENDENCIES component _ret)
   endif()
 
   set(_Boost_IMPORTED_TARGETS TRUE)
-  if(Boost_VERSION VERSION_LESS 103300)
+  if(Boost_VERSION AND Boost_VERSION VERSION_LESS 103300)
     message(WARNING "Imported targets and dependency information not available for Boost version ${Boost_VERSION} (all versions older than 1.33)")
     set(_Boost_IMPORTED_TARGETS FALSE)
   elseif(NOT Boost_VERSION VERSION_LESS 103300 AND Boost_VERSION VERSION_LESS 103500)
@@ -817,26 +840,58 @@ function(_Boost_COMPONENT_DEPENDENCIES component _ret)
     set(_Boost_TIMER_DEPENDENCIES chrono system)
     set(_Boost_WAVE_DEPENDENCIES filesystem system serialization thread chrono date_time atomic)
     set(_Boost_WSERIALIZATION_DEPENDENCIES serialization)
+  elseif(NOT Boost_VERSION VERSION_LESS 106700 AND Boost_VERSION VERSION_LESS 106800)
+    set(_Boost_CHRONO_DEPENDENCIES system)
+    set(_Boost_CONTEXT_DEPENDENCIES thread chrono system date_time)
+    set(_Boost_COROUTINE_DEPENDENCIES context system)
+    set(_Boost_FIBER_DEPENDENCIES context thread chrono system date_time)
+    set(_Boost_FILESYSTEM_DEPENDENCIES system)
+    set(_Boost_IOSTREAMS_DEPENDENCIES regex)
+    set(_Boost_LOG_DEPENDENCIES date_time log_setup system filesystem thread regex chrono atomic)
+    set(_Boost_MATH_DEPENDENCIES math_c99 math_c99f math_c99l math_tr1 math_tr1f math_tr1l atomic)
+    set(_Boost_MPI_DEPENDENCIES serialization)
+    set(_Boost_MPI_PYTHON_DEPENDENCIES python${component_python_version} mpi serialization)
+    set(_Boost_NUMPY_DEPENDENCIES python${component_python_version})
+    set(_Boost_RANDOM_DEPENDENCIES system)
+    set(_Boost_THREAD_DEPENDENCIES chrono system date_time atomic)
+    set(_Boost_TIMER_DEPENDENCIES chrono system)
+    set(_Boost_WAVE_DEPENDENCIES filesystem system serialization thread chrono date_time atomic)
+    set(_Boost_WSERIALIZATION_DEPENDENCIES serialization)
+  elseif(NOT Boost_VERSION VERSION_LESS 106800 AND Boost_VERSION VERSION_LESS 106900)
+    set(_Boost_CHRONO_DEPENDENCIES system)
+    set(_Boost_CONTEXT_DEPENDENCIES thread chrono system date_time)
+    set(_Boost_CONTRACT_DEPENDENCIES thread chrono system date_time)
+    set(_Boost_COROUTINE_DEPENDENCIES context system)
+    set(_Boost_FIBER_DEPENDENCIES context thread chrono system date_time)
+    set(_Boost_FILESYSTEM_DEPENDENCIES system)
+    set(_Boost_IOSTREAMS_DEPENDENCIES regex)
+    set(_Boost_LOG_DEPENDENCIES date_time log_setup system filesystem thread regex chrono atomic)
+    set(_Boost_MATH_DEPENDENCIES math_c99 math_c99f math_c99l math_tr1 math_tr1f math_tr1l atomic)
+    set(_Boost_MPI_DEPENDENCIES serialization)
+    set(_Boost_MPI_PYTHON_DEPENDENCIES python${component_python_version} mpi serialization)
+    set(_Boost_NUMPY_DEPENDENCIES python${component_python_version})
+    set(_Boost_RANDOM_DEPENDENCIES system)
+    set(_Boost_THREAD_DEPENDENCIES chrono system date_time atomic)
+    set(_Boost_TIMER_DEPENDENCIES chrono system)
+    set(_Boost_WAVE_DEPENDENCIES filesystem system serialization thread chrono date_time atomic)
+    set(_Boost_WSERIALIZATION_DEPENDENCIES serialization)
   else()
-    if(NOT Boost_VERSION VERSION_LESS 106700)
-      set(_Boost_CHRONO_DEPENDENCIES system)
-      set(_Boost_CONTEXT_DEPENDENCIES thread chrono system date_time)
-      set(_Boost_COROUTINE_DEPENDENCIES context system)
-      set(_Boost_FIBER_DEPENDENCIES context thread chrono system date_time)
-      set(_Boost_FILESYSTEM_DEPENDENCIES system)
+    if(NOT Boost_VERSION VERSION_LESS 106900)
+      set(_Boost_CONTRACT_DEPENDENCIES thread chrono date_time)
+      set(_Boost_COROUTINE_DEPENDENCIES context)
+      set(_Boost_FIBER_DEPENDENCIES context)
       set(_Boost_IOSTREAMS_DEPENDENCIES regex)
-      set(_Boost_LOG_DEPENDENCIES date_time log_setup system filesystem thread regex chrono atomic)
+      set(_Boost_LOG_DEPENDENCIES date_time log_setup filesystem thread regex chrono atomic)
       set(_Boost_MATH_DEPENDENCIES math_c99 math_c99f math_c99l math_tr1 math_tr1f math_tr1l atomic)
       set(_Boost_MPI_DEPENDENCIES serialization)
       set(_Boost_MPI_PYTHON_DEPENDENCIES python${component_python_version} mpi serialization)
       set(_Boost_NUMPY_DEPENDENCIES python${component_python_version})
-      set(_Boost_RANDOM_DEPENDENCIES system)
-      set(_Boost_THREAD_DEPENDENCIES chrono system date_time atomic)
+      set(_Boost_THREAD_DEPENDENCIES chrono date_time atomic)
       set(_Boost_TIMER_DEPENDENCIES chrono system)
-      set(_Boost_WAVE_DEPENDENCIES filesystem system serialization thread chrono date_time atomic)
+      set(_Boost_WAVE_DEPENDENCIES filesystem serialization thread chrono date_time atomic)
       set(_Boost_WSERIALIZATION_DEPENDENCIES serialization)
     endif()
-    if(NOT Boost_VERSION VERSION_LESS 106800)
+    if(NOT Boost_VERSION VERSION_LESS 107000)
       message(WARNING "New Boost version may have incorrect or missing dependencies and imported targets")
     endif()
   endif()
@@ -873,7 +928,12 @@ function(_Boost_COMPONENT_HEADERS component _hdrs)
   set(_Boost_ATOMIC_HEADERS              "boost/atomic.hpp")
   set(_Boost_CHRONO_HEADERS              "boost/chrono.hpp")
   set(_Boost_CONTAINER_HEADERS           "boost/container/container_fwd.hpp")
-  set(_Boost_CONTEXT_HEADERS             "boost/context/all.hpp")
+  set(_Boost_CONTRACT_HEADERS            "boost/contract.hpp")
+  if(Boost_VERSION VERSION_LESS 106100)
+    set(_Boost_CONTEXT_HEADERS           "boost/context/all.hpp")
+  else()
+    set(_Boost_CONTEXT_HEADERS           "boost/context/detail/fcontext.hpp")
+  endif()
   set(_Boost_COROUTINE_HEADERS           "boost/coroutine/all.hpp")
   set(_Boost_DATE_TIME_HEADERS           "boost/date_time/date.hpp")
   set(_Boost_EXCEPTION_HEADERS           "boost/exception/exception.hpp")
@@ -902,6 +962,12 @@ function(_Boost_COMPONENT_HEADERS component _hdrs)
   set(_Boost_REGEX_HEADERS               "boost/regex.hpp")
   set(_Boost_SERIALIZATION_HEADERS       "boost/serialization/serialization.hpp")
   set(_Boost_SIGNALS_HEADERS             "boost/signals.hpp")
+  set(_Boost_STACKTRACE_ADDR2LINE_HEADERS "boost/stacktrace.hpp")
+  set(_Boost_STACKTRACE_BACKTRACE_HEADERS "boost/stacktrace.hpp")
+  set(_Boost_STACKTRACE_BASIC_HEADERS    "boost/stacktrace.hpp")
+  set(_Boost_STACKTRACE_NOOP_HEADERS     "boost/stacktrace.hpp")
+  set(_Boost_STACKTRACE_WINDBG_CACHED_HEADERS "boost/stacktrace.hpp")
+  set(_Boost_STACKTRACE_WINDBG_HEADERS   "boost/stacktrace.hpp")
   set(_Boost_SYSTEM_HEADERS              "boost/system/config.hpp")
   set(_Boost_TEST_EXEC_MONITOR_HEADERS   "boost/test/test_exec_monitor.hpp")
   set(_Boost_THREAD_HEADERS              "boost/thread.hpp")
@@ -952,11 +1018,7 @@ function(_Boost_MISSING_DEPENDENCIES componentvar extravar)
       set(_Boost_${uppercomponent}_DEPENDENCIES ${_Boost_${uppercomponent}_DEPENDENCIES} PARENT_SCOPE)
       set(_Boost_IMPORTED_TARGETS ${_Boost_IMPORTED_TARGETS} PARENT_SCOPE)
       foreach(componentdep ${_Boost_${uppercomponent}_DEPENDENCIES})
-# Work with CMake 3.2.
-#        if (NOT ("${componentdep}" IN_LIST _boost_processed_components OR "${componentdep}" IN_LIST _boost_new_components))
-        list(FIND _boost_processed_components "${componentdep}" _boost_component_found)
-        list(FIND _boost_new_components "${componentdep}" _boost_component_new)
-        if (_boost_component_found EQUAL -1 AND _boost_component_new EQUAL -1)
+        if (NOT ("${componentdep}" IN_LIST _boost_processed_components OR "${componentdep}" IN_LIST _boost_new_components))
           list(APPEND _boost_new_components ${componentdep})
         endif()
       endforeach()
@@ -1086,7 +1148,8 @@ else()
   # _Boost_COMPONENT_HEADERS.  See the instructions at the top of
   # _Boost_COMPONENT_DEPENDENCIES.
   set(_Boost_KNOWN_VERSIONS ${Boost_ADDITIONAL_VERSIONS}
-    "1.67.0" "1.67" "1.66.0" "1.66" "1.65.1" "1.65.0" "1.65"
+    "1.69.0" "1.69"
+    "1.68.0" "1.68" "1.67.0" "1.67" "1.66.0" "1.66" "1.65.1" "1.65.0" "1.65"
     "1.64.0" "1.64" "1.63.0" "1.63" "1.62.0" "1.62" "1.61.0" "1.61" "1.60.0" "1.60"
     "1.59.0" "1.59" "1.58.0" "1.58" "1.57.0" "1.57" "1.56.0" "1.56" "1.55.0" "1.55"
     "1.54.0" "1.54" "1.53.0" "1.53" "1.52.0" "1.52" "1.51.0" "1.51"
@@ -1329,11 +1392,8 @@ if(Boost_INCLUDE_DIR)
   math(EXPR Boost_MINOR_VERSION "${Boost_VERSION} / 100 % 1000")
   math(EXPR Boost_SUBMINOR_VERSION "${Boost_VERSION} % 100")
 
-# Work with CMake 3.2.
-#  string(APPEND Boost_ERROR_REASON
-#    "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
-  set(Boost_ERROR_REASON
-    "${Boost_ERROR_REASON}Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
+  string(APPEND Boost_ERROR_REASON
+    "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}\nBoost include path: ${Boost_INCLUDE_DIR}")
   if(Boost_DEBUG)
     message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
                    "version.hpp reveals boost "
@@ -1355,26 +1415,16 @@ if(Boost_INCLUDE_DIR)
     endif()
     if(NOT Boost_FOUND)
       # State that we found a version of Boost that is too new or too old.
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON
-#        "\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
-      set(Boost_ERROR_REASON
-        "${Boost_ERROR_REASON}\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
+      string(APPEND Boost_ERROR_REASON
+        "\nDetected version of Boost is too ${_Boost_VERSION_AGE}. Requested version was ${Boost_FIND_VERSION_MAJOR}.${Boost_FIND_VERSION_MINOR}")
       if (Boost_FIND_VERSION_PATCH)
-# Work with CMake 3.2.
-#        string(APPEND Boost_ERROR_REASON
-#          ".${Boost_FIND_VERSION_PATCH}")
-        set(Boost_ERROR_REASON
-          "${Boost_ERROR_REASON}.${Boost_FIND_VERSION_PATCH}")
+        string(APPEND Boost_ERROR_REASON
+          ".${Boost_FIND_VERSION_PATCH}")
       endif ()
       if (NOT Boost_FIND_VERSION_EXACT)
-# Work with CMake 3.2.
-#        string(APPEND Boost_ERROR_REASON " (or newer)")
-        set(Boost_ERROR_REASON "${Boost_ERROR_REASON} (or newer)")
+        string(APPEND Boost_ERROR_REASON " (or newer)")
       endif ()
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON ".")
-      set(Boost_ERROR_REASON "${Boost_ERROR_REASON}.")
+      string(APPEND Boost_ERROR_REASON ".")
     endif ()
   else()
     # Caller will accept any Boost version.
@@ -1382,11 +1432,8 @@ if(Boost_INCLUDE_DIR)
   endif()
 else()
   set(Boost_FOUND 0)
-# Work with CMake 3.2.
-#  string(APPEND Boost_ERROR_REASON
-#    "Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
-  set(Boost_ERROR_REASON
-    "${Boost_ERROR_REASON}Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
+  string(APPEND Boost_ERROR_REASON
+    "Unable to find the Boost header files. Please set BOOST_ROOT to the root directory containing Boost or BOOST_INCLUDEDIR to the directory containing Boost's headers.")
 endif()
 
 # ------------------------------------------------------------------------
@@ -1469,79 +1516,61 @@ if(WIN32 AND Boost_USE_DEBUG_RUNTIME)
   if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC"
           OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang"
           OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
-# Work with CMake 3.2.
-#    string(APPEND _boost_DEBUG_ABI_TAG "g")
-    set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}g")
+    string(APPEND _boost_DEBUG_ABI_TAG "g")
   endif()
 endif()
 #  y        using special debug build of python
 if(Boost_USE_DEBUG_PYTHON)
-# Work with CMake 3.2.
-#  string(APPEND _boost_DEBUG_ABI_TAG "y")
-  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}y")
+  string(APPEND _boost_DEBUG_ABI_TAG "y")
 endif()
 #  d        using a debug version of your code
-# Work with CMake 3.2.
-#string(APPEND _boost_DEBUG_ABI_TAG "d")
-set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}d")
+string(APPEND _boost_DEBUG_ABI_TAG "d")
 #  p        using the STLport standard library rather than the
 #           default one supplied with your compiler
 if(Boost_USE_STLPORT)
-# Work with CMake 3.2.
-#  string(APPEND _boost_RELEASE_ABI_TAG "p")
-#  string(APPEND _boost_DEBUG_ABI_TAG "p")
-  set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}p")
-  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}p")
+  string(APPEND _boost_RELEASE_ABI_TAG "p")
+  string(APPEND _boost_DEBUG_ABI_TAG "p")
 endif()
 #  n        using the STLport deprecated "native iostreams" feature
 #           removed from the documentation in 1.43.0 but still present in
 #           boost/config/auto_link.hpp
 if(Boost_USE_STLPORT_DEPRECATED_NATIVE_IOSTREAMS)
-# Work with CMake 3.2.
-#  string(APPEND _boost_RELEASE_ABI_TAG "n")
-#  string(APPEND _boost_DEBUG_ABI_TAG "n")
-  set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}n")
-  set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}n")
+  string(APPEND _boost_RELEASE_ABI_TAG "n")
+  string(APPEND _boost_DEBUG_ABI_TAG "n")
 endif()
 
 #  -x86     Architecture and address model tag
 #           First character is the architecture, then word-size, either 32 or 64
 #           Only used in 'versioned' layout, added in Boost 1.66.0
-set(_boost_ARCHITECTURE_TAG "")
-# {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
-if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
-# Work with CMake 3.2.
-#  string(APPEND _boost_ARCHITECTURE_TAG "-")
-  set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}-")
-  # This needs to be kept in-sync with the section of CMakePlatformId.h.in
-  # inside 'defined(_WIN32) && defined(_MSC_VER)'
-  if(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "IA64")
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "i")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}i")
-  elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "X86"
-            OR ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "x64")
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "x")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}x")
-  elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "^ARM")
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "a")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}a")
-  elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "MIPS")
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "m")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}m")
+if(DEFINED Boost_ARCHITECTURE)
+  set(_boost_ARCHITECTURE_TAG "${Boost_ARCHITECTURE}")
+  if(Boost_DEBUG)
+    message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
+      "using user-specified Boost_ARCHITECTURE = ${_boost_ARCHITECTURE_TAG}")
   endif()
+else()
+  set(_boost_ARCHITECTURE_TAG "")
+  # {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
+  if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
+    string(APPEND _boost_ARCHITECTURE_TAG "-")
+    # This needs to be kept in-sync with the section of CMakePlatformId.h.in
+    # inside 'defined(_WIN32) && defined(_MSC_VER)'
+    if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "IA64")
+      string(APPEND _boost_ARCHITECTURE_TAG "i")
+    elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "X86"
+              OR CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "x64")
+      string(APPEND _boost_ARCHITECTURE_TAG "x")
+    elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "^ARM")
+      string(APPEND _boost_ARCHITECTURE_TAG "a")
+    elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "MIPS")
+      string(APPEND _boost_ARCHITECTURE_TAG "m")
+    endif()
 
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "64")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}64")
-  else()
-# Work with CMake 3.2.
-#    string(APPEND _boost_ARCHITECTURE_TAG "32")
-    set(_boost_ARCHITECTURE_TAG "${_boost_ARCHITECTURE_TAG}32")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      string(APPEND _boost_ARCHITECTURE_TAG "64")
+    else()
+      string(APPEND _boost_ARCHITECTURE_TAG "32")
+    endif()
   endif()
 endif()
 
@@ -1665,10 +1694,7 @@ endif()
 _Boost_MISSING_DEPENDENCIES(Boost_FIND_COMPONENTS _Boost_EXTRA_FIND_COMPONENTS)
 
 # If thread is required, get the thread libs as a dependency
-# Work with CMake 3.2.
-#if("thread" IN_LIST Boost_FIND_COMPONENTS)
-list(FIND Boost_FIND_COMPONENTS "thread" _Boost_THREAD_DEPENDENCY_LIBS)
-if(NOT _Boost_THREAD_DEPENDENCY_LIBS EQUAL -1)
+if("thread" IN_LIST Boost_FIND_COMPONENTS)
   if(Boost_FIND_QUIETLY)
     set(_Boost_find_quiet QUIET)
   else()
@@ -1786,6 +1812,7 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
     list(APPEND _boost_RELEASE_NAMES
       ${Boost_LIB_PREFIX}${Boost_NAMESPACE}_${component}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_LIB_VERSION}
       ${Boost_LIB_PREFIX}${Boost_NAMESPACE}_${component}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}
+      ${Boost_LIB_PREFIX}${Boost_NAMESPACE}_${component}${_boost_MULTITHREADED}
       ${Boost_LIB_PREFIX}${Boost_NAMESPACE}_${component} )
     if(_boost_STATIC_RUNTIME_WORKAROUND)
       set(_boost_RELEASE_STATIC_ABI_TAG "-s${_boost_RELEASE_ABI_TAG}")
@@ -1937,44 +1964,27 @@ if(Boost_FOUND)
     set(Boost_FOUND 0)
     # We were unable to find some libraries, so generate a sensible
     # error message that lists the libraries we were unable to find.
-# Work with CMake 3.2.
-#    string(APPEND Boost_ERROR_REASON
-#      "\nCould not find the following")
-    set(Boost_ERROR_REASON
-      "${Boost_ERROR_REASON}\nCould not find the following")
+    string(APPEND Boost_ERROR_REASON
+      "\nCould not find the following")
     if(Boost_USE_STATIC_LIBS)
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON " static")
-      set(Boost_ERROR_REASON "${Boost_ERROR_REASON} static")
+      string(APPEND Boost_ERROR_REASON " static")
     endif()
-# Work with CMake 3.2.
-#    string(APPEND Boost_ERROR_REASON
-#      " Boost libraries:\n")
-    set(Boost_ERROR_REASON
-      "${Boost_ERROR_REASON} Boost libraries:\n")
+    string(APPEND Boost_ERROR_REASON
+      " Boost libraries:\n")
     foreach(COMPONENT ${_Boost_MISSING_COMPONENTS})
       string(TOUPPER ${COMPONENT} UPPERCOMPONENT)
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON
-#        "        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
-      set(Boost_ERROR_REASON
-        "${Boost_ERROR_REASON}        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
+      string(APPEND Boost_ERROR_REASON
+        "        ${Boost_NAMESPACE}_${COMPONENT}${Boost_ERROR_REASON_${UPPERCOMPONENT}}\n")
     endforeach()
 
     list(LENGTH Boost_FIND_COMPONENTS Boost_NUM_COMPONENTS_WANTED)
     list(LENGTH _Boost_MISSING_COMPONENTS Boost_NUM_MISSING_COMPONENTS)
     if (${Boost_NUM_COMPONENTS_WANTED} EQUAL ${Boost_NUM_MISSING_COMPONENTS})
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON
-#        "No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
-      set(Boost_ERROR_REASON
-        "${Boost_ERROR_REASON}No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+      string(APPEND Boost_ERROR_REASON
+        "No Boost libraries were found. You may need to set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
     else ()
-# Work with CMake 3.2.
-#      string(APPEND Boost_ERROR_REASON
-#        "Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
-      set(Boost_ERROR_REASON
-        "${Boost_ERROR_REASON}Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
+      string(APPEND Boost_ERROR_REASON
+        "Some (but not all) of the required Boost libraries were found. You may need to install these additional Boost libraries. Alternatively, set BOOST_LIBRARYDIR to the directory containing Boost libraries or BOOST_ROOT to the location of Boost.")
     endif ()
   endif ()
 
@@ -1997,13 +2007,9 @@ if(Boost_FOUND)
     endif()
 
     if(EXISTS "${_boost_LIB_DIR}/lib")
-# Work with CMake 3.2.
-#      string(APPEND _boost_LIB_DIR /lib)
-      set(_boost_LIB_DIR "${_boost_LIB_DIR}/lib")
+      string(APPEND _boost_LIB_DIR /lib)
     elseif(EXISTS "${_boost_LIB_DIR}/stage/lib")
-# Work with CMake 3.2.
-#      string(APPEND _boost_LIB_DIR "/stage/lib")
-      set(_boost_LIB_DIR "${_boost_LIB_DIR}/stage/lib")
+      string(APPEND _boost_LIB_DIR "/stage/lib")
     else()
       set(_boost_LIB_DIR "")
     endif()
@@ -2108,6 +2114,9 @@ if(Boost_FOUND)
         message (STATUS "  ${COMPONENT}")
       endif()
       list(APPEND Boost_LIBRARIES ${Boost_${UPPERCOMPONENT}_LIBRARY})
+      if(COMPONENT STREQUAL "thread")
+        list(APPEND Boost_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+      endif()
     endif()
   endforeach()
 else()

@@ -21,71 +21,58 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-include(${LibCMaker_DIR}/cmake/cmr_print_debug.cmake)
+function(cmr_boost_generate_user_config_jam)
+  # https://boostorg.github.io/build/manual/develop/index.html#bbv2.reference.tools
+  # using <toolset_name> : [<version>] : [c++-compiler-command] : [compiler options] ;
 
-set(jam_c_FLAGS "${CMAKE_C_FLAGS_${build_TYPE}} ${jam_c_FLAGS}")
-set(jam_cxx_FLAGS "${CMAKE_CXX_FLAGS_${build_TYPE}} ${jam_cxx_FLAGS}")
-set(jam_asm_FLAGS "${CMAKE_ASM_FLAGS_${build_TYPE}} ${jam_asm_FLAGS}")
-
-# https://boostorg.github.io/build/manual/develop/index.html#bbv2.reference.tools
-# using <toolset_name> : [<version>] : [c++-compiler-command] : [compiler options] ;
-
-file(WRITE ${user_jam_FILE}
-  "using ${toolset_name}\n"
-  "  : ${toolset_version}\n"
-)
-
-file(APPEND ${user_jam_FILE}
-  "  : \"${boost_compiler}\"\n : \n"
-)
-
-if(use_cmake_archiver)
-  # We need custom '<archiver>' and '<ranlib>' for
-  # Android LTO ('*-gcc-ar' instead of '*-ar')
-  # WARNING: no spaces between '<archiver>' and '${CMAKE_AR}'!
-  file(APPEND ${user_jam_FILE}
-    " <archiver>\"${jam_AR}\"\n"
-    " <ranlib>\"${jam_RANLIB}\"\n"
+  file(WRITE ${user_jam_FILE}
+    "using ${toolset_name}\n"
+    "  : ${toolset_version}\n"
   )
-endif()
 
-string(REPLACE " " ";" c_flags_list "${jam_c_FLAGS}")
-foreach(c_flag ${c_flags_list})
   file(APPEND ${user_jam_FILE}
-    " <cflags>${c_flag}\n"
+    "  : \"${boost_compiler}\"\n : \n"
   )
-endforeach()
 
-string(REPLACE " " ";" cxx_flags_list "${jam_cxx_FLAGS}")
-foreach(cxx_flag ${cxx_flags_list})
+  if(CMAKE_RC_COMPILER)
+    file(APPEND ${user_jam_FILE}
+# TODO: is qoutes needed?
+      #" <rc>\"${CMAKE_RC_COMPILER}\"\n"
+      " <rc>${CMAKE_RC_COMPILER}\n"
+    )
+  endif()
+
+  if(use_cmake_archiver)
+    # We need custom '<archiver>' and '<ranlib>' for
+    # Android LTO ('*-gcc-ar' instead of '*-ar')
+    # WARNING: no spaces between '<archiver>' and '${CMAKE_AR}'!
+
+    if(CMAKE_AR)
+      file(APPEND ${user_jam_FILE}
+# TODO: is qoutes needed?
+      #" <archiver>\"${CMAKE_AR}\"\n"
+        " <archiver>${CMAKE_AR}\n"
+      )
+    endif()
+
+    if(CMAKE_RANLIB)
+      file(APPEND ${user_jam_FILE}
+# TODO: is qoutes needed?
+      #" <ranlib>\"${CMAKE_RANLIB}\"\n"
+        " <ranlib>${CMAKE_RANLIB}\n"
+      )
+    endif()
+  endif()
+
+  foreach(prefix_path ${CMAKE_PREFIX_PATH})
+    file(APPEND ${user_jam_FILE}
+      " <include>${prefix_path}/include\n"
+      " <library-path>${prefix_path}/lib\n"
+    )
+  endforeach()
+
   file(APPEND ${user_jam_FILE}
-    " <cxxflags>${cxx_flag}\n"
+    ";\n"
+    "${using_mpi}\n"
   )
-endforeach()
-
-string(REPLACE " " ";" asm_flags_list "${jam_asm_FLAGS}")
-foreach(asm_flag ${asm_flags_list})
-  file(APPEND ${user_jam_FILE}
-    " <compileflags>${asm_flag}\n"
-  )
-endforeach()
-
-string(REPLACE " " ";" link_flags_list "${jam_link_FLAGS}")
-foreach(link_flag ${link_flags_list})
-  file(APPEND ${user_jam_FILE}
-    " <linkflags>${link_flag}\n"
-  )
-endforeach()
-
-file(APPEND ${user_jam_FILE}
-  ";\n"
-  "${using_mpi}\n"
-)
-
-if(cmr_PRINT_DEBUG)
-  cmr_print_debug("------")
-  cmr_print_debug("Boost user jam config:")
-  file(READ "${user_jam_FILE}" user_jam_CONTENT)
-  cmr_print_debug("------\n${user_jam_CONTENT}")
-  cmr_print_debug("------")
-endif()
+endfunction()

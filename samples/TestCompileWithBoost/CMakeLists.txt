@@ -28,6 +28,9 @@ project(LibCMaker_Boost_Compile_Test CXX)
 option(CMAKE_VERBOSE_MAKEFILE "CMAKE_VERBOSE_MAKEFILE" OFF)
 option(cmr_PRINT_DEBUG "cmr_PRINT_DEBUG" OFF)
 
+# Used by LibCMaker_Boost for Boost building.
+set(CMAKE_CXX_STANDARD 11)  # 20 17 14 11 98
+
 
 #-----------------------------------------------------------------------
 # Configure to find_package()

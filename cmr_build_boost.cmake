@@ -39,21 +39,36 @@ set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
 
 # Set required compiler language standards.
-# Set in main project.
-#set(CMAKE_C_STANDARD 99)    # 11 99 90
-#set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
+# Used by LibCMaker_Boost for Boost building.
+# It is set in main project.
+#set(CMAKE_CXX_STANDARD 11)  # 20 17 14 11 98
 
 
 #-----------------------------------------------------------------------
 # LibCMaker_<LibName> specific vars and options
 #-----------------------------------------------------------------------
 
-option(PRINT_BOOST_DEBUG "Extra debug info from 'b2' tool" OFF)
+# Extra debug info from 'b2' tool.
+option(BOOST_DEBUG_SHOW_COMMANDS
+  "B2 debug: Show commands as they are executed"
+  OFF
+)
+option(BOOST_DEBUG_CONFIGURATION "B2 debug: Diagnose configuration" OFF)
+option(BOOST_DEBUG_BUILDING
+  "B2 debug: Report which targets are built with what properties"
+  OFF
+)
+option(BOOST_DEBUG_GENERATOR
+  "B2 debug: Diagnose generator search/execution"
+  OFF
+)
 
 
 #-----------------------------------------------------------------------
 # Library specific vars and options
 #-----------------------------------------------------------------------
+
+option(BOOST_REBUILD_OPTION "Rebuild everything" OFF)
 
 set(b2_FILE_NAME "b2")
 if(CMAKE_HOST_WIN32)
@@ -79,7 +94,11 @@ else()
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
 
-set(BOOST_LAYOUT_TYPE "tagged" CACHE STRING
+set(BOOST_DEFAULT_LAYOUT_TYPE "system")
+if(CMAKE_CONFIGURATION_TYPES)
+  set(BOOST_DEFAULT_LAYOUT_TYPE "tagged")
+endif()
+set(BOOST_LAYOUT_TYPE ${BOOST_DEFAULT_LAYOUT_TYPE} CACHE STRING
   "Determine whether to choose library names and header locations, may be 'versioned', 'tagged' or 'system'"
 )
 # From 'b2 --help':
@@ -115,10 +134,15 @@ option(BOOST_BUILD_STAGE
 )
 if(BOOST_BUILD_STAGE)
   # Install library files here.
+  # TODO: use CMAKE_STAGING_PREFIX instead of cmr_INSTALL_DIR?
   set(BOOST_BUILD_STAGE_DIR "${cmr_INSTALL_DIR}/stage"
-    CACHE PATH "stage directory"
+    CACHE PATH "Stage directory, install library files here."
   )
 endif()
+
+set(BOOST_BUILD_FLAGS "" CACHE STRING
+  "Additional flags to pass to the b2 tool"
+)
 
 
 #-----------------------------------------------------------------------

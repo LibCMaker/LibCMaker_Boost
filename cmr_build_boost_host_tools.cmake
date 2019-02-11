@@ -37,9 +37,9 @@ set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
 
 # Set required compiler language standards.
-# Set in main project.
-#set(CMAKE_C_STANDARD 99)    # 11 99 90
-#set(CMAKE_CXX_STANDARD 11)  # 17 14 11 98
+# Used by LibCMaker_Boost for Boost building.
+# It is set in main project.
+#set(CMAKE_CXX_STANDARD 11)  # 20 17 14 11 98
 
 
 #-----------------------------------------------------------------------
@@ -53,12 +53,27 @@ set(BUILD_SHARED_LIBS OFF)  # Always static for host tools.
 
 set(BUILD_HOST_TOOLS ON)
 
-option(PRINT_BOOST_DEBUG "Extra debug info from 'b2' tool" OFF)
+# Extra debug info from 'b2' tool.
+option(BOOST_DEBUG_SHOW_COMMANDS
+  "B2 debug: Show commands as they are executed"
+  OFF
+)
+option(BOOST_DEBUG_CONFIGURATION "B2 debug: Diagnose configuration" OFF)
+option(BOOST_DEBUG_BUILDING
+  "B2 debug: Report which targets are built with what properties"
+  OFF
+)
+option(BOOST_DEBUG_GENERATOR
+  "B2 debug: Diagnose generator search/execution"
+  OFF
+)
 
 
 #-----------------------------------------------------------------------
 # Library specific vars and options
 #-----------------------------------------------------------------------
+
+option(BOOST_REBUILD_OPTION "Rebuild everything" OFF)
 
 set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
 

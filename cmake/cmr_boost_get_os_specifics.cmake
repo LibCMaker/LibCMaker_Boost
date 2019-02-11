@@ -22,7 +22,29 @@
 # ****************************************************************************
 
 function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
-  list(APPEND os_specifics "--layout=${BOOST_LAYOUT_TYPE}")
+
+  # Legal values for 'target-os':
+  # "aix" "android" "appletv" "bsd" "cygwin" "darwin" "freebsd" "haiku" "hpux"
+  # "iphone" "linux" "netbsd" "openbsd" "osf" "qnx" "qnxnto" "sgi" "solaris"
+  # "unix" "unixware" "windows" "vms" "elf"
+  if(CYGWIN)
+    set(TARGET_OS "cygwin")
+  elseif(WIN32)
+    set(TARGET_OS "windows")
+  elseif(IOS)
+    set(TARGET_OS "iphone")
+  elseif(APPLE)
+    set(TARGET_OS "darwin")
+  elseif(ANDROID)
+    set(TARGET_OS "android")
+  elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    set(TARGET_OS "linux")
+  elseif(UNIX)
+    set(TARGET_OS "unix")
+  else()
+    cmr_print_error("Unsupported platform.")
+  endif()
+  list(APPEND os_specifics "target-os=${TARGET_OS}")
 
   if(DEFINED Boost_USE_STATIC_RUNTIME)
     if(Boost_USE_STATIC_RUNTIME)
@@ -30,21 +52,21 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     else()
       set(runtime_link_type "shared")
     endif()
+  endif()
+  if(ANDROID)
+    if(ANDROID_STL MATCHES ".*_static")
+      set(runtime_link_type "static")
+    elseif(ANDROID_STL MATCHES ".*_shared")
+      set(runtime_link_type "shared")
+    endif()
+  endif()
+  if(runtime_link_type)
+    # Whether to link to static or shared C and C++ runtime.
     list(APPEND os_specifics "runtime-link=${runtime_link_type}")
   endif()
 
   if(ANDROID)
     #list(APPEND os_specifics "--layout=tagged")
-
-    # Whether to link to static or shared C and C++ runtime.
-    # TODO: see BUILD_SHARED_LIBS and ANDROID_STL=c++_static/c++_shared
-    #list(APPEND os_specifics "runtime-link=shared")
-
-    # Legal values for 'target-os':
-    # "aix" "android" "appletv" "bsd" "cygwin" "darwin" "freebsd" "haiku" "hpux"
-    # "iphone" "linux" "netbsd" "openbsd" "osf" "qnx" "qnxnto" "sgi" "solaris"
-    # "unix" "unixware" "windows" "vms" "elf"
-    list(APPEND os_specifics "target-os=android")
 
     # Legal values for 'binary-format':
     # "elf" "mach-o" "pe" "xcoff"
@@ -84,15 +106,19 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     list(APPEND os_specifics "address-model=${cmr_BJAM_ADDR_MODEL}")
     list(APPEND os_specifics "architecture=${cmr_BJAM_ARCH}")
     list(APPEND os_specifics "abi=${cmr_BJAM_ABI}")
-  endif()
 
-
-  if(APPLE OR MSVC OR (UNIX AND NOT ANDROID))
+  elseif(APPLE OR MSVC OR (UNIX AND NOT ANDROID))
     # TODO: address-model=64 for MSVC and amd64
     #string(COMPARE EQUAL "${cmr_MSVC_ARCH}" "amd64" is_x64)
     #if(MSVC AND is_x64)
     #  list(APPEND os_specifics "address-model=64")
     #endif()
+
+    set(B2_ADDRESS_MODEL "64")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      set(B2_ADDRESS_MODEL "32")
+    endif()
+    list(APPEND os_specifics "address-model=${B2_ADDRESS_MODEL}")
 
     #list(APPEND os_specifics "--layout=tagged")
   endif()

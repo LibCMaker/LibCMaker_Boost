@@ -33,54 +33,46 @@ include(cmr_print_error)
 include(cmr_boost_get_lang_standard_flag)
 
 function(cmr_boost_set_cmake_flags)
-  cmake_parse_arguments(bscf "SKIP_INCLUDES" "CPPFLAGS" "" "${ARGV}")
+  cmake_parse_arguments(bscf "SKIP_INCLUDES" "" "" "${ARGV}")
   # -> bscf_SKIP_INCLUDES
-  # -> bscf_CPPFLAGS
 
   string(COMPARE NOTEQUAL "${bscf_UNPARSED_ARGUMENTS}" "" has_unparsed)
   if(has_unparsed)
     cmr_print_error("Unparsed arguments: ${bscf_UNPARSED_ARGUMENTS}")
   endif()
 
-  set(cppflags "")
+  # --sysroot=/path/to/sysroot do not added by CMake 3.7+
+  if(CMAKE_SYSROOT)
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+  endif()
 
-  if(ANDROID)
-    # --sysroot=/path/to/sysroot do not added by CMake 3.7+
-    if(CMAKE_SYSROOT)
-      set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-      set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
-      set(cppflags        "${cppflags} --sysroot=${CMAKE_SYSROOT}")
-    endif()
+  # CMake 3.6+
+  if(NOT bscf_SKIP_INCLUDES AND CMAKE_VERSION VERSION_GREATER 3.5.9)
+    foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})
+      # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
+      # https://stackoverflow.com/a/6274608
+      set(CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
+      )
+    endforeach()
+    foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
+      set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
+      )
+    endforeach()
+    foreach(x ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES})
+      set(CMAKE_ASM_FLAGS
+        "${CMAKE_ASM_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_ASM} ${x}"
+      )
+    endforeach()
+  endif()
 
-    if(NOT bscf_SKIP_INCLUDES)
-      foreach(x ${CMAKE_C_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
-        # CMake >= 2.8.5 has CMAKE_INCLUDE_SYSTEM_FLAG_C:
-        # https://stackoverflow.com/a/6274608
-        set(CMAKE_C_FLAGS
-          "${CMAKE_C_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_C} ${x}"
-        )
-      endforeach()
-      foreach(x ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
-        set(CMAKE_CXX_FLAGS
-          "${CMAKE_CXX_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
-        )
-        set(cppflags
-          "${cppflags} ${CMAKE_INCLUDE_SYSTEM_FLAG_CXX} ${x}"
-        )
-      endforeach()
-      foreach(x ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES})  # CMake 3.6+
-        set(CMAKE_ASM_FLAGS
-          "${CMAKE_ASM_FLAGS} ${CMAKE_INCLUDE_SYSTEM_FLAG_ASM} ${x}"
-        )
-      endforeach()
-    endif()
-
-    # TODO: work with CMAKE_C_STANDARD_LIBRARIES_INIT
-    set(CMAKE_SHARED_LINKER_FLAGS
-      "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_CXX_STANDARD_LIBRARIES_INIT}"
-    )
-  endif()  # if(ANDROID)
+  # TODO: work with CMAKE_C_STANDARD_LIBRARIES_INIT
+  set(CMAKE_SHARED_LINKER_FLAGS
+    "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_CXX_STANDARD_LIBRARIES_INIT}"
+  )
 
   if(MSVC)
     # Disable auto-linking
@@ -100,11 +92,12 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT}")
   endif()
 
-  cmr_boost_get_lang_standard_flag(C flag)
-  string(COMPARE NOTEQUAL "${flag}" "" has_flag)
-  if(has_flag)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
-  endif()
+# NOTE: 'cflags' is passed to the both the C and C++ compilers.
+#  cmr_boost_get_lang_standard_flag(C flag)
+#  string(COMPARE NOTEQUAL "${flag}" "" has_flag)
+#  if(has_flag)
+#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flag}")
+#  endif()
 
   cmr_boost_get_lang_standard_flag(CXX flag)
   string(COMPARE NOTEQUAL "${flag}" "" has_flag)
@@ -179,11 +172,6 @@ function(cmr_boost_set_cmake_flags)
   string(COMPARE NOTEQUAL "${CMAKE_ASM_COMPILE_OPTIONS_PIC}" "" has_pic)
   if(CMAKE_POSITION_INDEPENDENT_CODE AND has_pic)
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_PIC}")
-  endif()
-
-  string(COMPARE EQUAL "${bscf_CPPFLAGS}" "" is_empty)
-  if(NOT is_empty)
-    set("${bscf_CPPFLAGS}" "${${bscf_CPPFLAGS}} ${cppflags}" PARENT_SCOPE)
   endif()
 
   # Need to find out how to add flags on a per variant mode
