@@ -97,7 +97,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
 
     # Legal values for 'address-model':
     # "16" "32" "64" "32_64"
-    if(ANDROID_SYSROOT_ABI MATCHES "^.{3,4}64$")
+    if(ANDROID_SYSROOT_ABI MATCHES "^....?64$")
       set(cmr_BJAM_ADDR_MODEL 64)
     else()
       set(cmr_BJAM_ADDR_MODEL 32)
