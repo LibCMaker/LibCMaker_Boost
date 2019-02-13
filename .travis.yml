@@ -12,7 +12,10 @@ env:
     - cmr_LIB_NAME=Boost
     - cmr_BUILD_TESTING=ON
 
-    - cmr_SAMPLE_DIR=${TRAVIS_BUILD_DIR}/samples/TestCompileWith${cmr_LIB_NAME}
+    - cmr_WORK_DIR=${HOME}
+    - cmr_REPO_DIR=${HOME}/build/LibCMaker/LibCMaker_${cmr_LIB_NAME}
+    - cmr_SAMPLE_SRC_DIR=${cmr_REPO_DIR}/samples/TestCompileWith${cmr_LIB_NAME}
+    - cmr_SAMPLE_DIR=${cmr_WORK_DIR}/TestCompileWith${cmr_LIB_NAME}
     - cmr_SAMPLE_LIB_DIR=${cmr_SAMPLE_DIR}/libs
     - cmr_HOST_TOOLS_PROJECT_DIR=${cmr_SAMPLE_DIR}/host_tools
 
@@ -40,11 +43,13 @@ build_linux: &build_linux
     - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
 
   before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
     - mkdir ${cmr_BUILD_DIR}
     - mkdir ${cmr_INSTALL_DIR}
     - mkdir ${cmr_DOWNLOAD_DIR}
-    - mkdir ${cmr_SAMPLE_LIB_DIR}
-    - ln -s ../../../../LibCMaker_${cmr_LIB_NAME} ${cmr_SAMPLE_LIB_DIR}
 
     - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.4/${cmr_CMAKE_RELEASE}.tar.gz
     - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
@@ -74,6 +79,7 @@ build_linux: &build_linux
           -DBOOST_DEBUG_CONFIGURATION=ON
           -DBOOST_DEBUG_BUILDING=OFF
           -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
           -DBOOST_REBUILD_OPTION=OFF
 
     - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
@@ -128,12 +134,14 @@ build_android: &build_android
     - cmr_HOST_TOOLS_STAMP_FILE_NAME="host_tools_stamp"
 
   before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
     - mkdir ${cmr_BUILD_DIR}
     - mkdir ${cmr_HOST_BUILD_DIR}
     - mkdir ${cmr_INSTALL_DIR}
     - mkdir ${cmr_DOWNLOAD_DIR}
-    - mkdir ${cmr_SAMPLE_LIB_DIR}
-    - ln -s ../../../../LibCMaker_${cmr_LIB_NAME} ${cmr_SAMPLE_LIB_DIR}
 
     - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.6/${cmr_CMAKE_RELEASE}.tar.gz
     - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
@@ -163,7 +171,11 @@ build_android: &build_android
           -DBUILD_SHARED_LIBS=OFF
         -DLibCMaker_LIB_DIR=${cmr_SAMPLE_LIB_DIR}
           -DHOST_TOOLS_STAMP_FILE_NAME=${cmr_HOST_TOOLS_STAMP_FILE_NAME}
-          -DPRINT_BOOST_DEBUG=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
 
     - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
 
@@ -196,6 +208,7 @@ build_android: &build_android
           -DBOOST_DEBUG_CONFIGURATION=ON
           -DBOOST_DEBUG_BUILDING=OFF
           -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
           -DBOOST_REBUILD_OPTION=OFF
 
     - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
