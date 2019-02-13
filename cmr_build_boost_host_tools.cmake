@@ -67,6 +67,10 @@ option(BOOST_DEBUG_GENERATOR
   "B2 debug: Diagnose generator search/execution"
   OFF
 )
+option(BOOST_DEBUG_INSTALL
+  "Extra debug info from 'b2' tool during the installation phase."
+  OFF
+)
 
 
 #-----------------------------------------------------------------------

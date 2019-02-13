@@ -178,28 +178,6 @@
   set(common_b2_ARGS)
   list(APPEND common_b2_ARGS "-q") # Stop at first error
 
-  if(cmr_PRINT_DEBUG)
-    if(BOOST_DEBUG_SHOW_COMMANDS)
-      # Show commands as they are executed
-      list(APPEND common_b2_ARGS "-d+2")
-    endif()
-    if(BOOST_DEBUG_CONFIGURATION)
-      # Diagnose configuration
-      list(APPEND common_b2_ARGS "--debug-configuration")
-    endif()
-    if(BOOST_DEBUG_BUILDING)
-      # Report which targets are built with what properties
-      list(APPEND common_b2_ARGS "--debug-building")
-    endif()
-    if(BOOST_DEBUG_GENERATOR)
-      # Diagnose generator search/execution
-      list(APPEND common_b2_ARGS "--debug-generator")
-    endif()
-  else()
-    # Suppress all informational messages
-    list(APPEND common_b2_ARGS "-d0")
-  endif()
-
   # Parallelize build if possible
   if(NOT cmr_BUILD_MULTIPROC
         OR cmr_BUILD_MULTIPROC AND NOT cmr_BUILD_MULTIPROC_CNT)
@@ -239,6 +217,28 @@
   # for bcp building to prevent "duplicate target" errors.
   set(bcp_b2_ARGS)
   list(APPEND bcp_b2_ARGS ${common_b2_ARGS})
+
+  if(cmr_PRINT_DEBUG)
+    if(BOOST_DEBUG_SHOW_COMMANDS)
+      # Show commands as they are executed
+      list(APPEND bcp_b2_ARGS "-d+2")
+    endif()
+    if(BOOST_DEBUG_CONFIGURATION)
+      # Diagnose configuration
+      list(APPEND bcp_b2_ARGS "--debug-configuration")
+    endif()
+    if(BOOST_DEBUG_BUILDING)
+      # Report which targets are built with what properties
+      list(APPEND bcp_b2_ARGS "--debug-building")
+    endif()
+    if(BOOST_DEBUG_GENERATOR)
+      # Diagnose generator search/execution
+      list(APPEND bcp_b2_ARGS "--debug-generator")
+    endif()
+  else()
+    # Suppress all informational messages
+    list(APPEND bcp_b2_ARGS "-d0")
+  endif()
 
   if(BOOST_REBUILD_OPTION)
     list(APPEND bcp_b2_ARGS "-a") # Rebuild everything
@@ -325,19 +325,10 @@
     file(WRITE ${android_user_config_STAMP} "stamp")
   endif()
 
-  set(regex_user_config_STAMP
-    "${lib_VERSION_BUILD_DIR}/regex_user_config_stamp"
-  )
   if(NOT BOOST_WITHOUT_ICU)
-    if(ANDROID)
-      cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
-      execute_process(
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          ${lib_BASE_DIR}/patch/boost-${lib_VERSION}/libs/regex/build/Jamfile.v2
-          ${lib_SRC_DIR}/libs/regex/build/Jamfile.v2
-      )
-    endif()
-
+    set(regex_user_config_STAMP
+      "${lib_VERSION_BUILD_DIR}/regex_user_config_stamp"
+    )
     if(NOT EXISTS ${regex_user_config_STAMP})
       cmr_print_status("Patch 'boost/regex/user.hpp' in unpacked sources.")
       file(APPEND ${lib_SRC_DIR}/boost/regex/user.hpp
@@ -347,6 +338,15 @@
 "
       )
       file(WRITE ${regex_user_config_STAMP} "stamp")
+    endif()
+
+    if(ANDROID)
+      cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${lib_BASE_DIR}/patch/boost-${lib_VERSION}/libs/regex/build/Jamfile.v2
+          ${lib_SRC_DIR}/libs/regex/build/Jamfile.v2
+      )
     endif()
   endif()
 
@@ -542,22 +542,16 @@
     endif()
   endforeach()
 
+  set(B2_C_FLAGS "${CMAKE_C_FLAGS} ${B2_COMPILE_FLAGS}")
+  set(B2_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${B2_COMPILE_FLAGS}")
+
   get_directory_property(B2_LINK_FLAGS LINK_FLAGS)
   string(REPLACE ";" " " B2_LINK_FLAGS "${B2_LINK_FLAGS}")
-
   if(BUILD_SHARED_LIBS)
     string(APPEND B2_LINK_FLAGS " ${CMAKE_SHARED_LINKER_FLAGS}")
   else()
     string(APPEND B2_LINK_FLAGS " ${CMAKE_STATIC_LINKER_FLAGS}")
   endif()
-
-  # TODO: is it hack?
-  if(ANDROID AND ANDROID_STL)
-    string(APPEND B2_LINK_FLAGS " -l${ANDROID_STL}")
-  endif()
-
-  set(B2_C_FLAGS "${CMAKE_C_FLAGS} ${B2_COMPILE_FLAGS}")
-  set(B2_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${B2_COMPILE_FLAGS}")
 
   # Compensate for extra spaces in the flags, which can cause build failures
   foreach(_b2_flags B2_C_FLAGS B2_CXX_FLAGS B2_LINK_FLAGS)
@@ -579,9 +573,9 @@
 
   # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
   # https://stackoverflow.com/a/24470998
-  set(B2_BUILD_TYPE "$<UPPER_CASE:$<CONFIG>>")
-  set(B2_C_FLAGS "${CMAKE_C_FLAGS_${B2_BUILD_TYPE}} ${B2_C_FLAGS}")
-  set(B2_CXX_FLAGS "${CMAKE_CXX_FLAGS_${B2_BUILD_TYPE}} ${B2_CXX_FLAGS}")
+  set(B2_C_FLAGS "${B2_C_FLAGS} $<$<CONFIG:Release>:${CMAKE_C_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_DEBUG}>")
+  set(B2_CXX_FLAGS "${B2_CXX_FLAGS} $<$<CONFIG:Release>:${CMAKE_CXX_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_DEBUG}>")
+
 
   # Only add these arguments if they are not empty
   if(NOT "${B2_C_FLAGS}" STREQUAL "")
@@ -654,6 +648,28 @@
   set(b2_ARGS_BUILD)
   list(APPEND b2_ARGS_BUILD ${b2_ARGS})
 
+  if(cmr_PRINT_DEBUG)
+    if(BOOST_DEBUG_SHOW_COMMANDS)
+      # Show commands as they are executed
+      list(APPEND b2_ARGS_BUILD "-d+2")
+    endif()
+    if(BOOST_DEBUG_CONFIGURATION)
+      # Diagnose configuration
+      list(APPEND b2_ARGS_BUILD "--debug-configuration")
+    endif()
+    if(BOOST_DEBUG_BUILDING)
+      # Report which targets are built with what properties
+      list(APPEND b2_ARGS_BUILD "--debug-building")
+    endif()
+    if(BOOST_DEBUG_GENERATOR)
+      # Diagnose generator search/execution
+      list(APPEND b2_ARGS_BUILD "--debug-generator")
+    endif()
+  else()
+    # Suppress all informational messages
+    list(APPEND b2_ARGS_BUILD "-d0")
+  endif()
+
   if(BOOST_REBUILD_OPTION)
     list(APPEND b2_ARGS_BUILD "-a") # Rebuild everything
   endif()
@@ -693,6 +709,28 @@
   set(b2_ARGS_INSTALL)
   list(APPEND b2_ARGS_INSTALL ${b2_ARGS})
 
+  if(cmr_PRINT_DEBUG AND BOOST_DEBUG_INSTALL)
+    if(BOOST_DEBUG_SHOW_COMMANDS)
+      # Show commands as they are executed
+      list(APPEND b2_ARGS_INSTALL "-d+2")
+    endif()
+    if(BOOST_DEBUG_CONFIGURATION)
+      # Diagnose configuration
+      list(APPEND b2_ARGS_INSTALL "--debug-configuration")
+    endif()
+    if(BOOST_DEBUG_BUILDING)
+      # Report which targets are built with what properties
+      list(APPEND b2_ARGS_INSTALL "--debug-building")
+    endif()
+    if(BOOST_DEBUG_GENERATOR)
+      # Diagnose generator search/execution
+      list(APPEND b2_ARGS_INSTALL "--debug-generator")
+    endif()
+  else()
+    # Suppress all informational messages
+    list(APPEND b2_ARGS_INSTALL "-d0")
+  endif()
+
   # Install headers and compiled library files to the configured locations.
   list(APPEND b2_ARGS_INSTALL "install")
 
@@ -712,6 +750,7 @@
   # See above the command 'install(CODE ...)'.
   add_custom_target(boost_install
     COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_INSTALL}
+    VERBATIM  # TODO: needed?
     WORKING_DIRECTORY ${lib_SRC_DIR}
     COMMENT "Install Boost library."
   )
