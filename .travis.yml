@@ -97,6 +97,102 @@ build_linux_clang: &build_linux_clang
   compiler: clang
 
 
+# === Windows ===
+
+build_windows: &build_windows
+  stage: Test
+  os: windows
+  env: &build_windows_env
+    - cmr_TARGET_OS=windows
+
+    - cmr_CMAKE_RELEASE=cmake-3.11.1-win64-x64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+    - cmr_CMAKE_BUILD_TYPE=Release
+
+    - PATH=${cmr_INSTALL_DIR}/bin:${PATH}
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.11/${cmr_CMAKE_RELEASE}.zip
+    - 7z.exe x -aoa -o${cmr_INSTALL_DIR} ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.zip
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_COLOR_MAKEFILE=ON
+        -DBUILD_TESTING=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS=${cmr_BUILD_SHARED_LIBS}
+        -DCMAKE_GENERATOR="${cmr_CMAKE_GENERATOR}"
+          -DCMAKE_GENERATOR_PLATFORM="${cmr_CMAKE_GENERATOR_PLATFORM}"
+          -DCMAKE_GENERATOR_TOOLSET="${cmr_CMAKE_GENERATOR_TOOLSET}"
+          -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+          -DBOOST_REBUILD_OPTION=OFF
+
+    - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE}
+
+    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
+
+
+build_windows_msvc: &build_windows_msvc
+  <<: *build_windows
+  env: &build_windows_msvc_env
+    - *build_windows_env
+    - cmr_CMAKE_GENERATOR="Visual Studio 15 2017"
+
+
+build_windows_msvc_x64: &build_windows_msvc_x64
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_x64_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="x64"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141,host=x64"
+
+
+build_windows_msvc_x32: &build_windows_msvc_x32
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_x32_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="Win32"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141,host=x64"
+
+
+build_windows_msvc_winxp: &build_windows_msvc_winxp
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_winxp_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="Win32"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
+
+
 # === Android ===
 
 build_android: &build_android
@@ -277,6 +373,43 @@ jobs:
       env:
         - *build_linux_env
         - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# Windows, msvc
+    - <<: *build_windows_msvc_x64
+      name: "Windows, msvc, x64, shared"
+      env:
+        - *build_windows_msvc_x64_env
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_windows_msvc_x64
+      name: "Windows, msvc, x64, static"
+      env:
+        - *build_windows_msvc_x64_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_windows_msvc_x32
+      name: "Windows, msvc, x32, shared"
+      env:
+        - *build_windows_msvc_x32_env
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_windows_msvc_x32
+      name: "Windows, msvc, x32, static"
+      env:
+        - *build_windows_msvc_x32_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_windows_msvc_winxp
+      name: "Windows, msvc, winxp, shared"
+      env:
+        - *build_windows_msvc_winxp_env
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_windows_msvc_winxp
+      name: "Windows, msvc, winxp, static"
+      env:
+        - *build_windows_msvc_winxp_env
         - cmr_BUILD_SHARED_LIBS=OFF
 
 # Android, shared
