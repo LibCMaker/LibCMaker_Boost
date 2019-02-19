@@ -46,7 +46,10 @@ if(BUILD_TESTING)
   )
 
   # Boost
-  target_link_libraries(${test_NAME} PRIVATE Boost::regex)
+  # About 'Boost::disable_autolinking' see 'FindBoost.cmake'.
+  target_link_libraries(${test_NAME} PRIVATE
+    Boost::disable_autolinking Boost::regex
+  )
 
   if(NOT BOOST_WITHOUT_ICU)
     # ICU

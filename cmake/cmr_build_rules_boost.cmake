@@ -145,7 +145,7 @@
       COMMAND ${CMAKE_COMMAND} -E make_directory ${lib_VERSION_BUILD_DIR}
       COMMAND ${bootstrap_FILE} ${bootstrap_ARGS}
       COMMAND ${CMAKE_COMMAND} -E touch ${bootstrap_STAMP}
-      VERBATIM  # TODO: needed?
+      VERBATIM
       WORKING_DIRECTORY ${bootstrap_SRC_DIR}
       COMMENT "Run bootstrap script, build 'b2' program."
     )
@@ -209,6 +209,26 @@
     )
   endif()
 
+  if(CMAKE_HOST_WIN32)
+    if(BOOST_HASH)
+      # Compresses target paths using an MD5 hash.
+      # This option is useful to keep paths from becoming longer
+      # than the filesystem supports.
+      # This option produces shorter paths than --abbreviate-paths does,
+      # but at the cost of making them less understandable.
+      list(APPEND common_b2_ARGS
+        "--hash"
+      )
+    elseif(BOOST_ABBREVIATE_PATHS)
+      # Compresses target paths by abbreviating each component.
+      # This option is useful to keep paths from becoming longer
+      # than the filesystem supports.
+      list(APPEND common_b2_ARGS
+        "--abbreviate-paths"
+      )
+    endif()
+  endif()
+
 
   #-----------------------------------------------------------------------
   # bcp_b2_ARGS
@@ -270,7 +290,7 @@
     #   <boost sources>/dist/*
     add_custom_command(OUTPUT ${bcp_FILE}
       COMMAND ${b2_FILE} ${bcp_b2_ARGS} "${lib_SRC_DIR}/tools/bcp"
-      VERBATIM  # TODO: needed?
+      VERBATIM
       WORKING_DIRECTORY ${lib_SRC_DIR}
       DEPENDS ${bootstrap_STAMP}
       COMMENT "Build 'bcp' program."
@@ -340,7 +360,7 @@
       file(WRITE ${regex_user_config_STAMP} "stamp")
     endif()
 
-    if(ANDROID)
+    if(ANDROID OR MSVC)
       cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
       execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -373,50 +393,43 @@
   #-----------------------------------------------------------------------
   # Install options and directories
   #
-  if(lib_BUILD)
-    if(BOOST_BUILD_STAGE)
-      # Build and install only compiled library files to the stage directory.
-      list(APPEND b2_ARGS "stage")
-      if(BOOST_BUILD_STAGE_DIR)
-        # Install library files here.
-        list(APPEND b2_ARGS
-          "--stagedir=${BOOST_BUILD_STAGE_DIR}"
-        )
-      endif()
-      install(CODE
-        "message(\"Compiled library files in the stage directory is installed.\")"
-      )
-    else()
-      # Install architecture independent files here
-      list(APPEND b2_ARGS
-        "--prefix=${CMAKE_INSTALL_PREFIX}"
-      )
-      # Install architecture dependent files here
-      list(APPEND b2_ARGS
-        "--exec-prefix=${CMAKE_INSTALL_FULL_BINDIR}"
-      )
-      # Install header files here
-      list(APPEND b2_ARGS
-        "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
-      )
+  if(BOOST_BUILD_STAGE)
+    # Build and install only compiled library files to the stage directory.
+    list(APPEND b2_ARGS "stage")
+    if(BOOST_BUILD_STAGE_DIR)
       # Install library files here
       list(APPEND b2_ARGS
-        "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
-      )
-      list(APPEND b2_ARGS
-        "--stagedir=${lib_VERSION_BUILD_DIR}/stage"
-      )
-
-      # See below the command 'add_custom_target(boost_install ...)'.
-      install(CODE
-        "
-          execute_process(
-            COMMAND ${CMAKE_COMMAND} --build . --target boost_install
-            WORKING_DIRECTORY ${lib_BUILD_DIR}
-          )
-        "
+        "--stagedir=${BOOST_BUILD_STAGE_DIR}"
       )
     endif()
+    install(CODE
+      "message(\"Compiled library files in the stage directory is installed.\")"
+    )
+  else()
+    # Install architecture independent files here
+    list(APPEND b2_ARGS
+      "--prefix=${CMAKE_INSTALL_PREFIX}"
+    )
+    # Install header files here
+    list(APPEND b2_ARGS
+      "--includedir=${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+    )
+    # Install binary files here
+    list(APPEND b2_ARGS
+      "--bindir=${CMAKE_INSTALL_FULL_BINDIR}"
+    )
+    # Install library files here
+    list(APPEND b2_ARGS
+      "--libdir=${CMAKE_INSTALL_FULL_LIBDIR}"
+    )
+    # Install architecture dependent files here
+    list(APPEND b2_ARGS
+      "--exec-prefix=${CMAKE_INSTALL_FULL_BINDIR}"
+    )
+    # Used by compilation (without 'install' and 'stage')
+    list(APPEND b2_ARGS
+      "--stagedir=${lib_VERSION_BUILD_DIR}/stage"
+    )
   endif()
 
 
@@ -435,12 +448,15 @@
         "-sICU_PATH=${BOOST_WITH_ICU_DIR}"
       )
     endif()
-    # If ICU has been built with non-standard names for it's binaries.
-    # Will use "linker-options-for-icu" when linking the library
-    # rather than the default ICU binary names.
-#    list(APPEND b2_ARGS
-#      "\"-sICU_LINK=-licui18n -licuuc -licudata\""
-#    )
+    if(MSVC)
+      # If ICU has been built with non-standard names for it's binaries.
+      # Will use "linker-options-for-icu" when linking the library
+      # rather than the default ICU binary names.
+      list(APPEND b2_ARGS
+#        "\"-sICU_LINK=-licui18n -licuuc -licudata\""
+        "-sICU_LINK=\"/LIBPATH:${CMAKE_INSTALL_PREFIX}/bin /LIBPATH:${CMAKE_INSTALL_PREFIX}/lib icuin.lib icuuc.lib icudt.lib\""
+      )
+    endif()
   endif()
 
 
@@ -494,8 +510,8 @@
   list(APPEND b2_ARGS "variant=$<LOWER_CASE:$<CONFIG>>")
 
   set(BOOST_DEFAULT_LAYOUT_TYPE "system")
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(BOOST_DEFAULT_LAYOUT_TYPE "tagged")
+  if(MSVC)
+    set(BOOST_DEFAULT_LAYOUT_TYPE "versioned")
   endif()
   set(BOOST_LAYOUT_TYPE ${BOOST_DEFAULT_LAYOUT_TYPE} CACHE STRING
     "Determine whether to choose library names and header locations, may be 'versioned', 'tagged' or 'system'"
@@ -526,7 +542,7 @@
 
   get_directory_property(B2_INCLUDE_DIRECTORIES INCLUDE_DIRECTORIES)
   foreach(DIR ${B2_INCLUDE_DIRECTORIES})
-    if(MSVC)  # TODO: check it for other compilers.
+    if(MSVC)  # TODO: check the flags for other compilers.
       string(APPEND B2_COMPILE_FLAGS " /I ${DIR}")
     else()
       string(APPEND B2_COMPILE_FLAGS " -isystem ${DIR}")
@@ -559,23 +575,26 @@
     string(STRIP "${${_b2_flags}}" ${_b2_flags})
   endforeach()
 
-  set(cmr_PATH_SEP ":")
-  if(CMAKE_HOST_WIN32)
-    set(cmr_PATH_SEP ";")
-  endif()
-
-  set(B2_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SYSTEM_PREFIX_PATH})
-  set(B2_SYSTEM_PATH)
-  foreach(P ${B2_PATH})
-    list(APPEND B2_SYSTEM_PATH "${P}/bin")
-  endforeach()
-  string(REPLACE ";" "${cmr_PATH_SEP}" B2_SYSTEM_PATH "${B2_SYSTEM_PATH}")
-
   # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
   # https://stackoverflow.com/a/24470998
   set(B2_C_FLAGS "${B2_C_FLAGS} $<$<CONFIG:Release>:${CMAKE_C_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_DEBUG}>")
   set(B2_CXX_FLAGS "${B2_CXX_FLAGS} $<$<CONFIG:Release>:${CMAKE_CXX_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_DEBUG}>")
 
+  set(cmr_PATH_SEP ":")
+  if(CMAKE_HOST_WIN32)
+    set(cmr_PATH_SEP ";")
+  endif()
+
+  set(B2_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_SYSTEM_PREFIX_PATH})
+  set(B2_SYSTEM_PATH)
+  foreach(P ${B2_PREFIX_PATH})
+    list(APPEND B2_SYSTEM_PATH "${P}/bin")
+  endforeach()
+  if(NOT CMAKE_HOST_WIN32)
+    string(REPLACE ";" "${cmr_PATH_SEP}" B2_SYSTEM_PATH "${B2_SYSTEM_PATH}")
+  endif()
+
+  set(B2_PATH "${B2_SYSTEM_PATH}${cmr_PATH_SEP}$ENV{PATH}")
 
   # Only add these arguments if they are not empty
   if(NOT "${B2_C_FLAGS}" STREQUAL "")
@@ -589,7 +608,7 @@
   endif()
 
   set(B2_ENV_COMMAND ${CMAKE_COMMAND} -E env
-    "PATH=${B2_SYSTEM_PATH}${cmr_PATH_SEP}$ENV{PATH}"
+    "PATH=${B2_PATH}"
     "CC=${CMAKE_C_COMPILER}"
     "CXX=${CMAKE_CXX_COMPILER}"
     "CFLAGS=${B2_C_FLAGS}"
@@ -687,70 +706,87 @@
     cmr_print_debug("------")
   endif()
 
-  set(boost_STAMP "${lib_VERSION_BUILD_DIR}/boost_stamp")
+  set(boost_build_STAMP "${lib_VERSION_BUILD_DIR}/boost_build_stamp")
 
-  add_custom_command(OUTPUT ${boost_STAMP}
-    COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_BUILD}
-    COMMAND ${CMAKE_COMMAND} -E touch ${boost_STAMP}
-    VERBATIM  # TODO: needed?
+  add_custom_command(OUTPUT ${boost_build_STAMP}
+#    COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_BUILD}
+    COMMAND ${b2_FILE} ${b2_ARGS_BUILD}
+    COMMAND ${CMAKE_COMMAND} -E touch ${boost_build_STAMP}
+    VERBATIM
     WORKING_DIRECTORY ${lib_SRC_DIR}
     DEPENDS ${bootstrap_STAMP} ${bcp_FILE}
     COMMENT "Build Boost library."
   )
 
-  add_custom_target(build_boost ALL
-    DEPENDS ${boost_STAMP}
-  )
+  if(NOT lib_INSTALL)
+    add_custom_target(boost_build ALL
+      DEPENDS ${boost_build_STAMP}
+    )
+  endif()
 
 
   #-----------------------------------------------------------------------
   # b2_ARGS_INSTALL
   #
-  set(b2_ARGS_INSTALL)
-  list(APPEND b2_ARGS_INSTALL ${b2_ARGS})
+  if(lib_INSTALL)
+    set(b2_ARGS_INSTALL)
+    list(APPEND b2_ARGS_INSTALL ${b2_ARGS})
 
-  if(cmr_PRINT_DEBUG AND BOOST_DEBUG_INSTALL)
-    if(BOOST_DEBUG_SHOW_COMMANDS)
-      # Show commands as they are executed
-      list(APPEND b2_ARGS_INSTALL "-d+2")
+    if(cmr_PRINT_DEBUG AND BOOST_DEBUG_INSTALL)
+      if(BOOST_DEBUG_SHOW_COMMANDS)
+        # Show commands as they are executed
+        list(APPEND b2_ARGS_INSTALL "-d+2")
+      endif()
+      if(BOOST_DEBUG_CONFIGURATION)
+        # Diagnose configuration
+        list(APPEND b2_ARGS_INSTALL "--debug-configuration")
+      endif()
+      if(BOOST_DEBUG_BUILDING)
+        # Report which targets are built with what properties
+        list(APPEND b2_ARGS_INSTALL "--debug-building")
+      endif()
+      if(BOOST_DEBUG_GENERATOR)
+        # Diagnose generator search/execution
+        list(APPEND b2_ARGS_INSTALL "--debug-generator")
+      endif()
+    else()
+      # Suppress all informational messages
+      list(APPEND b2_ARGS_INSTALL "-d0")
     endif()
-    if(BOOST_DEBUG_CONFIGURATION)
-      # Diagnose configuration
-      list(APPEND b2_ARGS_INSTALL "--debug-configuration")
-    endif()
-    if(BOOST_DEBUG_BUILDING)
-      # Report which targets are built with what properties
-      list(APPEND b2_ARGS_INSTALL "--debug-building")
-    endif()
-    if(BOOST_DEBUG_GENERATOR)
-      # Diagnose generator search/execution
-      list(APPEND b2_ARGS_INSTALL "--debug-generator")
-    endif()
-  else()
-    # Suppress all informational messages
-    list(APPEND b2_ARGS_INSTALL "-d0")
+
+    # Install headers and compiled library files to the configured locations.
+    list(APPEND b2_ARGS_INSTALL "install")
   endif()
-
-  # Install headers and compiled library files to the configured locations.
-  list(APPEND b2_ARGS_INSTALL "install")
 
 
   #-----------------------------------------------------------------------
   # Install boost library
   #
-  if(cmr_PRINT_DEBUG)
-    cmr_print_debug("b2 options for Boost library installing:")
-    cmr_print_debug("------")
-    foreach(opt ${b2_ARGS_INSTALL})
-      cmr_print_debug("  ${opt}")
-    endforeach()
-    cmr_print_debug("------")
-  endif()
+  if(lib_INSTALL)
+    if(cmr_PRINT_DEBUG)
+      cmr_print_debug("b2 options for Boost library installing:")
+      cmr_print_debug("------")
+      foreach(opt ${b2_ARGS_INSTALL})
+        cmr_print_debug("  ${opt}")
+      endforeach()
+      cmr_print_debug("------")
+    endif()
 
-  # See above the command 'install(CODE ...)'.
-  add_custom_target(boost_install
-    COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_INSTALL}
-    VERBATIM  # TODO: needed?
-    WORKING_DIRECTORY ${lib_SRC_DIR}
-    COMMENT "Install Boost library."
-  )
+    set(boost_install_STAMP "${lib_VERSION_BUILD_DIR}/boost_install_stamp")
+
+    add_custom_command(OUTPUT ${boost_install_STAMP}
+#      COMMAND ${B2_ENV_COMMAND} ${b2_FILE} ${b2_ARGS_INSTALL}
+      COMMAND ${b2_FILE} ${b2_ARGS_INSTALL}
+      COMMAND ${CMAKE_COMMAND} -E touch ${boost_install_STAMP}
+      VERBATIM
+      WORKING_DIRECTORY ${lib_SRC_DIR}
+      DEPENDS ${boost_build_STAMP}
+      COMMENT "Install Boost library."
+    )
+
+    add_custom_target(boost_install ALL
+      DEPENDS ${boost_install_STAMP}
+    )
+
+    install(CODE "message(STATUS \"Boost library is installed.\")")
+  endif()

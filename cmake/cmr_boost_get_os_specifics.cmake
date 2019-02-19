@@ -23,10 +23,25 @@
 
 function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
 
+  # Legal values for 'architecture':
+  # "x86" "ia64" "sparc" "power"
+  # "mips1" "mips2" "mips3" "mips4" "mips32" "mips32r2" "mips64"
+  # "parisc" "arm" "combined" "combined-x86-power"
+
+  # Legal values for 'abi':
+  # "aapcs" "eabi" "ms" "n32" "n64" "o32" "o64" "sysv" "x32"
+
+  # Legal values for 'address-model':
+  # "16" "32" "64" "32_64"
+
+  # Legal values for 'binary-format':
+  # "elf" "mach-o" "pe" "xcoff"
+
   # Legal values for 'target-os':
   # "aix" "android" "appletv" "bsd" "cygwin" "darwin" "freebsd" "haiku" "hpux"
   # "iphone" "linux" "netbsd" "openbsd" "osf" "qnx" "qnxnto" "sgi" "solaris"
   # "unix" "unixware" "windows" "vms" "elf"
+
   if(CYGWIN)
     set(TARGET_OS "cygwin")
   elseif(WIN32)
@@ -47,10 +62,22 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
   list(APPEND os_specifics "target-os=${TARGET_OS}")
 
   if(DEFINED Boost_USE_STATIC_RUNTIME)
-    if(Boost_USE_STATIC_RUNTIME)
-      set(runtime_link_type "static")
+    if(MSVC)
+      if(BUILD_SHARED_LIBS)
+        set(runtime_link_type "shared")
+      elseif(cmr_USE_MSVC_STATIC_RUNTIME AND Boost_USE_STATIC_RUNTIME)
+        set(runtime_link_type "static")
+      else()
+        set(runtime_link_type "shared")
+      endif()
     else()
-      set(runtime_link_type "shared")
+      if(BUILD_SHARED_LIBS)
+        set(runtime_link_type "shared")
+      elseif(Boost_USE_STATIC_RUNTIME)
+        set(runtime_link_type "static")
+      else()
+        set(runtime_link_type "shared")
+      endif()
     endif()
   endif()
   if(ANDROID)
@@ -66,19 +93,8 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
   endif()
 
   if(ANDROID)
-    #list(APPEND os_specifics "--layout=tagged")
-
-    # Legal values for 'binary-format':
-    # "elf" "mach-o" "pe" "xcoff"
     list(APPEND os_specifics "binary-format=elf")
 
-    # Legal values for 'architecture':
-    # "x86" "ia64" "sparc" "power"
-    # "mips1" "mips2" "mips3" "mips4" "mips32" "mips32r2" "mips64"
-    # "parisc" "arm" "combined" "combined-x86-power"
-    #
-    # Legal values for 'abi':
-    # "aapcs" "eabi" "ms" "n32" "n64" "o32" "o64" "sysv" "x32"
     if(ANDROID_SYSROOT_ABI STREQUAL arm
         OR ANDROID_SYSROOT_ABI STREQUAL arm64)
       set(cmr_BJAM_ARCH arm)
@@ -95,8 +111,6 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
       set(cmr_BJAM_ABI o64)
     endif()
 
-    # Legal values for 'address-model':
-    # "16" "32" "64" "32_64"
     if(ANDROID_SYSROOT_ABI MATCHES "^....?64$")
       set(cmr_BJAM_ADDR_MODEL 64)
     else()
@@ -108,19 +122,18 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     list(APPEND os_specifics "abi=${cmr_BJAM_ABI}")
 
   elseif(APPLE OR MSVC OR (UNIX AND NOT ANDROID))
-    # TODO: address-model=64 for MSVC and amd64
-    #string(COMPARE EQUAL "${cmr_MSVC_ARCH}" "amd64" is_x64)
-    #if(MSVC AND is_x64)
-    #  list(APPEND os_specifics "address-model=64")
-    #endif()
+    list(APPEND os_specifics "architecture=x86")  # TODO: work for 'arm'.
 
     set(B2_ADDRESS_MODEL "64")
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
       set(B2_ADDRESS_MODEL "32")
     endif()
     list(APPEND os_specifics "address-model=${B2_ADDRESS_MODEL}")
-
-    #list(APPEND os_specifics "--layout=tagged")
+    # TODO: address-model=64 for MSVC and amd64
+    #string(COMPARE EQUAL "${cmr_MSVC_ARCH}" "amd64" is_x64)
+    #if(MSVC AND is_x64)
+    #  list(APPEND os_specifics "address-model=64")
+    #endif()
   endif()
 
   set(${out_OS_SPECIFICS} ${os_specifics} PARENT_SCOPE)

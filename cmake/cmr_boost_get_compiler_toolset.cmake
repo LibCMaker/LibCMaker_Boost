@@ -73,7 +73,7 @@ function(cmr_boost_get_compiler_toolset)
 
   set(boost_compiler "${CMAKE_CXX_COMPILER}")
   if(MSVC)
-    string(REPLACE "/" "\\" boost_compiler "${boost_compiler}")
+#    string(REPLACE "/" "\\" boost_compiler "${boost_compiler}")  # NOTE: no not work with MSVC in bash.
   endif()
 
   # TODO: mpi

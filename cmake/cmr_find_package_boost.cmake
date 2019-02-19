@@ -39,8 +39,13 @@
     BOOST_DEBUG_CONFIGURATION
     BOOST_DEBUG_BUILDING
     BOOST_DEBUG_GENERATOR
+    BOOST_DEBUG_INSTALL
+    BOOST_ABBREVIATE_PATHS
+    BOOST_HASH
+    BOOST_REBUILD_OPTION
     BOOST_BUILD_STAGE
     BOOST_BUILD_STAGE_DIR
+    BOOST_BUILD_FLAGS
     BOOST_LAYOUT_TYPE
     BOOST_WITHOUT_ICU
     BOOST_WITH_ICU_DIR
@@ -66,15 +71,13 @@
   if(BUILD_HOST_TOOLS)
     cmr_print_status("======== Build host tools for cross building ========")
     set(lib_BUILD_MODE BUILD_HOST_TOOLS INSTALL)
-  else()
-    if(B2_PROGRAM_PATH)
-      cmr_print_status(
-        "======== Cross building with 'b2' tool in ${B2_PROGRAM_PATH} ========"
-      )
-      list(APPEND find_CMAKE_ARGS
-        -DB2_PROGRAM_PATH=${B2_PROGRAM_PATH}
-      )
-    endif()
+  elseif(B2_PROGRAM_PATH)
+    cmr_print_status(
+      "======== Cross building with 'b2' tool in ${B2_PROGRAM_PATH} ========"
+    )
+    list(APPEND find_CMAKE_ARGS
+      -DB2_PROGRAM_PATH=${B2_PROGRAM_PATH}
+    )
   endif()
 
   cmr_lib_cmaker_main(

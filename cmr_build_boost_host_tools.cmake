@@ -72,6 +72,25 @@ option(BOOST_DEBUG_INSTALL
   OFF
 )
 
+if(CMAKE_HOST_WIN32)
+  # Compresses target paths by abbreviating each component.
+  # This option is useful to keep paths from becoming longer
+  # than the filesystem supports.
+  option(BOOST_ABBREVIATE_PATHS
+    "Compresses target paths by abbreviating each component."
+    ON
+  )
+  # Compresses target paths using an MD5 hash.
+  # This option is useful to keep paths from becoming longer
+  # than the filesystem supports.
+  # This option produces shorter paths than --abbreviate-paths does,
+  # but at the cost of making them less understandable.
+  option(BOOST_HASH
+    "Compresses target paths using an MD5 hash."
+    OFF
+  )
+endif()
+
 
 #-----------------------------------------------------------------------
 # Library specific vars and options

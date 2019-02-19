@@ -67,6 +67,25 @@ option(BOOST_DEBUG_INSTALL
   OFF
 )
 
+if(CMAKE_HOST_WIN32)
+  # Compresses target paths by abbreviating each component.
+  # This option is useful to keep paths from becoming longer
+  # than the filesystem supports.
+  option(BOOST_ABBREVIATE_PATHS
+    "Compresses target paths by abbreviating each component."
+    ON
+  )
+  # Compresses target paths using an MD5 hash.
+  # This option is useful to keep paths from becoming longer
+  # than the filesystem supports.
+  # This option produces shorter paths than --abbreviate-paths does,
+  # but at the cost of making them less understandable.
+  option(BOOST_HASH
+    "Compresses target paths using an MD5 hash."
+    OFF
+  )
+endif()
+
 
 #-----------------------------------------------------------------------
 # Library specific vars and options
@@ -89,22 +108,30 @@ option(BUILD_BCP_TOOL "Build 'bcp' program" OFF)
 # Used to build lib and for find_project().
 option(Boost_USE_MULTITHREADED "Boost_USE_MULTITHREADED" ON)
 
-# Whether to link to static or shared C and C++ runtime.
-# If DEFINED then add 'runtime-link' to 'b2' tool with value
-# 'static' for 'ON' or 'shared' for OFF.
-if(BUILD_SHARED_LIBS)
-  set(Boost_USE_STATIC_RUNTIME OFF)
+# Whether to link to static or shared C and C++ runtime (set 'runtime-link').
+# cmr_USE_MSVC_STATIC_RUNTIME must be ON for Boost_USE_STATIC_RUNTIME=ON.
+if(MSVC)
+  if(BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_RUNTIME OFF)
+  elseif(cmr_USE_MSVC_STATIC_RUNTIME)
+    set(Boost_USE_STATIC_RUNTIME ON)
+  else()
+    set(Boost_USE_STATIC_RUNTIME OFF)
+  endif()
 else()
-  set(Boost_USE_STATIC_RUNTIME ON)
+  if(BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_RUNTIME OFF)
+  else()
+    set(Boost_USE_STATIC_RUNTIME ON)
+  endif()
 endif()
 
-set(BOOST_DEFAULT_LAYOUT_TYPE "system")
-if(CMAKE_CONFIGURATION_TYPES)
-  set(BOOST_DEFAULT_LAYOUT_TYPE "tagged")
-endif()
-set(BOOST_LAYOUT_TYPE ${BOOST_DEFAULT_LAYOUT_TYPE} CACHE STRING
-  "Determine whether to choose library names and header locations, may be 'versioned', 'tagged' or 'system'"
-)
+#set(BOOST_LAYOUT_TYPE "system" CACHE STRING
+#  "Determine whether to choose library names and header locations, may be 'versioned', 'tagged' or 'system'"
+#)
+# Default value in 'cmr_build_rules_boost()'
+# is 'versioned' for MSVC and 'system' for others.
+#
 # From 'b2 --help':
 # Determine whether to choose library names and header locations
 # such that multiple versions of Boost or multiple compilers
