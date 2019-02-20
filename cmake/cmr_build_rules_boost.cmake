@@ -452,10 +452,9 @@
       # If ICU has been built with non-standard names for it's binaries.
       # Will use "linker-options-for-icu" when linking the library
       # rather than the default ICU binary names.
-      list(APPEND b2_ARGS
-#        "\"-sICU_LINK=-licui18n -licuuc -licudata\""
-        "-sICU_LINK=\"/LIBPATH:${CMAKE_INSTALL_PREFIX}/bin /LIBPATH:${CMAKE_INSTALL_PREFIX}/lib icuin.lib icuuc.lib icudt.lib\""
-      )
+#      list(APPEND b2_ARGS
+#        "-sICU_LINK=\"/LIBPATH:${CMAKE_INSTALL_PREFIX}/bin /LIBPATH:${CMAKE_INSTALL_PREFIX}/lib icuin.lib icuuc.lib icudt.lib\""
+#      )
     endif()
   endif()
 

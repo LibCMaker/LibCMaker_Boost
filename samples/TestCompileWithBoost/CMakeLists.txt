@@ -181,6 +181,9 @@ target_link_libraries(${PROJECT_NAME}_3 PRIVATE
 
 if(NOT BOOST_WITHOUT_ICU)
   # ICU
+  if(NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE U_STATIC_IMPLEMENTATION)
+  endif()
   target_link_libraries(${PROJECT_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
 endif()
 

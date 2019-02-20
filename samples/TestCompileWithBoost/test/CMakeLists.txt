@@ -53,6 +53,9 @@ if(BUILD_TESTING)
 
   if(NOT BOOST_WITHOUT_ICU)
     # ICU
+    if(NOT BUILD_SHARED_LIBS)
+      target_compile_definitions(${test_NAME} PRIVATE U_STATIC_IMPLEMENTATION)
+    endif()
     target_link_libraries(${test_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
   endif()
 
