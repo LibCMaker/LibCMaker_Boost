@@ -115,6 +115,7 @@ build_windows: &build_windows
     - PATH=${cmr_INSTALL_DIR}/bin:${PATH}
     - PATH=${cmr_INSTALL_DIR}/lib:${PATH}
 
+    - cmr_BOOST_WITHOUT_ICU=OFF
     - cmr_WORKAROUND_CMD=pwd
 
   before_install:
@@ -152,7 +153,7 @@ build_windows: &build_windows
           -DCMAKE_GENERATOR_PLATFORM="${cmr_CMAKE_GENERATOR_PLATFORM}"
           -DCMAKE_GENERATOR_TOOLSET="${cmr_CMAKE_GENERATOR_TOOLSET}"
           -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-        -DBOOST_WITHOUT_ICU=OFF
+        -DBOOST_WITHOUT_ICU=${cmr_BOOST_WITHOUT_ICU}
           -DBOOST_DEBUG_SHOW_COMMANDS=ON
           -DBOOST_DEBUG_CONFIGURATION=ON
           -DBOOST_DEBUG_BUILDING=OFF
@@ -393,6 +394,7 @@ jobs:
       env:
         - *build_windows_msvc_x64_env
         - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_BOOST_WITHOUT_ICU=ON
 
     - <<: *build_windows_msvc_x32
       name: "Windows, msvc, x32, shared"
