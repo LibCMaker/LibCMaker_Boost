@@ -171,6 +171,20 @@ matrix:
       cmr_MSVC_2015_x64_static: ON
 
 
+# TODO: remove it after fix these builds.
+    - image: Visual Studio 2017
+      cmr_MinGW_w64_x64_shared: ON
+
+    - image: Visual Studio 2017
+      cmr_MinGW_w64_x64_static: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2015_x64_shared: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2015_x64_static: ON
+
+
 clone_folder: c:\projects\LibCMaker_${cmr_LIB_NAME}
 
 
