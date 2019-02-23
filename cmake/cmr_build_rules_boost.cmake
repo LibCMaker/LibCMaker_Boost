@@ -320,6 +320,7 @@
   #-----------------------------------------------------------------------
   # Check COMPONENTS and get lib list
   #
+  cmr_print_value(BOOST_BUILD_ALL_COMPONENTS)
   include(cmr_boost_get_lib_list)
   cmr_boost_get_lib_list(
     boost_LIB_LIST VERSION ${lib_VERSION} COMPONENTS ${lib_COMPONENTS}

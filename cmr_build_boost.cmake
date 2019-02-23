@@ -32,7 +32,6 @@
 set(BOOST_lib_NAME        "Boost")
 set(BOOST_lib_VERSION     "1.68.0")
 set(BOOST_lib_COMPONENTS  regex filesystem)  # deps will also be compiled.
-#set(BOOST_lib_COMPONENTS  all)  # Install all compiled Boost libs.
 set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 
 # To use our Find<LibName>.cmake.
@@ -90,6 +89,8 @@ endif()
 #-----------------------------------------------------------------------
 # Library specific vars and options
 #-----------------------------------------------------------------------
+
+option(BOOST_BUILD_ALL_COMPONENTS "Build all Boost components" OFF)
 
 option(BOOST_REBUILD_OPTION "Rebuild everything" OFF)
 
@@ -219,16 +220,6 @@ cmr_find_package(
 #  LibCMaker_DIR   ${LibCMaker_DIR}
 #  NAME            ${BOOST_lib_NAME}
 #  VERSION         ${BOOST_lib_VERSION}
-#  LIB_DIR         ${BOOST_lib_DIR}
-#  REQUIRED
-#)
-
-# Install specified library version and all compiled libs.
-#cmr_find_package(
-#  LibCMaker_DIR   ${LibCMaker_DIR}
-#  NAME            ${BOOST_lib_NAME}
-#  VERSION         ${BOOST_lib_VERSION}
-#  COMPONENTS      all
 #  LIB_DIR         ${BOOST_lib_DIR}
 #  REQUIRED
 #)

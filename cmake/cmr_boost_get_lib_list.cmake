@@ -68,7 +68,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   boost_component_list(context 1.51.0)
   boost_component_list(contract 1.67.0)
   boost_component_list(coroutine 1.53.0)
-  boost_component_list(coroutine2 1.59.0)  # Header only lib.
+#  boost_component_list(coroutine2 1.59.0)  # Header only lib.
   boost_component_list(date_time 1.29.0)
   boost_component_list(exception 1.36.0)
   boost_component_list(fiber 1.62.0)
@@ -79,7 +79,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   boost_component_list(locale 1.48.0)
   boost_component_list(log 1.54.0)
   boost_component_list(math 1.23.0)
-  boost_component_list(metaparse 1.61.0)  # Header only lib.
+#  boost_component_list(metaparse 1.61.0)  # Header only lib.
   boost_component_list(mpi 1.35.0)
   boost_component_list(program_options 1.32.0)
   boost_component_list(python 1.19.0)
@@ -96,7 +96,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   boost_component_list(wave 1.33.0)
 
 
-  if(NOT bgll_COMPONENTS)
+  if(NOT BOOST_BUILD_ALL_COMPONENTS AND NOT bgll_COMPONENTS)
     set(build_only_headers ON)
   endif()
 
@@ -111,21 +111,10 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
     endif()
     return()  # if only headers.
-
-  else()  # if(NOT build_only_headers)
-    list(LENGTH bgll_COMPONENTS components_length)
-    list(FIND bgll_COMPONENTS "all" all_index)
-    if(NOT all_index EQUAL -1)
-      if(NOT components_length EQUAL 1)
-        cmr_print_error(
-          "COMPONENTS can not contain 'all' keyword with something others.")
-      endif()
-      set(build_all_libs ON)
-    endif()
   endif()
 
 
-  if(build_all_libs)
+  if(BOOST_BUILD_ALL_COMPONENTS)
     foreach(name IN LISTS BOOST_COMPONENT_NAMES)
       if(${bgll_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
         continue()
@@ -175,7 +164,8 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
     if(without_args)
       set(${out_LIB_LIST} ${without_args} PARENT_SCOPE)
     endif()
-    return()  # if all libs.
+
+    return()  # if build all components.
   endif()
 
 
