@@ -105,15 +105,14 @@ build_windows: &build_windows
   env: &build_windows_env
     - cmr_TARGET_OS=windows
 
-    - cmr_CMAKE_RELEASE=cmake-3.11.1-win64-x64
+    - cmr_CMAKE_RELEASE=cmake-3.11.0-win64-x64
     - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
     - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
     - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
 
     - cmr_CMAKE_BUILD_TYPE=Release
 
-    - PATH=${cmr_INSTALL_DIR}/bin:${PATH}
-    - PATH=${cmr_INSTALL_DIR}/lib:${PATH}
+    - PATH=${cmr_INSTALL_DIR}/bin:${cmr_INSTALL_DIR}/lib:${PATH}
 
     - cmr_BOOST_WITHOUT_ICU=OFF
     - cmr_WORKAROUND_CMD=pwd
@@ -384,6 +383,7 @@ jobs:
 # Windows, msvc
     - <<: *build_windows_msvc_x64
       name: "Windows, msvc, x64, shared"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_x64_env
         - cmr_BUILD_SHARED_LIBS=ON
@@ -391,6 +391,7 @@ jobs:
 
     - <<: *build_windows_msvc_x64
       name: "Windows, msvc, x64, static"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_x64_env
         - cmr_BUILD_SHARED_LIBS=OFF
@@ -398,24 +399,28 @@ jobs:
 
     - <<: *build_windows_msvc_x32
       name: "Windows, msvc, x32, shared"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_x32_env
         - cmr_BUILD_SHARED_LIBS=ON
 
     - <<: *build_windows_msvc_x32
       name: "Windows, msvc, x32, static"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_x32_env
         - cmr_BUILD_SHARED_LIBS=OFF
 
     - <<: *build_windows_msvc_winxp
       name: "Windows, msvc, winxp, shared"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_winxp_env
         - cmr_BUILD_SHARED_LIBS=ON
 
     - <<: *build_windows_msvc_winxp
       name: "Windows, msvc, winxp, static"
+      if: branch = do_not_build_with_travis_ci
       env:
         - *build_windows_msvc_winxp_env
         - cmr_BUILD_SHARED_LIBS=OFF

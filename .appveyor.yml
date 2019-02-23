@@ -1,0 +1,233 @@
+# === Windows builds ===
+
+image:
+  - Visual Studio 2017
+  - Visual Studio 2015
+
+
+environment:
+  global:
+    # NOTE: LibCMaker lib name.
+    # NOTE: See below the lib deps in 'before_build' and lib CMake keys in 'build_script'.
+    cmr_LIB_NAME: Boost
+    cmr_BUILD_TESTING: ON
+
+    cmr_WORK_DIR: C:\projects
+    cmr_REPO_DIR: ${APPVEYOR_BUILD_FOLDER}
+    cmr_SAMPLE_SRC_DIR: ${cmr_REPO_DIR}\samples\TestCompileWith${cmr_LIB_NAME}
+    cmr_SAMPLE_DIR: ${cmr_WORK_DIR}\TestCompileWith${cmr_LIB_NAME}
+    cmr_SAMPLE_LIB_DIR: ${cmr_SAMPLE_DIR}\libs
+
+    cmr_BUILD_DIR: ${cmr_SAMPLE_DIR}\build
+    cmr_INSTALL_DIR: ${cmr_BUILD_DIR}\install
+    cmr_DOWNLOAD_DIR: ${cmr_BUILD_DIR}\download
+
+    PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;%PATH%
+
+    cmr_BOOST_WITHOUT_ICU: OFF
+
+    cmr_CMAKE_BUILD_TYPE: Release
+
+    cmr_CMAKE_VERSION: 3.11
+    cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win64-x64
+    cmr_CMAKE_DIR: ${cmr_INSTALL_DIR}\${cmr_CMAKE_RELEASE}
+    cmr_CMAKE_CMD: ${cmr_CMAKE_DIR}\bin\cmake
+    cmr_CTEST_CMD: ${cmr_CMAKE_DIR}\bin\ctest
+
+    cmr_MinGW_w64_ROOT_PATH: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1
+
+    cmr_JOBS_CNT: 4
+
+  matrix:
+    # MSVC 2017, x64, shared
+    - cmr_MSVC_2017_x64_shared: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: ON
+
+    # MSVC 2017, x64, static
+    - cmr_MSVC_2017_x64_static: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: OFF
+
+    # MSVC 2017, x32, shared
+    - cmr_MSVC_2017_x32_shared: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: ON
+
+    # MSVC 2017, x32, static
+    - cmr_MSVC_2017_x32_static: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: OFF
+
+    # MSVC 2017, WinXP, shared
+    - cmr_MSVC_2017_WinXP_shared: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: ON
+
+    # MSVC 2017, WinXP, static
+    - cmr_MSVC_2017_WinXP_static: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: OFF
+
+    # MSVC 2015, x64, shared
+    - cmr_MSVC_2015_x64_shared: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 14 2015"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v140,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: ON
+
+    # MSVC 2015, x64, static
+    - cmr_MSVC_2015_x64_static: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 14 2015"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v140,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: OFF
+
+    # MinGW-w64, x64, shared
+    - cmr_MinGW_w64_x64_shared: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="MinGW Makefiles"
+      cmr_GEN_PLATFORM: " "
+      cmr_GEN_TOOLSET:  " "
+      cmr_CONFIG_TYPES: " "
+      cmr_STD_LIBS: " "
+      cmr_BUILD_SHARED_LIBS: ON
+      cmr_CMAKE_VERSION: 3.4
+      cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win32-x86
+      MINGW_HOME: ${cmr_MinGW_w64_ROOT_PATH}\mingw64
+      PATH: ${cmr_INSTALL_DIR}\bin;${MINGW_HOME}\bin;%PATH%
+
+    # MinGW-w64, x64, static
+    - cmr_MinGW_w64_x64_static: ON
+      cmr_GENERATOR:    -DCMAKE_GENERATOR="MinGW Makefiles"
+      cmr_GEN_PLATFORM: " "
+      cmr_GEN_TOOLSET:  " "
+      cmr_CONFIG_TYPES: " "
+      cmr_STD_LIBS: -DCMAKE_C_STANDARD_LIBRARIES="-static" -DCMAKE_CXX_STANDARD_LIBRARIES="-static"
+      cmr_BUILD_SHARED_LIBS: OFF
+      cmr_CMAKE_VERSION: 3.4
+      cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win32-x86
+      MINGW_HOME: ${cmr_MinGW_w64_ROOT_PATH}\mingw64
+      PATH: ${cmr_INSTALL_DIR}\bin;${MINGW_HOME}\bin;%PATH%
+
+
+matrix:
+  exclude:
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_x64_shared: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_x64_static: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_x32_shared: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_x32_static: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_WinXP_shared: ON
+
+    - image: Visual Studio 2015
+      cmr_MSVC_2017_WinXP_static: ON
+
+    - image: Visual Studio 2015
+      cmr_MinGW_w64_x64_shared: ON
+
+    - image: Visual Studio 2015
+      cmr_MinGW_w64_x64_static: ON
+
+    - image: Visual Studio 2017
+      cmr_MSVC_2015_x64_shared: ON
+
+    - image: Visual Studio 2017
+      cmr_MSVC_2015_x64_static: ON
+
+
+clone_folder: c:\projects\LibCMaker_${cmr_LIB_NAME}
+
+
+before_build:
+  - ver
+  - ps: $env:PATH = $env:PATH -replace "C:\\Program Files\\Git\\usr\\bin",""
+  - xcopy %cmr_SAMPLE_SRC_DIR% %cmr_SAMPLE_DIR% /e /i /h /q
+  - xcopy %cmr_REPO_DIR% %cmr_SAMPLE_LIB_DIR%\LibCMaker_%cmr_LIB_NAME% /e /i /h /q
+
+  - mkdir %cmr_BUILD_DIR%
+  - mkdir %cmr_INSTALL_DIR%
+  - mkdir %cmr_DOWNLOAD_DIR%
+
+  - curl -fsS -o %cmr_DOWNLOAD_DIR%\%cmr_CMAKE_RELEASE%.zip https://cmake.org/files/v%cmr_CMAKE_VERSION%/%cmr_CMAKE_RELEASE%.zip
+  - 7z.exe x -aoa -o%cmr_INSTALL_DIR% %cmr_DOWNLOAD_DIR%\%cmr_CMAKE_RELEASE%.zip
+
+  # NOTE: LibCMaker lib deps.
+  - git clone https://github.com/LibCMaker/LibCMaker.git %cmr_SAMPLE_LIB_DIR%\LibCMaker
+  - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git %cmr_SAMPLE_LIB_DIR%\LibCMaker_GoogleTest
+  - git clone https://github.com/LibCMaker/LibCMaker_ICU.git %cmr_SAMPLE_LIB_DIR%\LibCMaker_ICU
+
+
+build_script:
+  - cd %cmr_BUILD_DIR%
+
+  # NOTE: LibCMaker lib CMake keys.
+  - "%cmr_CMAKE_CMD% %cmr_SAMPLE_DIR%
+      -Dcmr_BUILD_MULTIPROC_CNT=%cmr_JOBS_CNT%
+      -Dcmr_PRINT_DEBUG=ON
+      -DCMAKE_VERBOSE_MAKEFILE=ON
+      -DCMAKE_COLOR_MAKEFILE=ON
+      -DBUILD_TESTING=%cmr_BUILD_TESTING%
+      -DCMAKE_INSTALL_PREFIX=%cmr_INSTALL_DIR%
+      -Dcmr_DOWNLOAD_DIR=%cmr_DOWNLOAD_DIR%
+      -Dcmr_UNPACKED_DIR=%cmr_DOWNLOAD_DIR%\\unpacked
+        -DCMAKE_BUILD_TYPE=%cmr_CMAKE_BUILD_TYPE%
+        -DBUILD_SHARED_LIBS=%cmr_BUILD_SHARED_LIBS%
+      -DBOOST_WITHOUT_ICU=${cmr_BOOST_WITHOUT_ICU}
+        -DBOOST_DEBUG_SHOW_COMMANDS=ON
+        -DBOOST_DEBUG_CONFIGURATION=ON
+        -DBOOST_DEBUG_BUILDING=OFF
+        -DBOOST_DEBUG_GENERATOR=ON
+        -DBOOST_DEBUG_INSTALL=OFF
+        -DBOOST_REBUILD_OPTION=OFF
+      %cmr_GENERATOR% %cmr_GEN_PLATFORM% %cmr_GEN_TOOLSET% %cmr_CONFIG_TYPES% %cmr_STD_LIBS%"
+
+  - "%cmr_CMAKE_CMD% --build . --config %cmr_CMAKE_BUILD_TYPE%"
+
+  - "%cmr_CTEST_CMD% --output-on-failure --build-config %cmr_CMAKE_BUILD_TYPE%"
+
+
+# === Notifications ===
+
+notifications:
+  - provider: Email
+    to:
+      - nfeodonit@yandex.com
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: true
