@@ -274,7 +274,8 @@ build_android: &build_android
           -DBUILD_SHARED_LIBS=OFF
         -DLibCMaker_LIB_DIR=${cmr_SAMPLE_LIB_DIR}
           -DHOST_TOOLS_STAMP_FILE_NAME=${cmr_HOST_TOOLS_STAMP_FILE_NAME}
-        -DBOOST_DEBUG_SHOW_COMMANDS=ON
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
           -DBOOST_DEBUG_CONFIGURATION=ON
           -DBOOST_DEBUG_BUILDING=OFF
           -DBOOST_DEBUG_GENERATOR=ON
@@ -285,7 +286,8 @@ build_android: &build_android
     # === Build Android libs ===
     - cd ${cmr_BUILD_DIR}
 
-    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+    # NOTE: 'travis_wait 60' is needed because of Ninja waits b2 without any output.
+    - travis_wait 60 ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
         -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
         -Dcmr_PRINT_DEBUG=ON
         -DCMAKE_VERBOSE_MAKEFILE=ON

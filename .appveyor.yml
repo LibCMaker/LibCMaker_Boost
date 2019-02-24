@@ -47,6 +47,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS: " "
       cmr_BUILD_SHARED_LIBS: ON
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x64, static
     - cmr_MSVC_2017_x64_static: ON
@@ -56,6 +57,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS: " "
       cmr_BUILD_SHARED_LIBS: OFF
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x32, shared
     - cmr_MSVC_2017_x32_shared: ON

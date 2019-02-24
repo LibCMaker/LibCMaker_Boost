@@ -577,8 +577,12 @@
 
   # Instead of CMAKE_BUILD_TYPE and etc., use the $<CONFIG:Debug> or similar.
   # https://stackoverflow.com/a/24470998
-  set(B2_C_FLAGS "${B2_C_FLAGS} $<$<CONFIG:Release>:${CMAKE_C_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_DEBUG}>")
-  set(B2_CXX_FLAGS "${B2_CXX_FLAGS} $<$<CONFIG:Release>:${CMAKE_CXX_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_DEBUG}>")
+  string(APPEND B2_C_FLAGS
+    " $<$<CONFIG:Release>:${CMAKE_C_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_DEBUG}>"
+  )
+  string(APPEND B2_CXX_FLAGS
+    " $<$<CONFIG:Release>:${CMAKE_CXX_FLAGS_RELEASE}>$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_DEBUG}>"
+  )
 
   set(cmr_PATH_SEP ":")
   if(CMAKE_HOST_WIN32)
