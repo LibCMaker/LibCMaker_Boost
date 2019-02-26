@@ -22,8 +22,6 @@ environment:
     cmr_INSTALL_DIR: ${cmr_BUILD_DIR}\install
     cmr_DOWNLOAD_DIR: ${cmr_BUILD_DIR}\download
 
-    PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;%PATH%
-
     cmr_BOOST_WITHOUT_ICU: OFF
 
     cmr_CMAKE_BUILD_TYPE: Release
@@ -31,113 +29,115 @@ environment:
     cmr_CMAKE_VERSION: 3.11
     cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win64-x64
     cmr_CMAKE_DIR: ${cmr_INSTALL_DIR}\${cmr_CMAKE_RELEASE}
-    cmr_CMAKE_CMD: ${cmr_CMAKE_DIR}\bin\cmake
-    cmr_CTEST_CMD: ${cmr_CMAKE_DIR}\bin\ctest
+    cmr_CMAKE_CMD: cmake
+    cmr_CTEST_CMD: ctest
 
     cmr_MinGW_w64_ROOT_PATH: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1
+
+    PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;%PATH%
 
     cmr_JOBS_CNT: 4
 
   matrix:
     # MSVC 2017, x64, shared
     - cmr_MSVC_2017_x64_shared: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x64, static
     - cmr_MSVC_2017_x64_static: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x32, shared
     - cmr_MSVC_2017_x32_shared: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
 
     # MSVC 2017, x32, static
     - cmr_MSVC_2017_x32_static: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
 
     # MSVC 2017, WinXP, shared
     - cmr_MSVC_2017_WinXP_shared: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141_xp,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
 
     # MSVC 2017, WinXP, static
     - cmr_MSVC_2017_WinXP_static: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 15 2017"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="Win32"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 15 2017"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="Win32"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v141_xp,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
 
     # MSVC 2015, x64, shared
     - cmr_MSVC_2015_x64_shared: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 14 2015"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v140,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 14 2015"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v140,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
 
     # MSVC 2015, x64, static
     - cmr_MSVC_2015_x64_static: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="Visual Studio 14 2015"
-      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM="x64"
-      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET="v140,host=x64"
-      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="Visual Studio 14 2015"
+      cmr_GEN_PLATFORM: -DCMAKE_GENERATOR_PLATFORM:STRING="x64"
+      cmr_GEN_TOOLSET:  -DCMAKE_GENERATOR_TOOLSET:STRING="v140,host=x64"
+      cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
 
     # MinGW-w64, x64, shared
     - cmr_MinGW_w64_x64_shared: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="MinGW Makefiles"
-      cmr_GEN_PLATFORM: " "
-      cmr_GEN_TOOLSET:  " "
-      cmr_CONFIG_TYPES: " "
-      cmr_STD_LIBS: " "
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="MinGW Makefiles"
+      cmr_GEN_PLATFORM:
+      cmr_GEN_TOOLSET:
+      cmr_CONFIG_TYPES:
+      cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
       cmr_CMAKE_VERSION: 3.4
       cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win32-x86
       MINGW_HOME: ${cmr_MinGW_w64_ROOT_PATH}\mingw64
-      PATH: ${cmr_INSTALL_DIR}\bin;${MINGW_HOME}\bin;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;${MINGW_HOME}\bin;%PATH%
 
     # MinGW-w64, x64, static
     - cmr_MinGW_w64_x64_static: ON
-      cmr_GENERATOR:    -DCMAKE_GENERATOR="MinGW Makefiles"
-      cmr_GEN_PLATFORM: " "
-      cmr_GEN_TOOLSET:  " "
-      cmr_CONFIG_TYPES: " "
-      cmr_STD_LIBS: -DCMAKE_C_STANDARD_LIBRARIES="-static" -DCMAKE_CXX_STANDARD_LIBRARIES="-static"
+      cmr_GENERATOR:    -DCMAKE_GENERATOR:STRING="MinGW Makefiles"
+      cmr_GEN_PLATFORM:
+      cmr_GEN_TOOLSET:
+      cmr_CONFIG_TYPES:
+      cmr_STD_LIBS: -DCMAKE_C_STANDARD_LIBRARIES:STRING="-static" -DCMAKE_CXX_STANDARD_LIBRARIES:STRING="-static"
       cmr_BUILD_SHARED_LIBS: OFF
       cmr_CMAKE_VERSION: 3.4
       cmr_CMAKE_RELEASE: cmake-${cmr_CMAKE_VERSION}.0-win32-x86
       MINGW_HOME: ${cmr_MinGW_w64_ROOT_PATH}\mingw64
-      PATH: ${cmr_INSTALL_DIR}\bin;${MINGW_HOME}\bin;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;${MINGW_HOME}\bin;%PATH%
 
 
 matrix:
@@ -174,17 +174,17 @@ matrix:
 
 
 # TODO: remove it after fix these builds.
-    - image: Visual Studio 2017
-      cmr_MinGW_w64_x64_shared: ON
+#    - image: Visual Studio 2017
+#      cmr_MinGW_w64_x64_shared: ON
 
-    - image: Visual Studio 2017
-      cmr_MinGW_w64_x64_static: ON
+#    - image: Visual Studio 2017
+#      cmr_MinGW_w64_x64_static: ON
 
-    - image: Visual Studio 2015
-      cmr_MSVC_2015_x64_shared: ON
+#    - image: Visual Studio 2015
+#      cmr_MSVC_2015_x64_shared: ON
 
-    - image: Visual Studio 2015
-      cmr_MSVC_2015_x64_static: ON
+#    - image: Visual Studio 2015
+#      cmr_MSVC_2015_x64_static: ON
 
 
 clone_folder: c:\projects\LibCMaker_${cmr_LIB_NAME}
@@ -212,19 +212,21 @@ before_build:
 build_script:
   - cd %cmr_BUILD_DIR%
 
+  - cmake --version
+
   # NOTE: LibCMaker lib CMake keys.
-  - "%cmr_CMAKE_CMD% %cmr_SAMPLE_DIR%
-      -Dcmr_BUILD_MULTIPROC_CNT=%cmr_JOBS_CNT%
-      -Dcmr_PRINT_DEBUG=ON
-      -DCMAKE_VERBOSE_MAKEFILE=ON
-      -DCMAKE_COLOR_MAKEFILE=ON
-      -DBUILD_TESTING=%cmr_BUILD_TESTING%
-      -DCMAKE_INSTALL_PREFIX=%cmr_INSTALL_DIR%
-      -Dcmr_DOWNLOAD_DIR=%cmr_DOWNLOAD_DIR%
-      -Dcmr_UNPACKED_DIR=%cmr_DOWNLOAD_DIR%\\unpacked
-        -DCMAKE_BUILD_TYPE=%cmr_CMAKE_BUILD_TYPE%
-        -DBUILD_SHARED_LIBS=%cmr_BUILD_SHARED_LIBS%
-      -DBOOST_WITHOUT_ICU=${cmr_BOOST_WITHOUT_ICU}
+  - cmake %cmr_SAMPLE_DIR%
+      -Dcmr_BUILD_MULTIPROC_CNT:STRING=%cmr_JOBS_CNT%
+      -Dcmr_PRINT_DEBUG:BOOL=ON
+      -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+      -DCMAKE_COLOR_MAKEFILE:BOOL=ON
+      -DBUILD_TESTING:BOOL=%cmr_BUILD_TESTING%
+      -DCMAKE_INSTALL_PREFIX:PATH=%cmr_INSTALL_DIR%
+      -Dcmr_DOWNLOAD_DIR:PATH=%cmr_DOWNLOAD_DIR%
+      -Dcmr_UNPACKED_DIR:PATH=%cmr_DOWNLOAD_DIR%\unpacked
+        -DCMAKE_BUILD_TYPE:STRING=%cmr_CMAKE_BUILD_TYPE%
+        -DBUILD_SHARED_LIBS:BOOL=%cmr_BUILD_SHARED_LIBS%
+        -DBOOST_WITHOUT_ICU=${cmr_BOOST_WITHOUT_ICU}
         -DBOOST_BUILD_ALL_COMPONENTS=ON
         -DBOOST_REBUILD_OPTION=OFF
         -DBOOST_DEBUG_SHOW_COMMANDS=ON
@@ -232,11 +234,11 @@ build_script:
         -DBOOST_DEBUG_BUILDING=OFF
         -DBOOST_DEBUG_GENERATOR=ON
         -DBOOST_DEBUG_INSTALL=OFF
-      %cmr_GENERATOR% %cmr_GEN_PLATFORM% %cmr_GEN_TOOLSET% %cmr_CONFIG_TYPES% %cmr_STD_LIBS%"
+      %cmr_GENERATOR% %cmr_GEN_PLATFORM% %cmr_GEN_TOOLSET% %cmr_CONFIG_TYPES% %cmr_STD_LIBS%
 
-  - "%cmr_CMAKE_CMD% --build . --config %cmr_CMAKE_BUILD_TYPE%"
+  - cmake --build . --config %cmr_CMAKE_BUILD_TYPE%
 
-  - "%cmr_CTEST_CMD% --output-on-failure --build-config %cmr_CMAKE_BUILD_TYPE%"
+  - ctest --output-on-failure --build-config %cmr_CMAKE_BUILD_TYPE%
 
 
 # === Notifications ===
