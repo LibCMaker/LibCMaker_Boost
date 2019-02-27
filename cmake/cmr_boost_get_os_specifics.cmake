@@ -121,7 +121,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     list(APPEND os_specifics "architecture=${cmr_BJAM_ARCH}")
     list(APPEND os_specifics "abi=${cmr_BJAM_ABI}")
 
-  elseif(APPLE OR MSVC OR (UNIX AND NOT ANDROID))
+  else()
     list(APPEND os_specifics "architecture=x86")  # TODO: work for 'arm'.
 
     set(B2_ADDRESS_MODEL "64")
