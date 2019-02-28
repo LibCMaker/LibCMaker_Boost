@@ -57,6 +57,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
+      cmr_BOOST_WITHOUT_ICU: ON
       PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x32, shared
@@ -174,12 +175,6 @@ matrix:
 
 
 # TODO: remove it after fix these builds.
-#    - image: Visual Studio 2017
-#      cmr_MinGW_w64_x64_shared: ON
-
-#    - image: Visual Studio 2017
-#      cmr_MinGW_w64_x64_static: ON
-
     - image: Visual Studio 2015
       cmr_MSVC_2015_x64_shared: ON
 
