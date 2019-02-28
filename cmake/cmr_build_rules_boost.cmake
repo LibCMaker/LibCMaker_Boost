@@ -361,7 +361,7 @@
       file(WRITE ${regex_user_config_STAMP} "stamp")
     endif()
 
-    if(ANDROID OR MSVC)
+    if(ANDROID OR MSVC OR MINGW)
       cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
       execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
