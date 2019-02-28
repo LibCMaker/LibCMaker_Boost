@@ -58,7 +58,7 @@ environment:
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
       PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
-      cmr_BOOST_WITHOUT_ICU: ON
+      cmr_BOOST_WITHOUT_ICU: ON  # TODO: remove it after fix build with ICU
 
     # MSVC 2017, x32, shared
     - cmr_MSVC_2017_x32_shared: ON
