@@ -60,9 +60,11 @@ if ! $(disable-icu)
       lib icudt : : <name>icudata                                   <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>icudt   <toolset>msvc                     <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>icudt   <toolset>intel <target-os>windows <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <name>icudt   <toolset>gcc   <target-os>windows <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>sicudata                                   <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>sicudt   <toolset>msvc                     <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>sicudt   <toolset>intel <target-os>windows <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <name>icudt    <toolset>gcc   <target-os>windows <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>this_is_an_invalid_library_name ;
 
       lib icuin : :                                                    <name>icui18n <runtime-link>shared <conditional>@path_options ;
@@ -70,11 +72,13 @@ if ! $(disable-icu)
       lib icuin : : <toolset>msvc                                      <name>icuin   <runtime-link>shared <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows <variant>debug   <name>icuind  <runtime-link>shared <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows                  <name>icuin   <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>gcc   <target-os>windows                  <name>icuin   <runtime-link>shared <conditional>@path_options ;
       lib icuin : :                                                    <name>sicui18n <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>msvc                     <variant>debug   <name>sicuind  <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>msvc                                      <name>sicuin   <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows <variant>debug   <name>sicuind  <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows                  <name>sicuin   <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>gcc   <target-os>windows                  <name>icuin    <runtime-link>static <conditional>@path_options ;
       lib icuin : : <name>this_is_an_invalid_library_name ;
 
       ICU_OPTS = 
