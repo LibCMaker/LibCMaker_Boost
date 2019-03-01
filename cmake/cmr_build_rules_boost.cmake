@@ -492,14 +492,14 @@
   if(Boost_USE_MULTITHREADED)
     list(APPEND b2_ARGS "threading=multi")
 
-    #if(CMAKE_CXX_STANDARD EQUAL 98)  # TODO: is checking needed?
+    if(CMAKE_CXX_STANDARD EQUAL 98)  # TODO: is checking needed?
       find_package(Threads REQUIRED)
       if(CMAKE_USE_PTHREADS_INIT)
         list(APPEND b2_ARGS "threadapi=pthread")
       elseif(CMAKE_USE_WIN32_THREADS_INIT)
         list(APPEND b2_ARGS "threadapi=win32")
       endif()
-    #endif()
+    endif()
 
   else()
     list(APPEND b2_ARGS "threading=single")
