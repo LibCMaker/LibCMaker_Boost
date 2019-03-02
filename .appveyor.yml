@@ -115,6 +115,7 @@ environment:
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
       PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
+      cmr_BOOST_WITHOUT_ICU: ON  # TODO: remove it after fix build with ICU
 
     # MinGW-w64, x64, shared
     - cmr_MinGW_w64_x64_shared: ON
