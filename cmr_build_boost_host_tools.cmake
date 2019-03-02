@@ -78,7 +78,7 @@ if(CMAKE_HOST_WIN32)
   # than the filesystem supports.
   option(BOOST_ABBREVIATE_PATHS
     "Compresses target paths by abbreviating each component."
-    ON
+    OFF
   )
   # Compresses target paths using an MD5 hash.
   # This option is useful to keep paths from becoming longer
@@ -87,7 +87,7 @@ if(CMAKE_HOST_WIN32)
   # but at the cost of making them less understandable.
   option(BOOST_HASH
     "Compresses target paths using an MD5 hash."
-    OFF
+    ON
   )
 endif()
 

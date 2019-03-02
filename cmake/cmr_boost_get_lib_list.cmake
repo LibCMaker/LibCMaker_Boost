@@ -131,9 +131,9 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
         # Boost.Context in 1.57.0 and earlier don't support arm64.
         # Boost.Context in 1.61.0 and earlier don't support mips64.
         # Boost.Coroutine depends on Boost.Context.
-        if((ANDROID_SYSROOT_ABI STREQUAL arm64
+        if((ANDROID_SYSROOT_ABI STREQUAL "arm64"
                 AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
-            OR (ANDROID_SYSROOT_ABI STREQUAL mips64
+            OR (ANDROID_SYSROOT_ABI STREQUAL "mips64"
                 AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
           string(COMPARE EQUAL "${name}" "context" without_component)
           if(without_component)
@@ -150,7 +150,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
 
         # Starting from 1.59.0, there is Boost.Coroutine2 library,
         # which depends on Boost.Context too.
-        if(ANDROID_SYSROOT_ABI STREQUAL mips64
+        if(ANDROID_SYSROOT_ABI STREQUAL "mips64"
                 AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
           string(COMPARE EQUAL "${name}" "coroutine2" without_component)
           if(without_component)
@@ -159,6 +159,10 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
           endif()
         endif()
       endif()  # if(ANDROID)
+
+      if(MINGW AND "${name}" STREQUAL "python")
+        add_definitions("-D_hypot=hypot")
+      endif()
     endforeach()
 
     if(without_args)
@@ -187,9 +191,9 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       # Boost.Context in 1.57.0 and earlier don't support arm64.
       # Boost.Context in 1.61.0 and earlier don't support mips64.
       # Boost.Coroutine depends on Boost.Context.
-      if((ANDROID_SYSROOT_ABI STREQUAL arm64
+      if((ANDROID_SYSROOT_ABI STREQUAL "arm64"
               AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
-          OR (ANDROID_SYSROOT_ABI STREQUAL mips64
+          OR (ANDROID_SYSROOT_ABI STREQUAL "mips64"
               AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
         string(COMPARE EQUAL "${name}" "context" bad_component)
         if(bad_component)
@@ -208,7 +212,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
 
       # Starting from 1.59.0, there is Boost.Coroutine2 library,
       # which depends on Boost.Context too.
-      if(ANDROID_SYSROOT_ABI STREQUAL mips64
+      if(ANDROID_SYSROOT_ABI STREQUAL "mips64"
               AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
         string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
         if(bad_component)
@@ -218,6 +222,10 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
         endif()
       endif()
     endif()  # if(ANDROID)
+
+    if(MINGW AND "${name}" STREQUAL "python")
+      add_definitions("-D_hypot=hypot")
+    endif()
 
     # Second, add the <library> to the 'with'-list.
     list(APPEND with_args "--with-${name}")
