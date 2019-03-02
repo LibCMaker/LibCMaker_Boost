@@ -161,7 +161,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       endif()  # if(ANDROID)
 
       if(MINGW AND "${name}" STREQUAL "python")
-        add_definitions("-D_hypot=hypot")
+        add_definitions("-D_hypot=hypot" "-DMS_WIN64")
       endif()
     endforeach()
 
@@ -224,7 +224,7 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
     endif()  # if(ANDROID)
 
     if(MINGW AND "${name}" STREQUAL "python")
-      add_definitions("-D_hypot=hypot")
+      add_definitions("-D_hypot=hypot" "-DMS_WIN64")
     endif()
 
     # Second, add the <library> to the 'with'-list.
