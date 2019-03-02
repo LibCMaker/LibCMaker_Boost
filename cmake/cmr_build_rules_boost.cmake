@@ -537,19 +537,20 @@
   # -> CMAKE_ASM_FLAGS
   # -> CMAKE_SHARED_LINKER_FLAGS
 
-  if(CMAKE_CXX_STANDARD)
-    if(lib_VERSION VERSION_GREATER "1.65.9")  # From 1.66.0
-      if(toolset_name MATCHES "gcc" OR toolset_name MATCHES "darwin"
-          OR toolset_name MATCHES "msvc")
-        list(APPEND b2_ARGS "cxxstd=${CMAKE_CXX_STANDARD}")
-      endif()
-    endif()
-    if(lib_VERSION VERSION_GREATER "1.66.9")  # From 1.67.0
-      if(toolset_name MATCHES "clang")
-        list(APPEND b2_ARGS "cxxstd=${CMAKE_CXX_STANDARD}")
-      endif()
-    endif()
-  endif()
+# NOTE: C++ standard is set in cmr_boost_set_cmake_flags()
+#  if(CMAKE_CXX_STANDARD)
+#    if(lib_VERSION VERSION_GREATER "1.65.9")  # From 1.66.0
+#      if(toolset_name MATCHES "gcc" OR toolset_name MATCHES "darwin"
+#          OR toolset_name MATCHES "msvc")
+#        list(APPEND b2_ARGS "cxxstd=${CMAKE_CXX_STANDARD}")
+#      endif()
+#    endif()
+#    if(lib_VERSION VERSION_GREATER "1.66.9")  # From 1.67.0
+#      if(toolset_name MATCHES "clang")
+#        list(APPEND b2_ARGS "cxxstd=${CMAKE_CXX_STANDARD}")
+#      endif()
+#    endif()
+#  endif()
 
   get_directory_property(B2_COMPILE_FLAGS COMPILE_OPTIONS)
   string(REPLACE ";" " " B2_COMPILE_FLAGS "${B2_COMPILE_FLAGS}")
