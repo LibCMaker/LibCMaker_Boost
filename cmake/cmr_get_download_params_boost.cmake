@@ -57,6 +57,11 @@
       "7f6130bc3cf65f56a618888ce9d5ea704fa10b462be126ad053e80e553d6d8b7"
     )
   endif()
+  if(version VERSION_EQUAL "1.69.0")
+    set(arch_file_sha
+      "8f32d4617390d1c2d16f26a27ab60d97807b35440d45891fa340fc2648b04406"
+    )
+  endif()
 
   set(base_url "https://dl.bintray.com/boostorg/release")
   set(src_dir_name    "boost-${version}")

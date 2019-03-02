@@ -30,7 +30,7 @@
 #-----------------------------------------------------------------------
 
 set(BOOST_lib_NAME        "Boost")
-set(BOOST_lib_VERSION     "1.68.0")
+set(BOOST_lib_VERSION     "1.69.0")
 set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 
 # To use our Find<LibName>.cmake.
