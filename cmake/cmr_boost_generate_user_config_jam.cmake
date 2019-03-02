@@ -30,9 +30,15 @@ function(cmr_boost_generate_user_config_jam)
     "  : ${toolset_version}\n"
   )
 
-  file(APPEND ${user_jam_FILE}
-    "  : \"${boost_compiler}\"\n : \n"
-  )
+  if(CMAKE_GENERATOR_TOOLSET MATCHES "v140")
+    file(APPEND ${user_jam_FILE}
+      "  : \n : \n"
+    )
+  else()
+    file(APPEND ${user_jam_FILE}
+      "  : \"${boost_compiler}\"\n : \n"
+    )
+  endif()
 
   if(CMAKE_RC_COMPILER)
     file(APPEND ${user_jam_FILE}

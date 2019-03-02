@@ -22,6 +22,8 @@
 # ****************************************************************************
 
 function(cmr_boost_get_compiler_toolset)
+  set(toolset_version "")
+
   # http://stackoverflow.com/a/10055571
   if(ANDROID)
     set(toolset_name "${ANDROID_TOOLCHAIN}")
@@ -48,11 +50,15 @@ function(cmr_boost_get_compiler_toolset)
     set(toolset_name "intel")
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(toolset_name "msvc")
+    if(CMAKE_GENERATOR_TOOLSET MATCHES "v140")
+      set(toolset_version "14.0")
+    elseif(CMAKE_GENERATOR_TOOLSET MATCHES "v141")
+      set(toolset_version "14.1")
+    endif()
   elseif()
     cmr_print_error("Unsupported compiler system.")
   endif()
 
-  set(toolset_version "")
 #  if(ANDROID)
 #    set(toolset_version "ndk")
 #  endif()
