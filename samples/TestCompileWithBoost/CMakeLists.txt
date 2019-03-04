@@ -172,7 +172,7 @@ target_link_libraries(${PROJECT_NAME}_2 PRIVATE
   Boost::disable_autolinking Boost::boost
 )
 # 'system' will also be added as IMPORT library.
-# NOTE: this autodetection is broken for Boost 1.69.0
+# NOTE: this autodetection from 'FindBoost.cmake' is broken for Boost 1.69.0
 # for Android shared arm64-v8a build with link error:
 # libboost_system.so.1.69.0, needed by install/lib/libboost_filesystem.so, not found
 target_link_libraries(${PROJECT_NAME}_3 PRIVATE
