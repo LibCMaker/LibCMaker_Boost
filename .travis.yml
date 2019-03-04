@@ -223,7 +223,7 @@ build_android: &build_android
     - cmr_CMAKE_GENERATOR="Ninja"
     - cmr_CMAKE_BUILD_TYPE=Release
 
-    - cmr_ANDROID_NDK_VERSION=r19
+    - cmr_ANDROID_NDK_VERSION=r19b
     - cmr_ANDROID_NDK_NAME=android-ndk-${cmr_ANDROID_NDK_VERSION}
     - cmr_ANDROID_NDK_PLATFORM=${cmr_ANDROID_NDK_NAME}-linux-x86_64
     - cmr_ANDROID_NDK=${cmr_INSTALL_DIR}/${cmr_ANDROID_NDK_NAME}
