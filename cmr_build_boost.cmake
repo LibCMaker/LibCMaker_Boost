@@ -31,7 +31,11 @@
 
 set(BOOST_lib_NAME        "Boost")
 set(BOOST_lib_VERSION     "1.69.0")
-set(BOOST_lib_COMPONENTS  regex filesystem)  # deps will also be compiled.
+# NOTE: this autodetection is broken for Boost 1.69.0
+# for Android shared arm64-v8a build with link error:
+# libboost_system.so.1.69.0, needed by install/lib/libboost_filesystem.so, not found
+#set(BOOST_lib_COMPONENTS  regex filesystem)  # deps will also be compiled.
+set(BOOST_lib_COMPONENTS  regex filesystem system)
 set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 
 # To use our Find<LibName>.cmake.
