@@ -16,15 +16,14 @@ local disable-icu = [ MATCH (--disable-icu) : [ modules.peek : ARGV ] ] ;
 rule path_options ( properties * )
 {
     local result ;
-#    if <address-model>64 in $(properties) && <toolset>msvc in $(properties) 
-#    {
-#    	result = <search>$(ICU_PATH)/bin64 <search>$(ICU_PATH)/lib64 ;
-#    }
-#    else
-#    {
-#    	result = <search>$(ICU_PATH)/bin <search>$(ICU_PATH)/lib ;
-#    }
-    result = <search>$(ICU_PATH)/bin <search>$(ICU_PATH)/lib ;
+    if <address-model>64 in $(properties) && <toolset>msvc in $(properties) 
+    {
+    	result = <search>$(ICU_PATH)/bin64 <search>$(ICU_PATH)/lib64 ;
+    }
+    else
+    {
+    	result = <search>$(ICU_PATH)/bin <search>$(ICU_PATH)/lib ;
+    }
     return $(result) ;
 }
 
@@ -52,16 +51,21 @@ if ! $(disable-icu)
       lib icuuc : :                                                               <runtime-link>shared <conditional>@path_options ;
       lib icuuc : : <toolset>msvc                     <variant>debug <name>icuucd <runtime-link>shared <conditional>@path_options ;
       lib icuuc : : <toolset>intel <target-os>windows <variant>debug <name>icuucd <runtime-link>shared <conditional>@path_options ;
-      lib icuuc : :                                                  <name>sicuuc <runtime-link>static <conditional>@path_options ;
+#      lib icuuc : :                                                  <name>sicuuc <runtime-link>static <conditional>@path_options ;
+      lib icuuc : :                                                  <name>icuuc <runtime-link>static <conditional>@path_options ;
       lib icuuc : : <toolset>msvc                     <variant>debug <name>sicuucd <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                                    <name>sicuuc <runtime-link>static <conditional>@path_options ;
       lib icuuc : : <toolset>intel <target-os>windows <variant>debug <name>sicuucd <runtime-link>static <conditional>@path_options ;
       lib icuuc : : <name>this_is_an_invalid_library_name ;
 
       lib icudt : : <name>icudata                                   <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <name>icudtd  <toolset>msvc      <variant>debug <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>icudt   <toolset>msvc                     <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>icudt   <toolset>intel <target-os>windows <runtime-link>shared <conditional>@path_options ;
       lib icudt : : <name>icudt   <toolset>gcc   <target-os>windows <runtime-link>shared <conditional>@path_options ;
-      lib icudt : : <name>sicudata                                   <runtime-link>static <conditional>@path_options ;
+#      lib icudt : : <name>sicudata                                   <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <name>icudata                                    <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <name>sicudtd  <toolset>msvc    <variant>debug   <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>sicudt   <toolset>msvc                     <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>sicudt   <toolset>intel <target-os>windows <runtime-link>static <conditional>@path_options ;
       lib icudt : : <name>icudt    <toolset>gcc   <target-os>windows <runtime-link>static <conditional>@path_options ;
@@ -73,7 +77,8 @@ if ! $(disable-icu)
       lib icuin : : <toolset>intel <target-os>windows <variant>debug   <name>icuind  <runtime-link>shared <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows                  <name>icuin   <runtime-link>shared <conditional>@path_options ;
       lib icuin : : <toolset>gcc   <target-os>windows                  <name>icuin   <runtime-link>shared <conditional>@path_options ;
-      lib icuin : :                                                    <name>sicui18n <runtime-link>static <conditional>@path_options ;
+#      lib icuin : :                                                    <name>sicui18n <runtime-link>static <conditional>@path_options ;
+      lib icuin : :                                                    <name>icui18n  <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>msvc                     <variant>debug   <name>sicuind  <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>msvc                                      <name>sicuin   <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows <variant>debug   <name>sicuind  <runtime-link>static <conditional>@path_options ;
@@ -98,9 +103,10 @@ if ! $(disable-icu)
 
 #unit-test has_icu : has_icu_test.cpp : $(ICU_OPTS) ;
 #explicit has_icu ;
+alias has_icu : icuuc icudt icuin ;
 
-#alias icu_options : : : : [ check-target-builds has_icu : $(ICU_OPTS) : ] ;
-alias icu_options : : : : $(ICU_OPTS) ;
+alias icu_options : : : : [ check-target-builds has_icu : $(ICU_OPTS) : ] ;
+#alias icu_options : : : : $(ICU_OPTS) ;
 
 SOURCES = 
    c_regex_traits.cpp
