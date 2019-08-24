@@ -400,7 +400,7 @@ jobs:
       env:
         - *build_windows_msvc_x64_env
         - cmr_BUILD_SHARED_LIBS=OFF
-        - cmr_BOOST_WITHOUT_ICU=ON
+#        - cmr_BOOST_WITHOUT_ICU=ON
 
     - <<: *build_windows_msvc_x32
       name: "Windows, msvc, x32, shared"
