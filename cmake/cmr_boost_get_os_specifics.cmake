@@ -23,6 +23,9 @@
 
 function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
 
+  # See
+  # https://www.boost.org/doc/libs/1_70_0/libs/context/doc/html/context/architectures.html
+
   # Legal values for 'architecture':
   # "x86" "ia64" "sparc" "power"
   # "mips1" "mips2" "mips3" "mips4" "mips32" "mips32r2" "mips64"
@@ -112,6 +115,29 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     endif()
 
     if(ANDROID_SYSROOT_ABI MATCHES "^....?64$")
+      set(cmr_BJAM_ADDR_MODEL 64)
+    else()
+      set(cmr_BJAM_ADDR_MODEL 32)
+    endif()
+
+    list(APPEND os_specifics "address-model=${cmr_BJAM_ADDR_MODEL}")
+    list(APPEND os_specifics "architecture=${cmr_BJAM_ARCH}")
+    list(APPEND os_specifics "abi=${cmr_BJAM_ABI}")
+
+  elseif(IOS)
+    list(APPEND os_specifics "binary-format=mach-o")
+
+    # CMAKE_OSX_ARCHITECTURES: armv7 armv7s armv7k arm64 arm64_32 i386 x86_64
+    if(CMAKE_OSX_ARCHITECTURES MATCHES "arm")
+      set(cmr_BJAM_ARCH arm)
+      set(cmr_BJAM_ABI aapcs)
+    elseif(CMAKE_OSX_ARCHITECTURES STREQUAL "i386"
+        OR CMAKE_OSX_ARCHITECTURES STREQUAL "x86_64")
+      set(cmr_BJAM_ARCH x86)
+      set(cmr_BJAM_ABI sysv)
+    endif()
+
+    if(CMAKE_OSX_ARCHITECTURES MATCHES "^....?64")
       set(cmr_BJAM_ADDR_MODEL 64)
     else()
       set(cmr_BJAM_ADDR_MODEL 32)

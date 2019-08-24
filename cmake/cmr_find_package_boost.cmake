@@ -29,6 +29,13 @@
   # Library specific build arguments
   #-----------------------------------------------------------------------
 
+  if(CMAKE_OSX_ARCHITECTURES MATCHES ";")  # List length is greater 1.
+    message(FATAL_ERROR
+      "This module does not work with OS X universal binaries."
+    )
+  endif()
+
+
 ## +++ Common part of the lib_cmaker_<lib_name> function +++
   set(find_LIB_VARS
     B2_PROGRAM_PATH
@@ -69,7 +76,7 @@
   set(lib_LANGUAGES CXX C ASM)
   set(lib_BUILD_MODE INSTALL)
 
-  if(BUILD_HOST_TOOLS)
+  if(find_BUILD_HOST_TOOLS)
     cmr_print_status("======== Build host tools for cross building ========")
     set(lib_BUILD_MODE BUILD_HOST_TOOLS INSTALL)
   elseif(B2_PROGRAM_PATH)

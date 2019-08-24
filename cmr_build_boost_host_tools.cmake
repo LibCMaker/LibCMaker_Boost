@@ -51,8 +51,6 @@ if(DEFINED BUILD_SHARED_LIBS)
 endif()
 set(BUILD_SHARED_LIBS OFF)  # Always static for host tools.
 
-set(BUILD_HOST_TOOLS ON)
-
 # Extra debug info from 'b2' tool.
 option(BOOST_DEBUG_SHOW_COMMANDS
   "B2 debug: Show commands as they are executed"
@@ -114,6 +112,7 @@ cmr_find_package(
   LIB_DIR         ${BOOST_lib_DIR}
   REQUIRED
   FIND_MODULE_NAME BoostHostTools
+  BUILD_HOST_TOOLS
 )
 
 if(DEFINED tmp_BUILD_SHARED_LIBS)

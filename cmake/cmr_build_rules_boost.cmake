@@ -361,7 +361,13 @@
       file(WRITE ${regex_user_config_STAMP} "stamp")
     endif()
 
-    if(ANDROID OR MSVC OR MINGW)
+    if(ANDROID OR IOS OR MSVC OR MINGW)
+      cmr_print_status("Patch 'libs/locale/build/Jamfile.v2' in unpacked sources.")
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${lib_BASE_DIR}/patch/boost-${lib_VERSION}/libs/locale/build/Jamfile.v2
+          ${lib_SRC_DIR}/libs/locale/build/Jamfile.v2
+      )
       cmr_print_status("Patch 'libs/regex/build/Jamfile.v2' in unpacked sources.")
       execute_process(
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

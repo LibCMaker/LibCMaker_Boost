@@ -114,51 +114,68 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
   endif()
 
 
+  if(ANDROID)
+    set(bgll_ARCH ${ANDROID_SYSROOT_ABI})
+  endif()
+  if(IOS)
+    set(bgll_ARCH ${CMAKE_OSX_ARCHITECTURES})
+  endif()
+
   if(BOOST_BUILD_ALL_COMPONENTS)
     foreach(name IN LISTS BOOST_COMPONENT_NAMES)
       if(${bgll_VERSION} VERSION_LESS BOOST_COMPONENT_${name}_VERSION)
         continue()
       endif()
 
-      if(ANDROID)
+      if(ANDROID OR IOS)
         string(COMPARE EQUAL "${name}" "python" without_component)
         if(without_component)
           # TODO: CrystaX NDK has Python.
           list(APPEND without_args "--without-${name}")
           continue()
         endif()
+      endif()
 
-        # Boost.Context in 1.57.0 and earlier don't support arm64.
-        # Boost.Context in 1.61.0 and earlier don't support mips64.
-        # Boost.Coroutine depends on Boost.Context.
-        if((ANDROID_SYSROOT_ABI STREQUAL "arm64"
-                AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
-            OR (ANDROID_SYSROOT_ABI STREQUAL "mips64"
-                AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
-          string(COMPARE EQUAL "${name}" "context" without_component)
-          if(without_component)
-            list(APPEND without_args "--without-${name}")
-            continue()
-          endif()
+      # TODO: Make the building of Boost.Container with "Unix Makefiles" on macOS,
+      # compare the all flags from Xcode generator with this.
+      if(APPLE AND CMAKE_GENERATOR MATCHES "Unix Makefiles")
+        string(COMPARE EQUAL "${name}" "container" without_component)
+        if(without_component)
+          list(APPEND without_args "--without-${name}")
+          continue()
+        endif()
+      endif()
 
-          string(COMPARE EQUAL "${name}" "coroutine" without_component)
-          if(without_component)
-            list(APPEND without_args "--without-${name}")
-            continue()
-          endif()
+      # Boost.Context in 1.57.0 and earlier don't support arm64.
+      # Boost.Context in 1.61.0 and earlier don't support mips64.
+      # Boost.Coroutine depends on Boost.Context.
+      if((NOT bgll_VERSION VERSION_GREATER "1.57.0"
+              AND bgll_ARCH MATCHES "arm64")
+          OR (NOT bgll_VERSION VERSION_GREATER "1.61.0"
+              AND ANDROID_SYSROOT_ABI MATCHES "mips64"))
+        string(COMPARE EQUAL "${name}" "context" without_component)
+        if(without_component)
+          list(APPEND without_args "--without-${name}")
+          continue()
         endif()
 
-        # Starting from 1.59.0, there is Boost.Coroutine2 library,
-        # which depends on Boost.Context too.
-        if(ANDROID_SYSROOT_ABI STREQUAL "mips64"
-                AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
-          string(COMPARE EQUAL "${name}" "coroutine2" without_component)
-          if(without_component)
-            list(APPEND without_args "--without-${name}")
-            continue()
-          endif()
+        string(COMPARE EQUAL "${name}" "coroutine" without_component)
+        if(without_component)
+          list(APPEND without_args "--without-${name}")
+          continue()
         endif()
-      endif()  # if(ANDROID)
+      endif()
+
+      # Starting from 1.59.0, there is Boost.Coroutine2 library,
+      # which depends on Boost.Context too.
+      if(NOT bgll_VERSION VERSION_GREATER "1.61.0"
+          AND ANDROID_SYSROOT_ABI MATCHES "mips64")
+        string(COMPARE EQUAL "${name}" "coroutine2" without_component)
+        if(without_component)
+          list(APPEND without_args "--without-${name}")
+          continue()
+        endif()
+      endif()
 
       if(MINGW AND "${name}" STREQUAL "python")
         add_definitions("-D_hypot=hypot" "-DMS_WIN64")
@@ -181,47 +198,54 @@ function(cmr_boost_get_lib_list out_LIB_LIST)
       )
     endif()
 
-    if(ANDROID)
+    if(ANDROID OR IOS)
       string(COMPARE EQUAL "${name}" "python" bad_component)
       if(bad_component)
-        # TODO: CrystaX NDK has Python.
-        cmr_print_error("Android NDK don't have Python for Boost.Python.")
-      endif()
-
-      # Boost.Context in 1.57.0 and earlier don't support arm64.
-      # Boost.Context in 1.61.0 and earlier don't support mips64.
-      # Boost.Coroutine depends on Boost.Context.
-      if((ANDROID_SYSROOT_ABI STREQUAL "arm64"
-              AND NOT bgll_VERSION VERSION_GREATER "1.57.0")
-          OR (ANDROID_SYSROOT_ABI STREQUAL "mips64"
-              AND NOT bgll_VERSION VERSION_GREATER "1.61.0"))
-        string(COMPARE EQUAL "${name}" "context" bad_component)
-        if(bad_component)
-          cmr_print_error(
-            "Boost.Context in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
-          )
+        if(ANDROID)
+          # TODO: CrystaX NDK has Python.
+          cmr_print_error("Android NDK don't have Python for Boost.Python.")
         endif()
-
-        string(COMPARE EQUAL "${name}" "coroutine" bad_component)
-        if(bad_component)
-          cmr_print_error(
-            "Boost.Coroutine in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
-          )
+        if(IOS)
+          # TODO: Check if iOS don't have Python.
+          cmr_print_error("iOS don't have Python for Boost.Python.")
         endif()
       endif()
+    endif()
 
-      # Starting from 1.59.0, there is Boost.Coroutine2 library,
-      # which depends on Boost.Context too.
-      if(ANDROID_SYSROOT_ABI STREQUAL "mips64"
-              AND NOT bgll_VERSION VERSION_GREATER "1.61.0")
-        string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
-        if(bad_component)
-          cmr_print_error(
-            "Boost.Coroutine2 in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
-          )
-        endif()
+    # Boost.Context in 1.57.0 and earlier don't support arm64.
+    # Boost.Context in 1.61.0 and earlier don't support mips64.
+    # Boost.Coroutine depends on Boost.Context.
+    if((NOT bgll_VERSION VERSION_GREATER "1.57.0"
+            AND bgll_ARCH MATCHES "arm64")
+        OR (NOT bgll_VERSION VERSION_GREATER "1.61.0"
+            AND ANDROID_SYSROOT_ABI MATCHES "mips64"))
+
+      string(COMPARE EQUAL "${name}" "context" bad_component)
+      if(bad_component)
+        cmr_print_error(
+          "Boost.Context in boost of version ${bgll_VERSION} don't support ${bgll_ARCH}."
+        )
       endif()
-    endif()  # if(ANDROID)
+
+      string(COMPARE EQUAL "${name}" "coroutine" bad_component)
+      if(bad_component)
+        cmr_print_error(
+          "Boost.Coroutine in boost of version ${bgll_VERSION} don't support ${bgll_ARCH}."
+        )
+      endif()
+    endif()
+
+    # Starting from 1.59.0, there is Boost.Coroutine2 library,
+    # which depends on Boost.Context too.
+    if(NOT bgll_VERSION VERSION_GREATER "1.61.0"
+        AND ANDROID_SYSROOT_ABI MATCHES "mips64")
+      string(COMPARE EQUAL "${name}" "coroutine2" bad_component)
+      if(bad_component)
+        cmr_print_error(
+          "Boost.Coroutine2 in boost of version ${bgll_VERSION} don't support ${ANDROID_SYSROOT_ABI}."
+        )
+      endif()
+    endif()
 
     if(MINGW AND "${name}" STREQUAL "python")
       add_definitions("-D_hypot=hypot" "-DMS_WIN64")

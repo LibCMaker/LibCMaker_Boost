@@ -77,7 +77,7 @@ endif()
 # Set CMake's search path for find_*() commands.
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
-if(ANDROID)
+if(ANDROID OR IOS)
   list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
 endif()
 

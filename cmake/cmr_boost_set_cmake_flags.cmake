@@ -170,8 +170,14 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHAVE_ROUND")
   endif()
 
+# CMAKE_OSX_SYSROOT specifies the location or **name**
+# of the macOS platform SDK to be used.
+# CMAKE_OSX_SYSROOT_INT is from ios.toolchain.cmake in LibCMaker.
+  string(COMPARE NOTEQUAL "${CMAKE_OSX_SYSROOT_INT}" "" have_osx_sysroot_int)
   string(COMPARE NOTEQUAL "${CMAKE_OSX_SYSROOT}" "" have_osx_sysroot)
-  if(have_osx_sysroot)
+  if(have_osx_sysroot_int)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT_INT}")
+  elseif(have_osx_sysroot)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${CMAKE_OSX_SYSROOT}")
   endif()
 
