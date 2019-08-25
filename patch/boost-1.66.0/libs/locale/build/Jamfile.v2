@@ -22,6 +22,21 @@ feature.feature boost.locale.posix : on off : optional propagated ;
 feature.feature boost.locale.std : on off : optional propagated ;
 feature.feature boost.locale.winapi : on off : optional propagated ;
 
+rule path_options ( properties * )
+{
+    local result ;
+    if <address-model>64 in $(properties) && <toolset>msvc in $(properties) 
+    {
+        result = <search>$(ICU_PATH)/bin64 <search>$(ICU_PATH)/lib64 ;
+    }
+    else
+    {
+        result = <search>$(ICU_PATH)/bin <search>$(ICU_PATH)/lib ;
+    }  
+    
+    return $(result) ;
+}
+
 # Configuration of libraries
 
 ## iconv
@@ -66,338 +81,79 @@ ICU_LINK =  [ modules.peek : ICU_LINK ] ;
 if $(ICU_LINK)
 {
     ICU_OPTS = <include>$(ICU_PATH)/include <linkflags>$(ICU_LINK) <dll-path>$(ICU_PATH)/bin <runtime-link>shared ;
-    ICU64_OPTS = <include>$(ICU_PATH)/include <linkflags>$(ICU_LINK) <dll-path>$(ICU_PATH)/bin64 <runtime-link>shared ;
+#    ICU64_OPTS = <include>$(ICU_PATH)/include <linkflags>$(ICU_LINK) <dll-path>$(ICU_PATH)/bin64 <runtime-link>shared ;
 }
 else
 {
-    searched-lib icuuc : :  <name>icuuc
-                            <search>$(ICU_PATH)/lib 
-                            <link>shared 
-                            <runtime-link>shared ;
+      lib icuuc : :                                                                 <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                     <variant>debug <name>icuucd   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                                    <name>icuuc    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuuc : : <toolset>intel <target-os>windows <variant>debug <name>icuucd   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuuc : : <toolset>intel <target-os>windows                <name>icuuc    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuuc : : <toolset>gcc   <target-os>windows                <name>icuuc    <link>shared <runtime-link>shared <conditional>@path_options ;
 
-    searched-lib icuuc : :  <toolset>msvc
-                            <variant>debug
-                            <name>icuucd
-                            <search>$(ICU_PATH)/lib
-                            <link>shared
-                            <runtime-link>shared ;
+      lib icuuc : :                                                  <name>icuuc    <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                     <variant>debug <name>sicuucd  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                                    <name>sicuuc   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>intel <target-os>windows <variant>debug <name>sicuucd  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>intel <target-os>windows                <name>sicuuc   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>gcc   <target-os>windows                <name>icuuc    <link>static <runtime-link>static <conditional>@path_options ;
 
-
-    searched-lib icuuc : :  <name>icuuc
-                            <search>$(ICU_PATH)/lib 
-                            <link>static 
-                            <runtime-link>static ;
-
-    searched-lib icuuc : :  <toolset>msvc
-                            <variant>debug
-                            <name>sicuucd
-                            <search>$(ICU_PATH)/lib
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuuc : :  <toolset>msvc
-                            <name>sicuuc
-                            <search>$(ICU_PATH)/lib
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuuc : :  <name>this_is_an_invalid_library_name ;
+      lib icuuc : : <name>this_is_an_invalid_library_name ;
 
 
+      lib icudt : :                                                  <name>icudata  <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <toolset>msvc                     <variant>debug <name>icudtd   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <toolset>msvc                                    <name>icudt    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <toolset>intel <target-os>windows <variant>debug <name>icudtd   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <toolset>intel <target-os>windows                <name>icudt    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icudt : : <toolset>gcc   <target-os>windows                <name>icudt    <link>shared <runtime-link>shared <conditional>@path_options ;
+
+      lib icudt : :                                                  <name>icudata  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>msvc                     <variant>debug <name>sicudtd  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>msvc                                    <name>sicudt   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>intel <target-os>windows <variant>debug <name>sicudtd  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>intel <target-os>windows                <name>sicudt   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>gcc   <target-os>windows                <name>icudt    <link>static <runtime-link>static <conditional>@path_options ;
+
+      lib icudt : : <name>this_is_an_invalid_library_name ;
 
 
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>icudata
-                            <link>shared
-                            <runtime-link>shared ;
+      lib icuin : :                                                  <name>icui18n  <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>msvc                     <variant>debug <name>icuind   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>msvc                                    <name>icuin    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>intel <target-os>windows <variant>debug <name>icuind   <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>intel <target-os>windows                <name>icuin    <link>shared <runtime-link>shared <conditional>@path_options ;
+      lib icuin : : <toolset>gcc   <target-os>windows                <name>icuin    <link>shared <runtime-link>shared <conditional>@path_options ;
 
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <variant>debug
-                            <name>icudtd
-                            <toolset>msvc
-                            <link>shared
-                            <runtime-link>shared ;
+      lib icuin : :                                                  <name>icui18n  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>msvc                     <variant>debug <name>sicuind  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>msvc                                    <name>sicuin   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>intel <target-os>windows <variant>debug <name>sicuind  <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>intel <target-os>windows                <name>sicuin   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>gcc   <target-os>windows                <name>icuin    <link>static <runtime-link>static <conditional>@path_options ;
 
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>icudt
-                            <toolset>msvc
-                            <link>shared
-                            <runtime-link>shared ;
-
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>icudt
-                            <toolset>gcc
-                            <target-os>windows
-                            <link>shared
-                            <runtime-link>shared ;
-
-
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>icudata
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <variant>debug
-                            <name>sicudtd
-                            <toolset>msvc
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>sicudt
-                            <toolset>msvc
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icudt : :  <search>$(ICU_PATH)/lib
-                            <name>icudt
-                            <toolset>gcc
-                            <target-os>windows
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icudt : :  <name>this_is_an_invalid_library_name ;
-
-
-
-
-    searched-lib icuin : :  <search>$(ICU_PATH)/lib
-                            <name>icui18n
-                            <link>shared
-                            <runtime-link>shared ;
-
-    searched-lib icuin : :  <toolset>msvc
-                            <variant>debug
-                            <name>icuind
-                            <search>$(ICU_PATH)/lib
-                            <link>shared
-                            <runtime-link>shared ;
-
-    searched-lib icuin : :  <toolset>msvc
-#                            <variant>release
-                            <name>icuin
-                            <search>$(ICU_PATH)/lib
-                            <link>shared
-                            <runtime-link>shared ;
-
-    searched-lib icuin : :  <toolset>gcc
-                            <target-os>windows
-                            <name>icuin
-                            <search>$(ICU_PATH)/lib
-                            <link>shared
-                            <runtime-link>shared ;
-
-
-    searched-lib icuin : :  <search>$(ICU_PATH)/lib
-                            <name>icui18n
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuin : :  <toolset>msvc
-                            <variant>debug
-                            <name>sicuind
-                            <search>$(ICU_PATH)/lib
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuin : :  <toolset>msvc
-#                            <variant>release
-                            <name>sicuin
-                            <search>$(ICU_PATH)/lib
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuin : :  <toolset>gcc
-                            <target-os>windows
-                            <name>icuin
-                            <search>$(ICU_PATH)/lib
-                            <link>static
-                            <runtime-link>static ;
-
-    searched-lib icuin : :  <name>this_is_an_invalid_library_name ;
-
-
+      lib icuin : : <name>this_is_an_invalid_library_name ;
 
 
     explicit icuuc icudt icuin ;
 
-    ICU_OPTS =   <include>$(ICU_PATH)/include 
-      <library>icuuc/<link>shared/<runtime-link>shared 
-      <library>icudt/<link>shared/<runtime-link>shared 
-      <library>icuin/<link>shared/<runtime-link>shared
-      <library>icuuc/<link>static/<runtime-link>static 
-      <library>icudt/<link>static/<runtime-link>static 
-      <library>icuin/<link>static/<runtime-link>static
-      <dll-path>$(ICU_PATH)/bin
-        <runtime-link>shared ;
+#    ICU_OPTS =   <include>$(ICU_PATH)/include 
+#      <library>icuuc/<link>shared/<runtime-link>shared 
+#      <library>icudt/<link>shared/<runtime-link>shared 
+#      <library>icuin/<link>shared/<runtime-link>shared
+#      <library>icuuc/<link>static/<runtime-link>static 
+#      <library>icudt/<link>static/<runtime-link>static 
+#      <library>icuin/<link>static/<runtime-link>static
+#      <dll-path>$(ICU_PATH)/bin
+#        <runtime-link>shared ;
 
-
-
-
-    searched-lib icuuc_64 : :   <name>icuuc
-                                <search>$(ICU_PATH)/lib64 
-                                <link>shared 
-                                <runtime-link>shared ;
-
-    searched-lib icuuc_64 : :   <toolset>msvc
-                                <variant>debug
-                                <name>icuucd
-                                <search>$(ICU_PATH)/lib64
-                                <link>shared
-                                <runtime-link>shared ;
-
-
-    searched-lib icuuc_64 : :   <name>icuuc
-                                <search>$(ICU_PATH)/lib64 
-                                <link>static 
-                                <runtime-link>static ;
-
-    searched-lib icuuc_64 : :   <toolset>msvc
-                                <variant>debug
-                                <name>sicuucd
-                                <search>$(ICU_PATH)/lib64
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuuc_64 : :   <toolset>msvc
-                                <name>sicuuc
-                                <search>$(ICU_PATH)/lib64
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuuc_64 : :   <name>this_is_an_invalid_library_name ;
-
-
-
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icudata
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <variant>debug
-                                <name>icudtd
-                                <toolset>msvc
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icudt
-                                <toolset>msvc
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icudt
-                                <toolset>gcc
-                                <target-os>windows
-                                <link>shared
-                                <runtime-link>shared ;
-
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icudata
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <variant>debug
-                                <name>sicudtd
-                                <toolset>msvc
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>sicudt
-                                <toolset>msvc
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icudt_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icudt
-                                <toolset>gcc
-                                <target-os>windows
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icudt_64 : :   <name>this_is_an_invalid_library_name ;
-
-
-
-
-    searched-lib icuin_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icui18n
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icuin_64 : :   <toolset>msvc
-                                <variant>debug
-                                <name>icuind
-                                <search>$(ICU_PATH)/lib64
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icuin_64 : :   <toolset>msvc
-#                                <variant>release
-                                <name>icuin
-                                <search>$(ICU_PATH)/lib64
-                                <link>shared
-                                <runtime-link>shared ;
-
-    searched-lib icuin_64 : :   <toolset>gcc
-                                <target-os>windows
-                                <name>icuin
-                                <search>$(ICU_PATH)/lib64
-                                <link>shared
-                                <runtime-link>shared ;
-
-
-    searched-lib icuin_64 : :   <search>$(ICU_PATH)/lib64
-                                <name>icui18n
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuin_64 : :   <toolset>msvc
-                                <variant>debug
-                                <name>sicuind
-                                <search>$(ICU_PATH)/lib64
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuin_64 : :   <toolset>msvc
-#                                <variant>release
-                                <name>sicuin
-                                <search>$(ICU_PATH)/lib64
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuin_64 : :   <toolset>gcc
-                                <target-os>windows
-                                <name>icuin
-                                <search>$(ICU_PATH)/lib64
-                                <link>static
-                                <runtime-link>static ;
-
-    searched-lib icuin_64 : :   <name>this_is_an_invalid_library_name ;
-
-
-
-
-    explicit icuuc_64 icudt_64 icuin_64 ;
-
-    ICU64_OPTS =   <include>$(ICU_PATH)/include 
-      <library>icuuc_64/<link>shared/<runtime-link>shared 
-      <library>icudt_64/<link>shared/<runtime-link>shared 
-      <library>icuin_64/<link>shared/<runtime-link>shared
-      <library>icuuc_64/<link>static/<runtime-link>static 
-      <library>icudt_64/<link>static/<runtime-link>static 
-      <library>icuin_64/<link>static/<runtime-link>shared
-      <dll-path>$(ICU_PATH)/bin64
-        <runtime-link>shared ;
- 
-    
+      ICU_OPTS = 
+         <include>$(ICU_PATH)/include 
+         <library>icuuc
+         <library>icudt
+         <library>icuin
+         ;
 }
 
 #obj has_icu_obj     : ../build/has_icu_test.cpp : $(ICU_OPTS)   ;
@@ -409,7 +165,7 @@ else
 #explicit has_icu has_icu64 ;
 
 alias has_icu : icuuc icudt icuin ;
-alias has_icu64 : icuuc_64 icudt_64 icuin_64 ;
+#alias has_icu64 : icuuc_64 icudt_64 icuin_64 ;
 
 
 # This function is called whenever the 'boost_locale' metatarget
