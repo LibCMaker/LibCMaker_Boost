@@ -47,7 +47,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\bin64;${cmr_INSTALL_DIR}\lib;${cmr_INSTALL_DIR}\lib64;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 
     # MSVC 2017, x64, static
     - cmr_MSVC_2017_x64_static: ON
@@ -57,7 +57,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\bin64;${cmr_INSTALL_DIR}\lib;${cmr_INSTALL_DIR}\lib64;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 #      cmr_BOOST_WITHOUT_ICU: ON  # TODO: remove it after fix build with ICU
 
     # MSVC 2017, x32, shared
@@ -104,7 +104,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: ON
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\bin64;${cmr_INSTALL_DIR}\lib;${cmr_INSTALL_DIR}\lib64;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 
     # MSVC 2015, x64, static
     - cmr_MSVC_2015_x64_static: ON
@@ -114,7 +114,7 @@ environment:
       cmr_CONFIG_TYPES: -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
       cmr_STD_LIBS:
       cmr_BUILD_SHARED_LIBS: OFF
-      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\lib;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
+      PATH: ${cmr_INSTALL_DIR}\bin;${cmr_INSTALL_DIR}\bin64;${cmr_INSTALL_DIR}\lib;${cmr_INSTALL_DIR}\lib64;${cmr_CMAKE_DIR}\bin;C:\Python27-x64;%PATH%
 #      cmr_BOOST_WITHOUT_ICU: ON  # TODO: remove it after fix build with ICU
 
     # MinGW-w64, x64, shared
