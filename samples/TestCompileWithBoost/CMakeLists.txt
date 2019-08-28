@@ -39,9 +39,9 @@ endif()
 # Compiler flags
 #-----------------------------------------------------------------------
 
-option(cmr_USE_MSVC_STATIC_RUNTIME "cmr_USE_MSVC_STATIC_RUNTIME" ON)
+option(cmr_USE_STATIC_RUNTIME "cmr_USE_STATIC_RUNTIME" ON)
 
-if(cmr_USE_MSVC_STATIC_RUNTIME AND MSVC AND NOT BUILD_SHARED_LIBS)
+if(cmr_USE_STATIC_RUNTIME AND MSVC AND NOT BUILD_SHARED_LIBS)
   # Set MSVC static runtime flags for all configurations.
   # See:
   # https://stackoverflow.com/a/20804336

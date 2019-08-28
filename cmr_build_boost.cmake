@@ -114,11 +114,11 @@ option(BUILD_BCP_TOOL "Build 'bcp' program" OFF)
 option(Boost_USE_MULTITHREADED "Boost_USE_MULTITHREADED" ON)
 
 # Whether to link to static or shared C and C++ runtime (set 'runtime-link').
-# cmr_USE_MSVC_STATIC_RUNTIME must be ON for Boost_USE_STATIC_RUNTIME=ON.
+# cmr_USE_STATIC_RUNTIME must be ON for Boost_USE_STATIC_RUNTIME=ON.
 if(MSVC)
   if(BUILD_SHARED_LIBS)
     set(Boost_USE_STATIC_RUNTIME OFF)
-  elseif(cmr_USE_MSVC_STATIC_RUNTIME)
+  elseif(cmr_USE_STATIC_RUNTIME)
     set(Boost_USE_STATIC_RUNTIME ON)
   else()
     set(Boost_USE_STATIC_RUNTIME OFF)
