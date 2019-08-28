@@ -37,6 +37,35 @@ rule path_options ( properties * )
     return $(result) ;
 }
 
+rule archive_flags ( properties * )
+{
+    local flags-result ;
+
+    if <toolset>msvc in $(properties) && <link>static in $(properties) && <runtime-link>static in $(properties)
+    { 
+        local xbits = "" ;
+        if <address-model>64 in $(properties) 
+        {
+            xbits = "64" ;
+        }
+
+        local libsuf = "" ;
+        if <variant>debug in $(properties) 
+        {
+            libsuf = "d" ;
+        }
+
+        local iculibs = in uc dt ;
+        for libtxt in $(iculibs)
+        {   
+            local p = $(ICU_PATH)/lib$(xbits)/sicu$(libtxt)$(libsuf).lib ;      
+            flags-result += <archiveflags>$(p) ; 
+        }
+    }
+
+    return $(flags-result) ;
+}
+
 # Configuration of libraries
 
 ## iconv
@@ -93,8 +122,8 @@ else
       lib icuuc : : <toolset>gcc   <target-os>windows                <name>icuuc    <link>shared <runtime-link>shared <conditional>@path_options ;
 
       lib icuuc : :                                                  <name>icuuc    <link>static <runtime-link>static <conditional>@path_options ;
-      lib icuuc : : <toolset>msvc                     <variant>debug <name>sicuucd  <link>static <runtime-link>static <conditional>@path_options ;
-      lib icuuc : : <toolset>msvc                                    <name>sicuuc   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuuc : : <toolset>msvc                     <variant>debug <name>sicuucd  <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
+      lib icuuc : : <toolset>msvc                                    <name>sicuuc   <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
       lib icuuc : : <toolset>intel <target-os>windows <variant>debug <name>sicuucd  <link>static <runtime-link>static <conditional>@path_options ;
       lib icuuc : : <toolset>intel <target-os>windows                <name>sicuuc   <link>static <runtime-link>static <conditional>@path_options ;
       lib icuuc : : <toolset>gcc   <target-os>windows                <name>icuuc    <link>static <runtime-link>static <conditional>@path_options ;
@@ -110,8 +139,8 @@ else
       lib icudt : : <toolset>gcc   <target-os>windows                <name>icudt    <link>shared <runtime-link>shared <conditional>@path_options ;
 
       lib icudt : :                                                  <name>icudata  <link>static <runtime-link>static <conditional>@path_options ;
-      lib icudt : : <toolset>msvc                     <variant>debug <name>sicudtd  <link>static <runtime-link>static <conditional>@path_options ;
-      lib icudt : : <toolset>msvc                                    <name>sicudt   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icudt : : <toolset>msvc                     <variant>debug <name>sicudtd  <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
+      lib icudt : : <toolset>msvc                                    <name>sicudt   <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
       lib icudt : : <toolset>intel <target-os>windows <variant>debug <name>sicudtd  <link>static <runtime-link>static <conditional>@path_options ;
       lib icudt : : <toolset>intel <target-os>windows                <name>sicudt   <link>static <runtime-link>static <conditional>@path_options ;
       lib icudt : : <toolset>gcc   <target-os>windows                <name>icudt    <link>static <runtime-link>static <conditional>@path_options ;
@@ -127,8 +156,8 @@ else
       lib icuin : : <toolset>gcc   <target-os>windows                <name>icuin    <link>shared <runtime-link>shared <conditional>@path_options ;
 
       lib icuin : :                                                  <name>icui18n  <link>static <runtime-link>static <conditional>@path_options ;
-      lib icuin : : <toolset>msvc                     <variant>debug <name>sicuind  <link>static <runtime-link>static <conditional>@path_options ;
-      lib icuin : : <toolset>msvc                                    <name>sicuin   <link>static <runtime-link>static <conditional>@path_options ;
+      lib icuin : : <toolset>msvc                     <variant>debug <name>sicuind  <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
+      lib icuin : : <toolset>msvc                                    <name>sicuin   <link>static <runtime-link>static <conditional>@path_options <conditional>@archive_flags ;
       lib icuin : : <toolset>intel <target-os>windows <variant>debug <name>sicuind  <link>static <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>intel <target-os>windows                <name>sicuin   <link>static <runtime-link>static <conditional>@path_options ;
       lib icuin : : <toolset>gcc   <target-os>windows                <name>icuin    <link>static <runtime-link>static <conditional>@path_options ;
@@ -153,6 +182,7 @@ else
          <library>icuuc
          <library>icudt
          <library>icuin
+         <link>static:<define>U_STATIC_IMPLEMENTATION=1
          ;
 }
 
