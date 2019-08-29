@@ -153,9 +153,6 @@ function(cmr_boost_set_cmake_flags)
   set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_CXX_STANDARD_LIBRARIES_INIT}"
   )
-  set(CMAKE_STATIC_LINKER_FLAGS
-    "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_CXX_STANDARD_LIBRARIES_INIT}"
-  )
 
   if(MSVC)
     # Disable auto-linking
@@ -168,6 +165,8 @@ function(cmr_boost_set_cmake_flags)
     # Fix boost.python:
     # include\pymath.h: warning C4273: 'round': inconsistent dll linkage
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHAVE_ROUND")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FS")
   endif()
 
 # CMAKE_OSX_SYSROOT specifies the location or **name**

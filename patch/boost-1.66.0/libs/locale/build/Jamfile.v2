@@ -182,7 +182,6 @@ else
          <library>icuuc
          <library>icudt
          <library>icuin
-         <link>static:<define>U_STATIC_IMPLEMENTATION=1
          ;
 }
 
@@ -236,15 +235,31 @@ rule configure-full ( properties * : flags-only )
 
     if ! <boost.locale.icu>off in $(properties)
     {
-        if [ configure.builds has_icu : $(properties) : "icu" ]
+        local bits ;
+
+        if <address-model>32 in $(properties)
         {
-            found-icu = true ;
-            flags-result += <define>BOOST_LOCALE_WITH_ICU=1 $(ICU_OPTS) ;
+            bits = "icu (32-bit)" ;
         }
-        else if [ configure.builds has_icu64 : $(properties) : "icu (lib64)" ]
+        else if <address-model>64 in $(properties)
+        {
+            bits = "icu (64-bit)" ;
+        }
+
+        if [ configure.builds has_icu : $(properties) : $(bits) ]
         {
             found-icu = true ;
-            flags-result += <define>BOOST_LOCALE_WITH_ICU=1 $(ICU64_OPTS) ;
+
+            flags-result += <define>BOOST_LOCALE_WITH_ICU=1 $(ICU_OPTS) ;
+
+            if <link>static in $(properties) && <runtime-link>static in $(properties)
+            {
+                flags-result += <define>U_STATIC_IMPLEMENTATION=1 ;
+            }
+            else
+            {
+                flags-result += <define>BOOST_REGEX_DYN_LINK=1 ;
+            }
         }
 
         if $(found-icu)
@@ -432,7 +447,6 @@ lib boost_locale
     :
       # Don't link explicitly, not required
       <define>BOOST_THREAD_NO_LIB=1
-      <link>shared:<define>BOOST_LOCALE_DYN_LINK=1
       <threading>multi
       # Meanwhile remove this
       <conditional>@configure

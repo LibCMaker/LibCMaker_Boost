@@ -128,36 +128,59 @@ if ! $(disable-icu)
       lib icuin : : <name>this_is_an_invalid_library_name ;
 
 
-#      ICU_OPTS = 
-#         <include>$(ICU_PATH)/include 
-#         <runtime-link>shared:<library>icuuc/<link>shared
-#         <runtime-link>shared:<library>icudt/<link>shared
-#         <runtime-link>shared:<library>icuin/<link>shared
-#         <runtime-link>static:<library>icuuc
-#         <runtime-link>static:<library>icudt
-#         <runtime-link>static:<library>icuin
-#         <define>BOOST_HAS_ICU=1 
-#         <runtime-link>static:<define>U_STATIC_IMPLEMENTATION=1
-#         ;
-
       ICU_OPTS = 
          <include>$(ICU_PATH)/include 
+         <define>BOOST_HAS_ICU=1 
          <library>icuuc
          <library>icudt
          <library>icuin
-         <define>BOOST_HAS_ICU=1 
-         <link>static:<define>U_STATIC_IMPLEMENTATION=1
          ;
    }
 
 }
 
-#unit-test has_icu : has_icu_test.cpp : $(ICU_OPTS) ;
-#explicit has_icu ;
+
 alias has_icu : icuuc icudt icuin ;
 
-alias icu_options : : : : [ check-target-builds has_icu : $(ICU_OPTS) : ] ;
-#alias icu_options : : : : $(ICU_OPTS) ;
+
+# This function is called whenever the 'boost_regex' metatarget
+# below is generated and figures what external components we have,
+# what user wants, and what sources have to be compiled in the end.
+rule configure ( properties * )
+{
+    local flags-result ;
+   
+    if ! $(disable-icu)
+    {
+        local bits ;
+
+        if <address-model>32 in $(properties) 
+        {
+            bits = "icu (32-bit)" ;
+        }
+        else if <address-model>64 in $(properties) 
+        {
+            bits = "icu (64-bit)" ;
+        }
+           
+        if [ configure.builds has_icu : $(properties) : $(bits) ]
+        {
+            flags-result += $(ICU_OPTS) ;
+           
+            if <link>static in $(properties) && <runtime-link>static in $(properties) 
+            {
+                flags-result += <define>U_STATIC_IMPLEMENTATION=1 ;
+            }
+            else
+            {
+                flags-result += <define>BOOST_REGEX_DYN_LINK=1 ;
+            }
+        }
+    }
+   
+    return $(flags-result) ;
+}
+
 
 SOURCES = 
    c_regex_traits.cpp
@@ -179,18 +202,9 @@ SOURCES =
    usinstances.cpp ;
 
 
-lib boost_regex : ../src/$(SOURCES) icu_options
+lib boost_regex : ../src/$(SOURCES)
     :         
-         <link>shared:<define>BOOST_REGEX_DYN_LINK=1
-         <toolset>gcc-cygwin:<link>static
+         <conditional>@configure
     ;
 
 boost-install boost_regex ;
-
-
-
-
-
-
-
-
