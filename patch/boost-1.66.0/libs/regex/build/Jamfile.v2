@@ -1,6 +1,6 @@
 # copyright John Maddock 2003
-# Distributed under the Boost Software License, Version 1.0. 
-# (See accompanying file LICENSE_1_0.txt or copy at 
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt.
 
 import modules ;
@@ -16,7 +16,7 @@ local disable-icu = [ MATCH (--disable-icu) : [ modules.peek : ARGV ] ] ;
 rule path_options ( properties * )
 {
     local result ;
-    if <address-model>64 in $(properties) && <toolset>msvc in $(properties) 
+    if <address-model>64 in $(properties) && <toolset>msvc in $(properties)
     {
         result = <search>$(ICU_PATH)/bin64 <search>$(ICU_PATH)/lib64 ;
     }
@@ -32,24 +32,24 @@ rule archive_flags ( properties * )
     local flags-result ;
 
     if <toolset>msvc in $(properties) && <link>static in $(properties) && <runtime-link>static in $(properties)
-    { 
+    {
         local xbits = "" ;
-        if <address-model>64 in $(properties) 
+        if <address-model>64 in $(properties)
         {
             xbits = "64" ;
         }
 
         local libsuf = "" ;
-        if <variant>debug in $(properties) 
+        if <variant>debug in $(properties)
         {
             libsuf = "d" ;
         }
 
         local iculibs = in uc dt ;
         for libtxt in $(iculibs)
-        {   
-            local p = $(ICU_PATH)/lib$(xbits)/sicu$(libtxt)$(libsuf).lib ;      
-            flags-result += <archiveflags>$(p) ; 
+        {
+            local p = $(ICU_PATH)/lib$(xbits)/sicu$(libtxt)$(libsuf).lib ;
+            flags-result += <archiveflags>$(p) ;
         }
     }
 
@@ -63,11 +63,11 @@ if ! $(disable-icu)
 {
 
    if [ modules.peek : ICU_PATH ]
-   {    
+   {
        ICU_PATH =  [ modules.peek : ICU_PATH ] ;
    }
    if [ modules.peek : ICU_LINK ]
-   {    
+   {
        ICU_LINK =  [ modules.peek : ICU_LINK ] ;
    }
 
@@ -128,9 +128,9 @@ if ! $(disable-icu)
       lib icuin : : <name>this_is_an_invalid_library_name ;
 
 
-      ICU_OPTS = 
-         <include>$(ICU_PATH)/include 
-         <define>BOOST_HAS_ICU=1 
+      ICU_OPTS =
+         <include>$(ICU_PATH)/include
+         <define>BOOST_HAS_ICU=1
          <library>icuuc
          <library>icudt
          <library>icuin
@@ -142,6 +142,8 @@ if ! $(disable-icu)
 
 alias has_icu : icuuc icudt icuin ;
 
+alias icu_options : : : : [ check-target-builds has_icu : $(ICU_OPTS) : ] ;
+
 
 # This function is called whenever the 'boost_regex' metatarget
 # below is generated and figures what external components we have,
@@ -149,40 +151,24 @@ alias has_icu : icuuc icudt icuin ;
 rule configure ( properties * )
 {
     local flags-result ;
-   
+
     if ! $(disable-icu)
     {
-        local bits ;
-
-        if <address-model>32 in $(properties) 
+        if <link>static in $(properties) && <runtime-link>static in $(properties)
         {
-            bits = "icu (32-bit)" ;
+            flags-result += <define>U_STATIC_IMPLEMENTATION=1 ;
         }
-        else if <address-model>64 in $(properties) 
+        else
         {
-            bits = "icu (64-bit)" ;
-        }
-           
-        if [ configure.builds has_icu : $(properties) : $(bits) ]
-        {
-            flags-result += $(ICU_OPTS) ;
-           
-            if <link>static in $(properties) && <runtime-link>static in $(properties) 
-            {
-                flags-result += <define>U_STATIC_IMPLEMENTATION=1 ;
-            }
-            else
-            {
-                flags-result += <define>BOOST_REGEX_DYN_LINK=1 ;
-            }
+            flags-result += <define>BOOST_REGEX_DYN_LINK=1 ;
         }
     }
-   
+
     return $(flags-result) ;
 }
 
 
-SOURCES = 
+SOURCES =
    c_regex_traits.cpp
    cpp_regex_traits.cpp
    cregex.cpp
@@ -198,12 +184,12 @@ SOURCES =
    w32_regex_traits.cpp
    wc_regex_traits.cpp
    wide_posix_api.cpp
-   winstances.cpp 
+   winstances.cpp
    usinstances.cpp ;
 
 
-lib boost_regex : ../src/$(SOURCES)
-    :         
+lib boost_regex : ../src/$(SOURCES) icu_options
+    :
          <conditional>@configure
     ;
 

@@ -1,6 +1,6 @@
 # copyright John Maddock 2003, Artyom Beilis 2010
-# Distributed under the Boost Software License, Version 1.0. 
-# (See accompanying file LICENSE_1_0.txt or copy at 
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt.
 
 
@@ -14,8 +14,8 @@ import os ;
 import toolset ;
 import project ;
 import feature ;
-# Features
 
+# Features
 feature.feature boost.locale.iconv : on off : optional propagated ;
 feature.feature boost.locale.icu : on off :  optional propagated ;
 feature.feature boost.locale.posix : on off : optional propagated ;
@@ -25,15 +25,15 @@ feature.feature boost.locale.winapi : on off : optional propagated ;
 rule path_options ( properties * )
 {
     local result ;
-    if <address-model>64 in $(properties) && <toolset>msvc in $(properties) 
+    if <address-model>64 in $(properties) && <toolset>msvc in $(properties)
     {
         result = <search>$(ICU_PATH)/bin64 <search>$(ICU_PATH)/lib64 ;
     }
     else
     {
         result = <search>$(ICU_PATH)/bin <search>$(ICU_PATH)/lib ;
-    }  
-    
+    }
+
     return $(result) ;
 }
 
@@ -42,24 +42,24 @@ rule archive_flags ( properties * )
     local flags-result ;
 
     if <toolset>msvc in $(properties) && <link>static in $(properties) && <runtime-link>static in $(properties)
-    { 
+    {
         local xbits = "" ;
-        if <address-model>64 in $(properties) 
+        if <address-model>64 in $(properties)
         {
             xbits = "64" ;
         }
 
         local libsuf = "" ;
-        if <variant>debug in $(properties) 
+        if <variant>debug in $(properties)
         {
             libsuf = "d" ;
         }
 
         local iculibs = in uc dt ;
         for libtxt in $(iculibs)
-        {   
-            local p = $(ICU_PATH)/lib$(xbits)/sicu$(libtxt)$(libsuf).lib ;      
-            flags-result += <archiveflags>$(p) ; 
+        {
+            local p = $(ICU_PATH)/lib$(xbits)/sicu$(libtxt)$(libsuf).lib ;
+            flags-result += <archiveflags>$(p) ;
         }
     }
 
@@ -76,11 +76,11 @@ explicit has_iconv ;
 
 ICONV_PATH = [ modules.peek : ICONV_PATH ] ;
 
-lib iconv 
-  : 
+lib iconv
+  :
   : <search>$(ICONV_PATH)/lib <link>shared <runtime-link>shared
   :
-  : <include>$(ICONV_PATH)/include 
+  : <include>$(ICONV_PATH)/include
   ;
 
 explicit iconv ;
@@ -89,8 +89,8 @@ obj has_iconv_libc_ext : ../build/has_iconv.cpp iconv ;
 exe has_external_iconv : has_iconv_libc_ext iconv ;
 explicit has_external_iconv ;
 
-exe accepts_shared_option   : ../build/option.cpp 
-                            :   <cxxflags>-shared-libstdc++ 
+exe accepts_shared_option   : ../build/option.cpp
+                            :   <cxxflags>-shared-libstdc++
                                 <cxxflags>-shared-libgcc
                                 <linkflags>-shared-libstdc++
                                 <linkflags>-shared-libgcc
@@ -167,34 +167,16 @@ else
 
     explicit icuuc icudt icuin ;
 
-#    ICU_OPTS =   <include>$(ICU_PATH)/include 
-#      <library>icuuc/<link>shared/<runtime-link>shared 
-#      <library>icudt/<link>shared/<runtime-link>shared 
-#      <library>icuin/<link>shared/<runtime-link>shared
-#      <library>icuuc/<link>static/<runtime-link>static 
-#      <library>icudt/<link>static/<runtime-link>static 
-#      <library>icuin/<link>static/<runtime-link>static
-#      <dll-path>$(ICU_PATH)/bin
-#        <runtime-link>shared ;
-
-      ICU_OPTS = 
-         <include>$(ICU_PATH)/include 
+      ICU_OPTS =
+         <include>$(ICU_PATH)/include
          <library>icuuc
          <library>icudt
          <library>icuin
          ;
 }
 
-#obj has_icu_obj     : ../build/has_icu_test.cpp : $(ICU_OPTS)   ;
-#obj has_icu64_obj   : ../build/has_icu_test.cpp : $(ICU64_OPTS) ;
-
-#exe has_icu   : has_icu_obj   : $(ICU_OPTS)   ;
-#exe has_icu64 : has_icu64_obj : $(ICU64_OPTS) ;
-
-#explicit has_icu has_icu64 ;
 
 alias has_icu : icuuc icudt icuin ;
-#alias has_icu64 : icuuc_64 icudt_64 icuin_64 ;
 
 
 # This function is called whenever the 'boost_locale' metatarget
@@ -205,11 +187,11 @@ rule configure-full ( properties * : flags-only )
 
     local result ;
     local flags-result ;
-    
+
     local found-iconv ;
-    
+
     if <boost.locale.iconv>on in $(properties)
-      || ! <boost.locale.iconv> in $(properties:G) 
+      || ! <boost.locale.iconv> in $(properties:G)
         && ! <target-os>solaris in $(properties)
     {
         # See if iconv is bundled with standard library.
@@ -217,7 +199,7 @@ rule configure-full ( properties * : flags-only )
         {
             found-iconv = true ;
         }
-        else 
+        else
         {
             if [ configure.builds has_external_iconv : $(properties) : "iconv (separate)" ]
             {
@@ -225,8 +207,8 @@ rule configure-full ( properties * : flags-only )
                 result += <library>iconv ;
             }
         }
-    }        
-    if $(found-iconv) 
+    }
+    if $(found-iconv)
     {
         flags-result += <define>BOOST_LOCALE_WITH_ICONV=1 ;
     }
@@ -258,13 +240,13 @@ rule configure-full ( properties * : flags-only )
             }
             else
             {
-                flags-result += <define>BOOST_REGEX_DYN_LINK=1 ;
+                flags-result += <define>BOOST_LOCALE_DYN_LINK=1 ;
             }
         }
 
         if $(found-icu)
         {
-            ICU_SOURCES = 
+            ICU_SOURCES =
                 boundary
                 codecvt
                 collator
@@ -275,20 +257,20 @@ rule configure-full ( properties * : flags-only )
                 numeric
                 time_zone
                 ;
-            
-            result += <source>icu/$(ICU_SOURCES).cpp 
-                      <library>../../thread/build//boost_thread 
+
+            result += <source>icu/$(ICU_SOURCES).cpp
+                      <library>../../thread/build//boost_thread
                       ;
         }
 
     }
-        
-    if ! $(found-iconv) && ! $(found-icu) && ! <target-os>windows in $(properties) && ! <target-os>cygwin in $(properties) 
+
+    if ! $(found-iconv) && ! $(found-icu) && ! <target-os>windows in $(properties) && ! <target-os>cygwin in $(properties)
     {
         ECHO "- Boost.Locale needs either iconv or ICU library to be built." ;
         result += <build>no ;
     }
-    
+
     if ! <boost.locale.std> in $(properties:G)
     {
         if <toolset>sun in $(properties)
@@ -298,9 +280,9 @@ rule configure-full ( properties * : flags-only )
         else
         {
             properties += <boost.locale.std>on ;
-        }                
+        }
     }
-    
+
     if <boost.locale.std>off in $(properties)
     {
         flags-result += <define>BOOST_LOCALE_NO_STD_BACKEND=1 ;
@@ -316,38 +298,38 @@ rule configure-full ( properties * : flags-only )
           ;
         result += <source>std/$(STD_SOURCES).cpp ;
     }
-    
+
     if ! <boost.locale.winapi> in $(properties:G)
     {
-        if <target-os>windows in $(properties) 
+        if <target-os>windows in $(properties)
           || <target-os>cygwin in $(properties)
         {
             properties += <boost.locale.winapi>on ;
-        }      
+        }
         else
         {
             properties += <boost.locale.winapi>off ;
-        }                
+        }
     }
-    if  <target-os>windows in $(properties) 
-        && <toolset>gcc in $(properties) 
+    if  <target-os>windows in $(properties)
+        && <toolset>gcc in $(properties)
         && <link>shared in $(properties)
         && [ configure.builds accepts_shared_option : $(properties) : "g++ -shared-* supported" ]
     {
-        flags-result += <cxxflags>-shared-libstdc++ 
+        flags-result += <cxxflags>-shared-libstdc++
                         <cxxflags>-shared-libgcc
                         <linkflags>-shared-libstdc++
                         <linkflags>-shared-libgcc
                         ;
     }
-    
+
     if <boost.locale.winapi>off in $(properties)
     {
         flags-result += <define>BOOST_LOCALE_NO_WINAPI_BACKEND=1 ;
     }
     else
     {
-        WINAPI_SOURCES = 
+        WINAPI_SOURCES =
             collate
             converter
             numeric
@@ -355,34 +337,34 @@ rule configure-full ( properties * : flags-only )
           ;
         result += <source>win32/$(WINAPI_SOURCES).cpp ;
     }
-    
+
     if ( ! <boost.locale.winapi>off in $(properties) || ! <boost.locale.std>off in $(properties) )
        && ( <target-os>windows in $(properties) || <target-os>cygwin in $(properties) )
     {
         result += <source>win32/lcid.cpp ;
     }
- 
+
     if ! <boost.locale.posix> in $(properties:G)
     {
-        if <target-os>linux in $(properties) 
-            || <target-os>darwin in $(properties) 
+        if <target-os>linux in $(properties)
+            || <target-os>darwin in $(properties)
             || ( <target-os>freebsd in $(properties) && [ configure.builds has_xlocale : $(properties) : "xlocale supported" ] )
         {
             properties += <boost.locale.posix>on ;
         }
         else
         {
-            properties += <boost.locale.posix>off ;            
-        }        
+            properties += <boost.locale.posix>off ;
+        }
     }
-    
+
     if <boost.locale.posix>off in $(properties)
     {
-        flags-result += <define>BOOST_LOCALE_NO_POSIX_BACKEND=1 ;        
+        flags-result += <define>BOOST_LOCALE_NO_POSIX_BACKEND=1 ;
     }
     else
     {
-        POSIX_SOURCES = 
+        POSIX_SOURCES =
           collate
           converter
           numeric
@@ -396,11 +378,11 @@ rule configure-full ( properties * : flags-only )
     {
         result += <source>util/gregorian.cpp ;
     }
-    
+
     result += <library>../../system/build//boost_system ;
 
 
-    if "$(flags-only)" = "flags" 
+    if "$(flags-only)" = "flags"
     {
         return $(flags-result) ;
     }
@@ -414,7 +396,7 @@ rule configure ( properties * )
 {
     local result = [ configure-full $(properties) : "all" ] ;
     return $(result) ;
-    
+
 }
 
 rule configure-flags ( properties * )
@@ -422,15 +404,15 @@ rule configure-flags ( properties * )
     local result ;
     result = [ configure-full $(properties) : "flags" ] ;
     return $(result) ;
-    
+
 }
 
 
 alias build_options : : : : <conditional>@configure ;
 alias build_flags : : : : <conditional>@configure-flags ;
 
-lib boost_locale 
-    : 
+lib boost_locale
+    :
         encoding/codepage.cpp
         shared/date_time.cpp
         shared/format.cpp
@@ -443,7 +425,7 @@ lib boost_locale
         util/codecvt_converter.cpp
         util/default_locale.cpp
         util/info.cpp
-        util/locale_data.cpp  
+        util/locale_data.cpp
     :
       # Don't link explicitly, not required
       <define>BOOST_THREAD_NO_LIB=1
