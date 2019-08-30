@@ -463,6 +463,22 @@
 #        "-sICU_LINK=\"/LIBPATH:${CMAKE_INSTALL_PREFIX}/bin /LIBPATH:${CMAKE_INSTALL_PREFIX}/lib icuin.lib icuuc.lib icudt.lib\""
 #      )
     endif()
+
+    list(APPEND b2_ARGS
+      "boost.locale.icu=on"
+    )
+    list(APPEND b2_ARGS
+      "boost.locale.iconv=off"
+    )
+    list(APPEND b2_ARGS
+      "boost.locale.winapi=off"
+    )
+    list(APPEND b2_ARGS
+      "boost.locale.std=off"
+    )
+    list(APPEND b2_ARGS
+      "boost.locale.posix=off"
+    )
   endif()
 
 
@@ -629,7 +645,10 @@
     list(APPEND b2_ARGS "cxxflags=${B2_CXX_FLAGS}")
   endif()
   if(NOT "${B2_LINK_FLAGS}" STREQUAL "")
+    # Boost.Build uses 'linkflags' only for shared linking of libraries.
     list(APPEND b2_ARGS "linkflags=${B2_LINK_FLAGS}")
+    # Use 'archiveflags' for static linking of libraries.
+    list(APPEND b2_ARGS "archiveflags=${B2_LINK_FLAGS}")
   endif()
 
   set(B2_ENV_COMMAND ${CMAKE_COMMAND} -E env

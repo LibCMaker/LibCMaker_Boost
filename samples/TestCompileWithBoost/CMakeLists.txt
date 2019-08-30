@@ -157,6 +157,14 @@ add_executable(${PROJECT_NAME}_3
 )
 set_property(TARGET ${PROJECT_NAME}_3 PROPERTY CXX_STANDARD 11)
 
+if(NOT BOOST_WITHOUT_ICU)
+  # Example #4, with compiled Boost locale and with ICU
+  add_executable(${PROJECT_NAME}_4
+    ${example_src_DIR}/example_locale_with_icu.cpp
+  )
+  set_property(TARGET ${PROJECT_NAME}_4 PROPERTY CXX_STANDARD 11)
+endif()
+
 
 #-----------------------------------------------------------------------
 # Link to the libraries
@@ -166,7 +174,7 @@ set_property(TARGET ${PROJECT_NAME}_3 PROPERTY CXX_STANDARD 11)
 # 'Boost::boost' is target for header-only dependencies.
 # About 'Boost::disable_autolinking' see 'FindBoost.cmake'.
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  Boost::disable_autolinking Boost::regex
+  Boost::disable_autolinking Boost::regex Boost::thread Boost::chrono Boost::date_time Boost::atomic
 )
 target_link_libraries(${PROJECT_NAME}_2 PRIVATE
   Boost::disable_autolinking Boost::boost
@@ -179,6 +187,11 @@ target_link_libraries(${PROJECT_NAME}_3 PRIVATE
 #  Boost::disable_autolinking Boost::filesystem
   Boost::disable_autolinking Boost::filesystem Boost::system
 )
+if(NOT BOOST_WITHOUT_ICU)
+  target_link_libraries(${PROJECT_NAME}_4 PRIVATE
+    Boost::disable_autolinking Boost::locale Boost::thread Boost::chrono Boost::date_time Boost::atomic
+  )
+endif()
 
 #target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 #target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
@@ -190,8 +203,10 @@ if(NOT BOOST_WITHOUT_ICU)
   # ICU
   if(NOT BUILD_SHARED_LIBS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE U_STATIC_IMPLEMENTATION)
+    target_compile_definitions(${PROJECT_NAME}_4 PRIVATE U_STATIC_IMPLEMENTATION)
   endif()
   target_link_libraries(${PROJECT_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
+  target_link_libraries(${PROJECT_NAME}_4 PRIVATE ICU::i18n ICU::uc ICU::data)
 endif()
 
 
