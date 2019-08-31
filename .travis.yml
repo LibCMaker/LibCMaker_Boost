@@ -333,7 +333,7 @@ build_macos: &build_macos
   env: &build_macos_env
     - cmr_TARGET_OS=macos
 
-    - cmr_CMAKE_RELEASE_VER=3.8
+    - cmr_CMAKE_RELEASE_VER=3.12  # ICU requires CMake 3.12+ for Xcode
     - cmr_CMAKE_RELEASE=cmake-${cmr_CMAKE_RELEASE_VER}.0-Darwin-x86_64
     - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}/CMake.app/Contents
     - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
