@@ -322,6 +322,183 @@ build_android: &build_android
 #    - ${cmr_CTEST_CMD} --output-on-failure
 
 
+# === macOS ===
+
+build_macos: &build_macos
+  stage: Test
+  os: osx
+  osx_image: xcode10.2
+  compiler: clang
+
+  env: &build_macos_env
+    - cmr_TARGET_OS=macos
+
+    - cmr_CMAKE_RELEASE_VER=3.8
+    - cmr_CMAKE_RELEASE=cmake-${cmr_CMAKE_RELEASE_VER}.0-Darwin-x86_64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}/CMake.app/Contents
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v${cmr_CMAKE_RELEASE_VER}/${cmr_CMAKE_RELEASE}.tar.gz
+    - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+
+build_macos_xcode: &build_macos_xcode
+  <<: *build_macos
+  env: &build_macos_xcode_env
+    - *build_macos_env
+    - cmr_JOBS="-jobs ${cmr_JOBS_CNT}"
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT:STRING=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG:BOOL=ON
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+        -DCMAKE_COLOR_MAKEFILE:BOOL=ON
+        -DBUILD_TESTING:BOOL=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR:PATH=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR:PATH=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE:STRING=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS:BOOL=${cmr_BUILD_SHARED_LIBS}
+        -DCMAKE_GENERATOR:STRING="Xcode"
+          -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+
+    - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE} -- ${cmr_JOBS}
+
+    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
+
+
+build_macos_make: &build_macos_make
+  <<: *build_macos
+  env: &build_macos_make_env
+    - *build_macos_env
+    - cmr_JOBS="-j ${cmr_JOBS_CNT}"
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT:STRING=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG:BOOL=ON
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+        -DCMAKE_COLOR_MAKEFILE:BOOL=ON
+        -DBUILD_TESTING:BOOL=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR:PATH=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR:PATH=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE:STRING=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS:BOOL=${cmr_BUILD_SHARED_LIBS}
+        -DCMAKE_GENERATOR:STRING="Unix Makefiles"
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+
+    - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
+
+    - ${cmr_CTEST_CMD} --output-on-failure
+
+
+# === iOS ===
+
+build_ios: &build_ios_xcode
+  stage: Test
+  os: osx
+  osx_image: xcode10.2
+  compiler: clang
+
+  env: &build_ios_xcode_env
+    - cmr_TARGET_OS=ios
+    - cmr_JOBS="-jobs ${cmr_JOBS_CNT}"
+
+    - cmr_CMAKE_RELEASE_VER=3.15
+    - cmr_CMAKE_RELEASE=cmake-${cmr_CMAKE_RELEASE_VER}.0-Darwin-x86_64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}/CMake.app/Contents
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v${cmr_CMAKE_RELEASE_VER}/${cmr_CMAKE_RELEASE}.tar.gz
+    - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT:STRING=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG:BOOL=ON
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+        -DCMAKE_COLOR_MAKEFILE:BOOL=ON
+        -DBUILD_TESTING:BOOL=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR:PATH=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR:PATH=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE:STRING=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS:BOOL=${cmr_BUILD_SHARED_LIBS}
+        -DCMAKE_GENERATOR:STRING="Xcode"
+          -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
+        -DCMAKE_TOOLCHAIN_FILE=${cmr_SAMPLE_LIB_DIR}/LibCMaker/cmake/ios.toolchain.cmake
+          -DPLATFORM=SIMULATOR64
+          -DENABLE_VISIBILITY=${cmr_BUILD_SHARED_LIBS}
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+        -Dcmr_HOST_BUILD_DIR=${cmr_HOST_BUILD_DIR}
+          -DICU_CROSS_COMPILING=ON
+
+    - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE} -- ${cmr_JOBS}
+
+#    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
+
+
 # === Build matrix ===
 
 jobs:
@@ -400,7 +577,7 @@ jobs:
       env:
         - *build_windows_msvc_x64_env
         - cmr_BUILD_SHARED_LIBS=OFF
-#        - cmr_BOOST_WITHOUT_ICU=ON
+        - cmr_BOOST_WITHOUT_ICU=ON
 
     - <<: *build_windows_msvc_x32
       name: "Windows, msvc, x32, shared"
@@ -503,6 +680,93 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=x86_64
         - cmr_ANDROID_NATIVE_API_LEVEL=21
+
+# macOS, clang, Xcode
+    - <<: *build_macos_xcode
+      name: "macOS, clang, Xcode, debug, shared"
+      env:
+        - *build_macos_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_macos_xcode
+      name: "macOS, clang, Xcode, debug, static"
+      env:
+        - *build_macos_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_macos_xcode
+      name: "macOS, clang, Xcode, release, shared"
+      env:
+        - *build_macos_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_macos_xcode
+      name: "macOS, clang, Xcode, release, static"
+      env:
+        - *build_macos_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# macOS, clang, Make
+    - <<: *build_macos_make
+      name: "macOS, clang, Make, debug, shared"
+      env:
+        - *build_macos_make_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_macos_make
+      name: "macOS, clang, Make, debug, static"
+      env:
+        - *build_macos_make_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_macos_make
+      name: "macOS, clang, Make, release, shared"
+      env:
+        - *build_macos_make_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_macos_make
+      name: "macOS, clang, Make, release, static"
+      env:
+        - *build_macos_make_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# ios, clang, Xcode
+    - <<: *build_ios_xcode
+      name: "ios, clang, Xcode, debug, shared"
+      env:
+        - *build_ios_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_ios_xcode
+      name: "ios, clang, Xcode, debug, static"
+      env:
+        - *build_ios_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_ios_xcode
+      name: "ios, clang, Xcode, release, shared"
+      env:
+        - *build_ios_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_ios_xcode
+      name: "ios, clang, Xcode, release, static"
+      env:
+        - *build_ios_xcode_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
 
 
 notifications:
