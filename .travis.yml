@@ -414,14 +414,14 @@ build_macos_make: &build_macos_make
           -DCMAKE_BUILD_TYPE:STRING=${cmr_CMAKE_BUILD_TYPE}
           -DBUILD_SHARED_LIBS:BOOL=${cmr_BUILD_SHARED_LIBS}
         -DCMAKE_GENERATOR:STRING="Unix Makefiles"
-        -DBOOST_WITHOUT_ICU=OFF
-          -DBOOST_BUILD_ALL_COMPONENTS=ON
-          -DBOOST_REBUILD_OPTION=OFF
-          -DBOOST_DEBUG_SHOW_COMMANDS=ON
-          -DBOOST_DEBUG_CONFIGURATION=ON
-          -DBOOST_DEBUG_BUILDING=OFF
-          -DBOOST_DEBUG_GENERATOR=ON
-          -DBOOST_DEBUG_INSTALL=OFF
+        -DBOOST_WITHOUT_ICU:BOOL=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS:BOOL=ON
+          -DBOOST_REBUILD_OPTION:BOOL=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS:BOOL=ON
+          -DBOOST_DEBUG_CONFIGURATION:BOOL=ON
+          -DBOOST_DEBUG_BUILDING:BOOL=OFF
+          -DBOOST_DEBUG_GENERATOR:BOOL=ON
+          -DBOOST_DEBUG_INSTALL:BOOL=OFF
 
     - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
 
@@ -446,12 +446,18 @@ build_ios: &build_ios_xcode
     - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
     - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
 
+    - cmr_CMAKE_TOOLCHAIN_FILE=${cmr_SAMPLE_LIB_DIR}/LibCMaker/cmake/ios.toolchain.cmake
+
+    - cmr_HOST_BUILD_DIR=${cmr_BUILD_DIR}/host_tools
+    - cmr_HOST_TOOLS_STAMP_FILE_NAME="host_tools_stamp"
+
   before_install:
     - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
     - mkdir ${cmr_SAMPLE_LIB_DIR}
     - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
 
     - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_HOST_BUILD_DIR}
     - mkdir ${cmr_INSTALL_DIR}
     - mkdir ${cmr_DOWNLOAD_DIR}
 
@@ -465,6 +471,33 @@ build_ios: &build_ios_xcode
 
 
   script:
+    # === Build host tools ===
+    - cd ${cmr_HOST_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_HOST_TOOLS_PROJECT_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT:STRING=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG:BOOL=ON
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+        -DCMAKE_COLOR_MAKEFILE:BOOL=ON
+        -DBUILD_TESTING:BOOL=OFF
+        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR:PATH=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR:PATH=${cmr_DOWNLOAD_DIR}/unpacked_host_tools
+          -DCMAKE_BUILD_TYPE:STRING=Release
+          -DBUILD_SHARED_LIBS:BOOL=OFF
+        -DLibCMaker_LIB_DIR:PATH=${cmr_SAMPLE_LIB_DIR}
+          -DHOST_TOOLS_STAMP_FILE_NAME:STRING=${cmr_HOST_TOOLS_STAMP_FILE_NAME}
+        -DCMAKE_GENERATOR:STRING="Xcode"
+          -DCMAKE_CONFIGURATION_TYPES:STRING=Release
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+
+    - ${cmr_CMAKE_CMD} --build . --config Release -- ${cmr_JOBS}
+
+    # === Build iOS libs ===
     - cd ${cmr_BUILD_DIR}
 
     - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
@@ -480,19 +513,20 @@ build_ios: &build_ios_xcode
           -DBUILD_SHARED_LIBS:BOOL=${cmr_BUILD_SHARED_LIBS}
         -DCMAKE_GENERATOR:STRING="Xcode"
           -DCMAKE_CONFIGURATION_TYPES:STRING=${cmr_CMAKE_BUILD_TYPE}
-        -DCMAKE_TOOLCHAIN_FILE=${cmr_SAMPLE_LIB_DIR}/LibCMaker/cmake/ios.toolchain.cmake
-          -DPLATFORM=SIMULATOR64
-          -DENABLE_VISIBILITY=${cmr_BUILD_SHARED_LIBS}
-        -DBOOST_WITHOUT_ICU=OFF
-          -DBOOST_BUILD_ALL_COMPONENTS=ON
-          -DBOOST_REBUILD_OPTION=OFF
-          -DBOOST_DEBUG_SHOW_COMMANDS=ON
-          -DBOOST_DEBUG_CONFIGURATION=ON
-          -DBOOST_DEBUG_BUILDING=OFF
-          -DBOOST_DEBUG_GENERATOR=ON
-          -DBOOST_DEBUG_INSTALL=OFF
-        -Dcmr_HOST_BUILD_DIR=${cmr_HOST_BUILD_DIR}
-          -DICU_CROSS_COMPILING=ON
+        -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${cmr_CMAKE_TOOLCHAIN_FILE}
+          -DPLATFORM:STRING=SIMULATOR64
+          -DARCHS:STRING=x86_64
+          -DENABLE_VISIBILITY:BOOL=${cmr_BUILD_SHARED_LIBS}
+        -DBOOST_WITHOUT_ICU:BOOL=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS:BOOL=ON
+          -DBOOST_REBUILD_OPTION:BOOL=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS:BOOL=ON
+          -DBOOST_DEBUG_CONFIGURATION:BOOL=ON
+          -DBOOST_DEBUG_BUILDING:BOOL=OFF
+          -DBOOST_DEBUG_GENERATOR:BOOL=ON
+          -DBOOST_DEBUG_INSTALL:BOOL=OFF
+        -Dcmr_HOST_BUILD_DIR:PATH=${cmr_HOST_BUILD_DIR}
+          -DICU_CROSS_COMPILING:BOOL=ON
 
     - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE} -- ${cmr_JOBS}
 
@@ -739,30 +773,30 @@ jobs:
         - cmr_CMAKE_BUILD_TYPE=Release
         - cmr_BUILD_SHARED_LIBS=OFF
 
-# ios, clang, Xcode
+# iOS, clang, Xcode
     - <<: *build_ios_xcode
-      name: "ios, clang, Xcode, debug, shared"
+      name: "iOS, clang, Xcode, debug, shared"
       env:
         - *build_ios_xcode_env
         - cmr_CMAKE_BUILD_TYPE=Debug
         - cmr_BUILD_SHARED_LIBS=ON
 
     - <<: *build_ios_xcode
-      name: "ios, clang, Xcode, debug, static"
+      name: "iOS, clang, Xcode, debug, static"
       env:
         - *build_ios_xcode_env
         - cmr_CMAKE_BUILD_TYPE=Debug
         - cmr_BUILD_SHARED_LIBS=OFF
 
     - <<: *build_ios_xcode
-      name: "ios, clang, Xcode, release, shared"
+      name: "iOS, clang, Xcode, release, shared"
       env:
         - *build_ios_xcode_env
         - cmr_CMAKE_BUILD_TYPE=Release
         - cmr_BUILD_SHARED_LIBS=ON
 
     - <<: *build_ios_xcode
-      name: "ios, clang, Xcode, release, static"
+      name: "iOS, clang, Xcode, release, static"
       env:
         - *build_ios_xcode_env
         - cmr_CMAKE_BUILD_TYPE=Release
