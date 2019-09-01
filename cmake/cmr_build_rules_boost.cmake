@@ -600,11 +600,8 @@
 
   get_directory_property(B2_LINK_FLAGS LINK_FLAGS)
   string(REPLACE ";" " " B2_LINK_FLAGS "${B2_LINK_FLAGS}")
-  if(BUILD_SHARED_LIBS)
-    string(APPEND B2_LINK_FLAGS " ${CMAKE_SHARED_LINKER_FLAGS}")
-  else()
-    string(APPEND B2_LINK_FLAGS " ${CMAKE_STATIC_LINKER_FLAGS}")
-  endif()
+  set(B2_SHARED_LINK_FLAGS "${B2_LINK_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}")
+  set(B2_STATIC_LINK_FLAGS "${B2_LINK_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS}")
 
   # Compensate for extra spaces in the flags, which can cause build failures
   foreach(_b2_flags B2_C_FLAGS B2_CXX_FLAGS B2_LINK_FLAGS)
@@ -644,11 +641,13 @@
   if(NOT "${B2_CXX_FLAGS}" STREQUAL "")
     list(APPEND b2_ARGS "cxxflags=${B2_CXX_FLAGS}")
   endif()
-  if(NOT "${B2_LINK_FLAGS}" STREQUAL "")
+  if(NOT "${B2_SHARED_LINK_FLAGS}" STREQUAL "")
     # Boost.Build uses 'linkflags' only for shared linking of libraries.
-    list(APPEND b2_ARGS "linkflags=${B2_LINK_FLAGS}")
-    # Use 'archiveflags' for static linking of libraries.
-    list(APPEND b2_ARGS "archiveflags=${B2_LINK_FLAGS}")
+    list(APPEND b2_ARGS "linkflags=${B2_SHARED_LINK_FLAGS}")
+  endif()
+  if(NOT "${B2_STATIC_LINK_FLAGS}" STREQUAL "")
+    # Boost.Build uses 'archiveflags' only for static linking of libraries.
+    list(APPEND b2_ARGS "archiveflags=${B2_STATIC_LINK_FLAGS}")
   endif()
 
   set(B2_ENV_COMMAND ${CMAKE_COMMAND} -E env

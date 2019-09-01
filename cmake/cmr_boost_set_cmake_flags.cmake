@@ -106,6 +106,8 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} --sysroot=${CMAKE_SYSROOT}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${CMAKE_SYSROOT}")
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --sysroot=${CMAKE_SYSROOT}")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} --sysroot=${CMAKE_SYSROOT}")
   endif()
 
   string(COMPARE NOTEQUAL "${CMAKE_C_COMPILE_OPTIONS_PIC}" "" has_pic)
@@ -123,10 +125,9 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_PIC}")
   endif()
 
-
-  set(CMAKE_SHARED_LINKER_FLAGS
-    "${CMAKE_CXX_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}"
-  )
+  if(ANDROID AND (ANDROID_STL STREQUAL "c++_shared" OR ANDROID_STL STREQUAL "c++_static"))
+    set(CMAKE_SHARED_LINKER_FLAGS"-stdlib=libc++ ${CMAKE_SHARED_LINKER_FLAGS}")
+  endif()
 
   # CMake 3.6+
   if(NOT bscf_SKIP_INCLUDES AND CMAKE_VERSION VERSION_GREATER 3.5.9)
