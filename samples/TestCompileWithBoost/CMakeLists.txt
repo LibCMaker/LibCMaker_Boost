@@ -174,7 +174,8 @@ endif()
 # 'Boost::boost' is target for header-only dependencies.
 # About 'Boost::disable_autolinking' see 'FindBoost.cmake'.
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  Boost::disable_autolinking Boost::regex Boost::thread Boost::chrono Boost::date_time Boost::atomic
+  Boost::disable_autolinking Boost::regex Boost::thread Boost::chrono
+  Boost::date_time Boost::atomic Boost::system
 )
 target_link_libraries(${PROJECT_NAME}_2 PRIVATE
   Boost::disable_autolinking Boost::boost
@@ -189,7 +190,8 @@ target_link_libraries(${PROJECT_NAME}_3 PRIVATE
 )
 if(NOT BOOST_WITHOUT_ICU)
   target_link_libraries(${PROJECT_NAME}_4 PRIVATE
-    Boost::disable_autolinking Boost::locale Boost::thread Boost::chrono Boost::date_time Boost::atomic
+    Boost::disable_autolinking Boost::locale Boost::thread Boost::chrono
+    Boost::date_time Boost::atomic Boost::system
   )
 endif()
 
