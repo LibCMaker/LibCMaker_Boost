@@ -125,8 +125,9 @@ function(cmr_boost_set_cmake_flags)
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_COMPILE_OPTIONS_PIC}")
   endif()
 
-  if(ANDROID AND (ANDROID_STL STREQUAL "c++_shared" OR ANDROID_STL STREQUAL "c++_static"))
-    set(CMAKE_SHARED_LINKER_FLAGS"-stdlib=libc++ ${CMAKE_SHARED_LINKER_FLAGS}")
+  if(ANDROID AND
+      (ANDROID_STL STREQUAL "c++_shared" OR ANDROID_STL STREQUAL "c++_static"))
+    set(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_SHARED_LINKER_FLAGS}")
   endif()
 
   # CMake 3.6+
