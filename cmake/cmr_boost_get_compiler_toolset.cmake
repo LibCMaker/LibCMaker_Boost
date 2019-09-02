@@ -70,7 +70,7 @@ function(cmr_boost_get_compiler_toolset)
   endif()
 
   set(use_cmake_archiver TRUE)
-  if(APPLE)
+  if(APPLE AND NOT IOS)
     # TODO: for both gcc and clang or only for gcc?
     # Using CMAKE_AR on OSX leads to error (b2 use 'libtool'):
     # * https://travis-ci.org/ingenue/bcm/jobs/204617507

@@ -375,6 +375,15 @@
           ${lib_SRC_DIR}/libs/regex/build/Jamfile.v2
       )
     endif()
+
+    if(IOS AND BUILD_SHARED_LIBS)
+      cmr_print_status("Patch 'tools/build/src/tools/gcc.jam' in unpacked sources.")
+      execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${lib_BASE_DIR}/patch/boost-${lib_VERSION}/tools/build/src/tools/gcc.jam
+          ${lib_SRC_DIR}/tools/build/src/tools/gcc.jam
+      )
+    endif()
   endif()
 
 
