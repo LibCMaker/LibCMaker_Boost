@@ -383,7 +383,7 @@ function(_boost_set_legacy_variables_from_config)
   _boost_set_if_unset(Boost_VERSION_STRING "${Boost_VERSION_MAJOR}.${Boost_VERSION_MINOR}.${Boost_VERSION_PATCH}")
   find_path(Boost_INCLUDE_DIR
     NAMES boost/version.hpp boost/config.hpp
-    HINTS ${Boost_INCLUDE_DIRS}
+#    HINTS ${Boost_INCLUDE_DIRS}
     NO_DEFAULT_PATH
   )
   if(NOT Boost_VERSION_MACRO OR NOT Boost_LIB_VERSION)
@@ -645,7 +645,10 @@ macro(_Boost_FIND_LIBRARY var build_type)
     endif()
   elseif(_Boost_FIND_LIBRARY_HINTS_FOR_COMPONENT)
     # Try component-specific hints but do not save Boost_LIBRARY_DIR_[RELEASE,DEBUG].
-    find_library(${var} HINTS ${_Boost_FIND_LIBRARY_HINTS_FOR_COMPONENT} ${ARGN})
+    find_library(${var}
+#      HINTS ${_Boost_FIND_LIBRARY_HINTS_FOR_COMPONENT}
+      ${ARGN}
+    )
   endif()
 
   # If Boost_LIBRARY_DIR_[RELEASE,DEBUG] is known then search only there.
@@ -731,7 +734,7 @@ function(_Boost_GUESS_COMPILER_PREFIX _ret)
     if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.20)
       # MSVC toolset 14.x versions are forward compatible.
       set(_boost_COMPILER "-vc142;-vc141;-vc140")
-    if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
+    elseif (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
       # MSVC toolset 14.x versions are forward compatible.
       set(_boost_COMPILER "-vc141;-vc140")
     elseif (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19)
@@ -1660,7 +1663,7 @@ if(NOT Boost_INCLUDE_DIR)
   # Look for a standard boost header file.
   find_path(Boost_INCLUDE_DIR
     NAMES         boost/config.hpp
-    HINTS         ${_boost_INCLUDE_SEARCH_DIRS}
+#    HINTS         ${_boost_INCLUDE_SEARCH_DIRS}
     PATH_SUFFIXES ${_boost_PATH_SUFFIXES}
     NO_CMAKE_ENVIRONMENT_PATH
     NO_SYSTEM_ENVIRONMENT_PATH
@@ -2116,7 +2119,7 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
   if(Boost_USE_RELEASE_LIBS)
     _Boost_FIND_LIBRARY(Boost_${UPPERCOMPONENT}_LIBRARY_RELEASE RELEASE
       NAMES ${_boost_RELEASE_NAMES}
-      HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
+#      HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
       NAMES_PER_DIR
       DOC "${_boost_docstring_release}"
       NO_CMAKE_ENVIRONMENT_PATH
@@ -2174,7 +2177,7 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
   if(Boost_USE_DEBUG_LIBS)
     _Boost_FIND_LIBRARY(Boost_${UPPERCOMPONENT}_LIBRARY_DEBUG DEBUG
       NAMES ${_boost_DEBUG_NAMES}
-      HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
+#      HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
       NAMES_PER_DIR
       DOC "${_boost_docstring_debug}"
       NO_CMAKE_ENVIRONMENT_PATH
