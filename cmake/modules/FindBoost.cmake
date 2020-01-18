@@ -441,7 +441,11 @@ if (NOT Boost_NO_BOOST_CMAKE)
   # Do the same find_package call but look specifically for the CMake version.
   # Note that args are passed in the Boost_FIND_xxxxx variables, so there is no
   # need to delegate them to this find_package call.
-  find_package(Boost QUIET NO_MODULE)
+  find_package(Boost QUIET NO_MODULE
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH
+  )
   mark_as_advanced(Boost_DIR)
 
   # If we found a boost cmake package, then we're done. Print out what we found.
@@ -1658,6 +1662,9 @@ if(NOT Boost_INCLUDE_DIR)
     NAMES         boost/config.hpp
     HINTS         ${_boost_INCLUDE_SEARCH_DIRS}
     PATH_SUFFIXES ${_boost_PATH_SUFFIXES}
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH
     )
 endif()
 
@@ -2112,6 +2119,9 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
       HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
       NAMES_PER_DIR
       DOC "${_boost_docstring_release}"
+      NO_CMAKE_ENVIRONMENT_PATH
+      NO_SYSTEM_ENVIRONMENT_PATH
+      NO_CMAKE_SYSTEM_PATH
       )
   endif()
 
@@ -2167,6 +2177,9 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
       HINTS ${_boost_LIBRARY_SEARCH_DIRS_tmp}
       NAMES_PER_DIR
       DOC "${_boost_docstring_debug}"
+      NO_CMAKE_ENVIRONMENT_PATH
+      NO_SYSTEM_ENVIRONMENT_PATH
+      NO_CMAKE_SYSTEM_PATH
       )
   endif ()
 
