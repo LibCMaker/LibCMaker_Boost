@@ -1550,11 +1550,11 @@ if(WIN32)
     INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_NO_LIB")
 endif()
 
-cmake_policy(GET CMP0074 _Boost_CMP0074)
-if(NOT "x${_Boost_CMP0074}x" STREQUAL "xNEWx")
-  _Boost_CHECK_SPELLING(Boost_ROOT)
-endif()
-unset(_Boost_CMP0074)
+#cmake_policy(GET CMP0074 _Boost_CMP0074)
+#if(NOT "x${_Boost_CMP0074}x" STREQUAL "xNEWx")
+#  _Boost_CHECK_SPELLING(Boost_ROOT)
+#endif()
+#unset(_Boost_CMP0074)
 _Boost_CHECK_SPELLING(Boost_LIBRARYDIR)
 _Boost_CHECK_SPELLING(Boost_INCLUDEDIR)
 
@@ -1706,15 +1706,15 @@ if(Boost_INCLUDE_DIR)
   set(Boost_VERSION_STRING "${Boost_VERSION_MAJOR}.${Boost_VERSION_MINOR}.${Boost_VERSION_PATCH}")
 
   # Define final Boost_VERSION
-  cmake_policy(GET CMP0093 _Boost_CMP0093
-    PARENT_SCOPE # undocumented, do not use outside of CMake
-  )
-  if("x${_Boost_CMP0093}x" STREQUAL "xNEWx")
-    set(Boost_VERSION ${Boost_VERSION_STRING})
-  else()
+#  cmake_policy(GET CMP0093 _Boost_CMP0093
+#    PARENT_SCOPE # undocumented, do not use outside of CMake
+#  )
+#  if("x${_Boost_CMP0093}x" STREQUAL "xNEWx")
+#    set(Boost_VERSION ${Boost_VERSION_STRING})
+#  else()
     set(Boost_VERSION ${Boost_VERSION_MACRO})
-  endif()
-  unset(_Boost_CMP0093)
+#  endif()
+#  unset(_Boost_CMP0093)
 
   _Boost_DEBUG_PRINT_VAR("${CMAKE_CURRENT_LIST_FILE}" "${CMAKE_CURRENT_LIST_LINE}" "Boost_VERSION")
   _Boost_DEBUG_PRINT_VAR("${CMAKE_CURRENT_LIST_FILE}" "${CMAKE_CURRENT_LIST_LINE}" "Boost_VERSION_STRING")
