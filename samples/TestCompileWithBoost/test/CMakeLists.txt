@@ -63,7 +63,62 @@ if(BUILD_TESTING)
     GTest::GTest GTest::Main
   )
 
-  add_test(NAME ${test_NAME} COMMAND ${test_NAME})
+  if(NOT ANDROID AND NOT IOS)  # Linux, Windows, macOS
+    add_test(NAME ${test_NAME} COMMAND ${test_NAME})
+  endif()
+
+  if(ANDROID)
+    find_program(adb_exec adb)
+    if(NOT adb_exec)
+      message(FATAL_ERROR "Could not find 'adb'")
+    endif()
+
+    set(TEST_WORK_DIR "/data/local/tmp/LibCMaker_test")
+
+    add_test(NAME rm_work_dir
+      COMMAND ${adb_exec} shell "if [ -d \"${TEST_WORK_DIR}\" ] ; then rm -r \"${TEST_WORK_DIR}\" ; fi"
+    )
+
+    if(BUILD_SHARED_LIBS)
+      add_test(NAME push_libs
+        COMMAND ${adb_exec} push "${cmr_INSTALL_DIR}/lib" "${TEST_WORK_DIR}/lib"
+      )
+
+      find_library(cpp_shared_LIB "c++_shared")
+      if(NOT cpp_shared_LIB)
+        message(FATAL_ERROR "The library 'c++_shared' can not be found.")
+      endif()
+
+      get_filename_component(cpp_shared_LIB_FILE_NAME ${cpp_shared_LIB} NAME)
+
+      add_test(NAME push_cpp_shared
+        COMMAND ${adb_exec} push
+          "${cpp_shared_LIB}"
+          "${TEST_WORK_DIR}/lib/${cpp_shared_LIB_FILE_NAME}"
+      )
+    endif()
+
+    add_test(NAME push_${test_NAME}
+      COMMAND ${adb_exec} push ${test_NAME} "${TEST_WORK_DIR}/${test_NAME}"
+    )
+    add_test(NAME chmod_${test_NAME}
+      COMMAND ${adb_exec} shell chmod 775 "${TEST_WORK_DIR}/${test_NAME}"
+    )
+    add_test(NAME cd_to_work_dir COMMAND ${adb_exec} shell
+      cd "${TEST_WORK_DIR}"
+    )
+    add_test(NAME ${test_NAME} COMMAND ${adb_exec} shell
+      "cd ${TEST_WORK_DIR} && "
+      "LD_LIBRARY_PATH=${TEST_WORK_DIR}/lib ${TEST_WORK_DIR}/${test_NAME}"
+      # :${LD_LIBRARY_PATH} || :/vendor/lib64:/system/lib64
+    )
+    set_tests_properties(${test_NAME} PROPERTIES
+      PASS_REGULAR_EXPRESSION "PASSED"
+    )
+    set_tests_properties(${test_NAME} PROPERTIES
+      FAIL_REGULAR_EXPRESSION "FAILED"
+    )
+  endif()
 endif()
 
 
