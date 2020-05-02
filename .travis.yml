@@ -37,7 +37,7 @@ build_linux: &build_linux
     - cmr_TARGET_OS=linux
     - cmr_JOBS="-j${cmr_JOBS_CNT}"
 
-    - cmr_CMAKE_RELEASE=cmake-3.4.0-Linux-x86_64
+    - cmr_CMAKE_RELEASE=cmake-3.8.0-Linux-x86_64
     - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
     - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
     - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
@@ -51,7 +51,7 @@ build_linux: &build_linux
     - mkdir ${cmr_INSTALL_DIR}
     - mkdir ${cmr_DOWNLOAD_DIR}
 
-    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.4/${cmr_CMAKE_RELEASE}.tar.gz
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.8/${cmr_CMAKE_RELEASE}.tar.gz
     - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
 
     # NOTE: LibCMaker lib deps.
@@ -215,7 +215,7 @@ build_android: &build_android
     - cmr_TARGET_OS=android
     - cmr_JOBS="-j${cmr_JOBS_CNT}"
 
-    - cmr_CMAKE_RELEASE=cmake-3.6.0-Linux-x86_64
+    - cmr_CMAKE_RELEASE=cmake-3.8.0-Linux-x86_64
     - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
     - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
     - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
@@ -255,7 +255,7 @@ build_android: &build_android
     # https://stackoverflow.com/a/60598900
     - mkdir -p ${ANDROID_HOME}/platforms  # 'platforms' dir must be, at least empty.
 
-    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.6/${cmr_CMAKE_RELEASE}.tar.gz
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.8/${cmr_CMAKE_RELEASE}.tar.gz
     - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
 
     - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://dl.google.com/android/repository/${cmr_ANDROID_NDK_PLATFORM}.zip

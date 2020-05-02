@@ -44,6 +44,12 @@ if(BUILD_TESTING)
     CXX_STANDARD 11
     C_STANDARD 11
   )
+  if(NOT ANDROID AND NOT APPLE)
+    set_target_properties(${test_NAME} PROPERTIES
+      # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
+      LINK_WHAT_YOU_USE ON
+    )
+  endif()
 
   # Boost
   # About 'Boost::disable_autolinking' see 'FindBoost.cmake'.
