@@ -725,7 +725,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=x86
         - cmr_ANDROID_NATIVE_API_LEVEL=16
-        - cmr_ANDROID_EMULATOR_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=23
 
     - <<: *build_android
       name: "Android, shared, x86_64"
@@ -735,7 +735,7 @@ jobs:
         - cmr_ANDROID_STL=c++_shared
         - cmr_ANDROID_ABI=x86_64
         - cmr_ANDROID_NATIVE_API_LEVEL=21
-        - cmr_ANDROID_EMULATOR_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
 # Android, static
     - <<: *build_android
@@ -766,7 +766,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=x86
         - cmr_ANDROID_NATIVE_API_LEVEL=16
-        - cmr_ANDROID_EMULATOR_API_LEVEL=16
+        - cmr_ANDROID_EMULATOR_API_LEVEL=23
 
     - <<: *build_android
       name: "Android, static, x86_64"
@@ -776,7 +776,7 @@ jobs:
         - cmr_ANDROID_STL=c++_static
         - cmr_ANDROID_ABI=x86_64
         - cmr_ANDROID_NATIVE_API_LEVEL=21
-        - cmr_ANDROID_EMULATOR_API_LEVEL=21
+        - cmr_ANDROID_EMULATOR_API_LEVEL=24
 
 # macOS, clang, Xcode
     - <<: *build_macos_xcode
