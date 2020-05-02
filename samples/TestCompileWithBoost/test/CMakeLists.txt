@@ -44,7 +44,8 @@ if(BUILD_TESTING)
     CXX_STANDARD 11
     C_STANDARD 11
   )
-  if(NOT ANDROID AND NOT APPLE AND NOT MINGW)
+  if(NOT MINGW AND NOT ANDROID AND NOT IOS
+      AND NOT (APPLE AND CMAKE_GENERATOR MATCHES "Unix Makefiles"))
     set_target_properties(${test_NAME} PROPERTIES
       # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
       LINK_WHAT_YOU_USE ON
