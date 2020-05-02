@@ -144,7 +144,7 @@ else()
   )
 endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-if(NOT ANDROID AND NOT APPLE)
+if(NOT ANDROID AND NOT APPLE AND NOT MINGW)
   set_target_properties(${PROJECT_NAME} PROPERTIES
     # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
     LINK_WHAT_YOU_USE ON
@@ -156,7 +156,7 @@ add_executable(${PROJECT_NAME}_2
   ${example_src_DIR}/test_boost_headers.cpp
 )
 set_property(TARGET ${PROJECT_NAME}_2 PROPERTY CXX_STANDARD 11)
-if(NOT ANDROID AND NOT APPLE)
+if(NOT ANDROID AND NOT APPLE AND NOT MINGW)
   set_target_properties(${PROJECT_NAME}_2 PROPERTIES
     # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
     LINK_WHAT_YOU_USE ON
@@ -168,7 +168,7 @@ add_executable(${PROJECT_NAME}_3
   ${example_src_DIR}/test_boost_compiled.cpp
 )
 set_property(TARGET ${PROJECT_NAME}_3 PROPERTY CXX_STANDARD 11)
-if(NOT ANDROID AND NOT APPLE)
+if(NOT ANDROID AND NOT APPLE AND NOT MINGW)
   set_target_properties(${PROJECT_NAME}_3 PROPERTIES
     # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
     LINK_WHAT_YOU_USE ON
@@ -181,7 +181,7 @@ if(NOT BOOST_WITHOUT_ICU)
     ${example_src_DIR}/example_locale_with_icu.cpp
   )
   set_property(TARGET ${PROJECT_NAME}_4 PROPERTY CXX_STANDARD 11)
-  if(NOT ANDROID AND NOT APPLE)
+  if(NOT ANDROID AND NOT APPLE AND NOT MINGW)
     set_target_properties(${PROJECT_NAME}_4 PROPERTIES
       # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
       LINK_WHAT_YOU_USE ON
