@@ -38,3 +38,4 @@ build/
 # For testing
 build*/
 libs/
+run-build*.sh
