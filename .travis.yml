@@ -289,7 +289,7 @@ build_android: &build_android
         -DCMAKE_VERBOSE_MAKEFILE=ON
         -DCMAKE_COLOR_MAKEFILE=ON
         -DBUILD_TESTING=OFF
-        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}/host_tools
         -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
         -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked_host_tools
           -DCMAKE_BUILD_TYPE=Release
@@ -535,7 +535,7 @@ build_ios: &build_ios_xcode
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
         -DCMAKE_COLOR_MAKEFILE:BOOL=ON
         -DBUILD_TESTING:BOOL=OFF
-        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX:PATH=${cmr_INSTALL_DIR}/host_tools
         -Dcmr_DOWNLOAD_DIR:PATH=${cmr_DOWNLOAD_DIR}
         -Dcmr_UNPACKED_DIR:PATH=${cmr_DOWNLOAD_DIR}/unpacked_host_tools
           -DCMAKE_BUILD_TYPE:STRING=Release

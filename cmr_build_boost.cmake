@@ -102,7 +102,7 @@ set(b2_FILE_NAME "b2")
 if(CMAKE_HOST_WIN32)
   set(b2_FILE_NAME "b2.exe")
 endif()
-set(_b2_program_path "${cmr_INSTALL_DIR}/bin/${b2_FILE_NAME}")
+set(_b2_program_path "${cmr_INSTALL_DIR}/host_tools/bin/${b2_FILE_NAME}")
 
 if(EXISTS ${_b2_program_path})
   set(B2_PROGRAM_PATH ${_b2_program_path})  # Use 'b2' in specified path.

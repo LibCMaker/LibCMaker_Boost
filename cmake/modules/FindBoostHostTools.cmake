@@ -30,7 +30,7 @@
 
 find_program (b2_FILE
   NAMES b2
-  PATH_SUFFIXES bin
+  PATH_SUFFIXES bin host_tools/bin
   NO_CMAKE_ENVIRONMENT_PATH
   NO_SYSTEM_ENVIRONMENT_PATH
   NO_CMAKE_SYSTEM_PATH
@@ -40,7 +40,7 @@ mark_as_advanced(b2_FILE)
 if(BUILD_BCP_TOOL)
   find_program (bcp_FILE
     NAMES bcp
-    PATH_SUFFIXES bin
+    PATH_SUFFIXES bin host_tools/bin
     NO_CMAKE_ENVIRONMENT_PATH
     NO_SYSTEM_ENVIRONMENT_PATH
     NO_CMAKE_SYSTEM_PATH
