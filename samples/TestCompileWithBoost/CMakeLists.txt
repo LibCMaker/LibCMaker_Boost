@@ -3,7 +3,7 @@
 #  Purpose:  A CMake build script for Boost Libraries
 #  Author:   NikitaFeodonit, nfeodonit@yandex.com
 # ****************************************************************************
-#    Copyright (c) 2017-2019 NikitaFeodonit
+#    Copyright (c) 2017-2020 NikitaFeodonit
 #
 #    This file is part of the LibCMaker_Boost project.
 #
@@ -21,12 +21,16 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-cmake_minimum_required(VERSION 3.7)
+set(LibCMaker_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/libs")
+set(LibCMaker_DIR "${LibCMaker_LIB_DIR}/LibCMaker")
+
+include(${LibCMaker_DIR}/samples/cmr_get_cmake_min_ver.cmake NO_POLICY_SCOPE)
+cmr_get_cmake_min_ver()
+cmake_minimum_required(VERSION ${cmr_CMAKE_MIN_VER})
 
 project(LibCMaker_Boost_Compile_Test CXX)
 
-option(CMAKE_VERBOSE_MAKEFILE "CMAKE_VERBOSE_MAKEFILE" OFF)
-option(cmr_PRINT_DEBUG "cmr_PRINT_DEBUG" OFF)
+include(${LibCMaker_DIR}/samples/cmr_samples_common_macros.cmake)
 
 # Used by LibCMaker_Boost for Boost building.
 set(CMAKE_CXX_STANDARD 11)  # 20 17 14 11 98
@@ -36,82 +40,15 @@ endif()
 
 
 #-----------------------------------------------------------------------
-# Compiler flags
+# Common sample 1st part
 #-----------------------------------------------------------------------
 
-option(cmr_USE_STATIC_RUNTIME "cmr_USE_STATIC_RUNTIME" ON)
-
-if(cmr_USE_STATIC_RUNTIME AND MSVC AND NOT BUILD_SHARED_LIBS)
-  # Set MSVC static runtime flags for all configurations.
-  # See:
-  # https://stackoverflow.com/a/20804336
-  # https://stackoverflow.com/a/14172871
-  foreach(cfg "" ${CMAKE_CONFIGURATION_TYPES})
-    set(c_flag_var   CMAKE_C_FLAGS)
-    set(cxx_flag_var CMAKE_CXX_FLAGS)
-    if(cfg)
-      string(TOUPPER ${cfg} cfg_upper)
-      set(c_flag_var   "${c_flag_var}_${cfg_upper}")
-      set(cxx_flag_var "${cxx_flag_var}_${cfg_upper}")
-    endif()
-    if(${c_flag_var} MATCHES "/MD")
-      string(REPLACE "/MD" "/MT" ${c_flag_var} "${${c_flag_var}}")
-      set(${c_flag_var} ${${c_flag_var}} CACHE STRING
-        "Flags used by the C compiler during ${cfg_upper} builds." FORCE
-      )
-    endif()
-    if(${cxx_flag_var} MATCHES "/MD")
-      string(REPLACE "/MD" "/MT" ${cxx_flag_var} "${${cxx_flag_var}}")
-      set(${cxx_flag_var} ${${cxx_flag_var}} CACHE STRING
-        "Flags used by the CXX compiler during ${cfg_upper} builds." FORCE
-      )
-    endif()
-  endforeach()
-endif()
-
-
-#-----------------------------------------------------------------------
-# Configure to find_package()
-#-----------------------------------------------------------------------
-
-# Set CMake's search path for find_*() commands.
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
-
-if(ANDROID OR IOS)
-  list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
-endif()
-
-
-#-----------------------------------------------------------------------
-# Set path vars
-#-----------------------------------------------------------------------
-
-set(LibCMaker_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/libs")
-set(cmr_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
-
-if(NOT cmr_UNPACKED_DIR)
-  set(cmr_UNPACKED_DIR "${PROJECT_BINARY_DIR}/download/unpacked")
-endif()
-
-
-#-----------------------------------------------------------------------
-# LibCMaker settings
-#-----------------------------------------------------------------------
-
-set(LibCMaker_DIR "${LibCMaker_LIB_DIR}/LibCMaker")
-list(APPEND CMAKE_MODULE_PATH "${LibCMaker_DIR}/cmake")
-include(cmr_find_package)
+cmr_common_sample_1st_part()
 
 
 #-----------------------------------------------------------------------
 # Download, configure, build, install and find the required libraries
 #-----------------------------------------------------------------------
-
-option(BUILD_TESTING "Build the testing tree." OFF)
-if(BUILD_TESTING)
-  enable_testing()
-  include(${LibCMaker_LIB_DIR}/LibCMaker_GoogleTest/cmr_build_googletest.cmake)
-endif()
 
 if(NOT BOOST_WITHOUT_ICU)
   include(${LibCMaker_LIB_DIR}/LibCMaker_ICU/cmr_build_icu.cmake)
@@ -131,26 +68,23 @@ include(${LibCMaker_LIB_DIR}/LibCMaker_Boost/cmr_build_boost.cmake)
 
 set(example_src_DIR "${CMAKE_CURRENT_LIST_DIR}/src")
 
+# NOTE: Common settings for Example #1 see in cmr_1st_part() and cmr_2nd_part().
+
 # Example #1, with compiled Boost regex ...
 if(NOT BOOST_WITHOUT_ICU)
   # ... and with ICU
-  add_executable(${PROJECT_NAME}
-    ${example_src_DIR}/example_regex_with_icu.cpp
+  target_sources(${PROJECT_NAME}
+    PRIVATE
+      ${example_src_DIR}/example_regex_with_icu.cpp
   )
 else()
   # ... and without ICU
-  add_executable(${PROJECT_NAME}
-    ${example_src_DIR}/example_regex.cpp
+  target_sources(${PROJECT_NAME}
+    PRIVATE
+      ${example_src_DIR}/example_regex.cpp
   )
 endif()
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-if(NOT MINGW AND NOT ANDROID AND NOT IOS
-    AND NOT (APPLE AND CMAKE_GENERATOR MATCHES "Unix Makefiles"))
-  set_target_properties(${PROJECT_NAME} PROPERTIES
-    # Link all libraries into the target so as not to use LD_LIBRARY_PATH.
-    LINK_WHAT_YOU_USE ON
-  )
-endif()
 
 # Example #2, only with Boost headers
 add_executable(${PROJECT_NAME}_2
@@ -240,6 +174,13 @@ if(NOT BOOST_WITHOUT_ICU)
   target_link_libraries(${PROJECT_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
   target_link_libraries(${PROJECT_NAME}_4 PRIVATE ICU::i18n ICU::uc ICU::data)
 endif()
+
+
+#-----------------------------------------------------------------------
+# Common sample 2nd part
+#-----------------------------------------------------------------------
+
+cmr_common_sample_2nd_part()
 
 
 #-----------------------------------------------------------------------
