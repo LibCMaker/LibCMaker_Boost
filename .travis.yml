@@ -585,7 +585,9 @@ build_ios: &build_ios_xcode
 
     - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE} -- ${cmr_JOBS}
 
-#    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
+    - xcrun simctl boot "iPhone 8"
+
+    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
 
 
 # === Build matrix ===
