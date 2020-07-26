@@ -29,14 +29,17 @@
 # Lib's name, version, paths
 #-----------------------------------------------------------------------
 
-set(BOOST_lib_NAME        "Boost")
-set(BOOST_lib_VERSION     "1.69.0")
+set(BOOST_lib_NAME "Boost")
+set(BOOST_lib_VERSION "1.69.0" CACHE STRING "BOOST_lib_VERSION")
 # NOTE: this autodetection from 'FindBoost.cmake' is broken for Boost 1.69.0
 # for Android shared arm64-v8a build with link error:
 # libboost_system.so.1.69.0, needed by install/lib/libboost_filesystem.so, not found
 #set(BOOST_lib_COMPONENTS  regex filesystem)  # deps will also be compiled.
-set(BOOST_lib_COMPONENTS  locale regex thread chrono date_time atomic filesystem system)
-set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
+set(BOOST_lib_COMPONENTS
+  locale regex thread chrono date_time atomic filesystem system
+  CACHE STRING "BOOST_lib_COMPONENTS"
+)
+set(BOOST_lib_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "BOOST_lib_DIR")
 
 # To use our Find<LibName>.cmake.
 list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
@@ -105,7 +108,9 @@ endif()
 set(_b2_program_path "${cmr_INSTALL_DIR}/host_tools/bin/${b2_FILE_NAME}")
 
 if(EXISTS ${_b2_program_path})
-  set(B2_PROGRAM_PATH ${_b2_program_path})  # Use 'b2' in specified path.
+  set(B2_PROGRAM_PATH ${_b2_program_path} CACHE PATH
+    "Use 'b2' in specified path"
+  )
 endif()
 
 option(BUILD_BCP_TOOL "Build 'bcp' program" OFF)

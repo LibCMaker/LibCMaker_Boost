@@ -29,9 +29,9 @@
 # Lib's name, version, paths
 #-----------------------------------------------------------------------
 
-set(BOOST_lib_NAME        "Boost")
-set(BOOST_lib_VERSION     "1.69.0")
-set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
+set(BOOST_lib_NAME "Boost")
+set(BOOST_lib_VERSION "1.69.0" CACHE STRING "BOOST_lib_VERSION")
+set(BOOST_lib_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "BOOST_lib_DIR")
 
 # To use our Find<LibName>.cmake.
 list(APPEND CMAKE_MODULE_PATH "${BOOST_lib_DIR}/cmake/modules")
@@ -95,9 +95,7 @@ endif()
 #-----------------------------------------------------------------------
 
 option(BOOST_REBUILD_OPTION "Rebuild everything" OFF)
-
-set(BUILD_BCP_TOOL OFF)  # Build 'bcp' program.
-
+option(BUILD_BCP_TOOL "Build 'bcp' program" OFF)
 option(BOOST_WITHOUT_ICU "Disable Unicode/ICU support in Regex" ON)
 
 
