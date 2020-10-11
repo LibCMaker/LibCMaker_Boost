@@ -424,7 +424,7 @@
   else()
     # Install architecture independent files here
     list(APPEND b2_ARGS
-      "--prefix=${CMAKE_INSTALL_PREFIX}"
+      "--prefix=${cmr_INSTALL_DIR}"
     )
     # Install header files here
     list(APPEND b2_ARGS
@@ -469,7 +469,7 @@
       # Will use "linker-options-for-icu" when linking the library
       # rather than the default ICU binary names.
 #      list(APPEND b2_ARGS
-#        "-sICU_LINK=\"/LIBPATH:${CMAKE_INSTALL_PREFIX}/bin /LIBPATH:${CMAKE_INSTALL_PREFIX}/lib icuin.lib icuuc.lib icudt.lib\""
+#        "-sICU_LINK=\"/LIBPATH:${cmr_INSTALL_DIR}/bin /LIBPATH:${cmr_INSTALL_DIR}/lib icuin.lib icuuc.lib icudt.lib\""
 #      )
     endif()
 

@@ -31,18 +31,6 @@ option(cmr_PRINT_DEBUG "cmr_PRINT_DEBUG" OFF)
 
 
 #-----------------------------------------------------------------------
-# Configure to find_package()
-#-----------------------------------------------------------------------
-
-# Set CMake's search path for find_*() commands.
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
-
-if(ANDROID OR IOS)
-  list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
-endif()
-
-
-#-----------------------------------------------------------------------
 # Set path vars
 #-----------------------------------------------------------------------
 
@@ -63,6 +51,18 @@ if(NOT cmr_UNPACKED_DIR)
 endif()
 if(NOT cmr_BUILD_DIR)
   set(cmr_BUILD_DIR "${PROJECT_BINARY_DIR}")
+endif()
+
+
+#-----------------------------------------------------------------------
+# Configure to find_package()
+#-----------------------------------------------------------------------
+
+# Set CMake's search path for find_*() commands.
+list(APPEND CMAKE_PREFIX_PATH "${cmr_INSTALL_DIR}")
+
+if(ANDROID OR IOS)
+  list(APPEND CMAKE_FIND_ROOT_PATH "${cmr_INSTALL_DIR}")
 endif()
 
 
