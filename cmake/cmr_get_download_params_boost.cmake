@@ -63,7 +63,7 @@
     )
   endif()
 
-  set(base_url "https://dl.bintray.com/boostorg/release")
+  set(base_url "https://boostorg.jfrog.io/artifactory/main/release")
   set(src_dir_name    "boost-${version}")
   set(arch_file_name  "${src_dir_name}.tar.bz2")
   set(unpack_to_dir   "${unpacked_dir}/${src_dir_name}")
