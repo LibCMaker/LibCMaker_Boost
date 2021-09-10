@@ -98,6 +98,7 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
   if(ANDROID)
     list(APPEND os_specifics "binary-format=elf")
 
+    # From 'android.toolchain.cmake' in old Android NDK or from 'android-legacy.toolchain.cmake' in new one.
     if(ANDROID_SYSROOT_ABI STREQUAL arm
         OR ANDROID_SYSROOT_ABI STREQUAL arm64)
       set(cmr_BJAM_ARCH arm)
@@ -112,6 +113,17 @@ function(cmr_boost_get_os_specifics out_OS_SPECIFICS)
     elseif(ANDROID_SYSROOT_ABI STREQUAL mips64)
       set(cmr_BJAM_ARCH mips1)
       set(cmr_BJAM_ABI o64)
+    endif()
+
+    # From 'android.toolchain.cmake' in new Android NDK.
+    if(CMAKE_ANDROID_ARCH_ABI STREQUAL armeabi-v7a
+        OR CMAKE_ANDROID_ARCH_ABI STREQUAL arm64-v8a)
+      set(cmr_BJAM_ARCH arm)
+      set(cmr_BJAM_ABI aapcs)
+    elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL x86
+        OR CMAKE_ANDROID_ARCH_ABI STREQUAL x86_64)
+      set(cmr_BJAM_ARCH x86)
+      set(cmr_BJAM_ABI sysv)
     endif()
 
     if(ANDROID_SYSROOT_ABI MATCHES "^....?64$")
