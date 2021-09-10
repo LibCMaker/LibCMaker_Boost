@@ -1,0 +1,448 @@
+name: LibCMaker CI
+# for GitHub Actions
+
+# workflow_dispatch: Allows to run this workflow manually from the Actions tab.
+on: [push, pull_request, workflow_dispatch]
+
+
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+
+# === Linux ===
+
+# Linux, GCC
+          - target: "Linux"
+            platform: "x64"
+            compiler: "GCC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Unix Makefiles"
+            runner: "ubuntu-18.04"
+
+          - target: "Linux"
+            platform: "x64"
+            compiler: "GCC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Unix Makefiles"
+            runner: "ubuntu-18.04"
+
+# Linux, Clang
+          - target: "Linux"
+            platform: "x64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Unix Makefiles"
+            runner: "ubuntu-18.04"
+
+          - target: "Linux"
+            platform: "x64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Unix Makefiles"
+            runner: "ubuntu-18.04"
+
+
+# === macOS ===
+
+# macOS, AppleClang, Xcode
+          - target: "macOS_Xcode"
+            platform: "x64"
+            compiler: "AppleClang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Xcode"
+            runner: "macos-10.15"
+
+          - target: "macOS_Xcode"
+            platform: "x64"
+            compiler: "AppleClang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Xcode"
+            runner: "macos-10.15"
+
+# macOS, Clang, Unix Makefiles
+          - target: "macOS_Makefiles"
+            platform: "x64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Unix Makefiles"
+            runner: "macos-10.15"
+
+          - target: "macOS_Makefiles"
+            platform: "x64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Unix Makefiles"
+            runner: "macos-10.15"
+
+# macOS, GCC, Unix Makefiles
+          - target: "macOS_Makefiles"
+            platform: "x64"
+            compiler: "GCC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Unix Makefiles"
+            runner: "macos-10.15"
+
+          - target: "macOS_Makefiles"
+            platform: "x64"
+            compiler: "GCC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Unix Makefiles"
+            runner: "macos-10.15"
+
+
+# === Windows ===
+
+# Windows, MSVC, x64
+          - target: "Windows_MSVC"
+            platform: "x64"
+            compiler: "MSVC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+          - target: "Windows_MSVC"
+            platform: "x64"
+            compiler: "MSVC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+# Windows, MSVC, Win32
+          - target: "Windows_MSVC"
+            platform: "Win32"
+            compiler: "MSVC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+          - target: "Windows_MSVC"
+            platform: "Win32"
+            compiler: "MSVC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+# Windows, MSVC, WinXP
+          - target: "Windows_MSVC"
+            platform: "WinXP"
+            compiler: "MSVC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+          - target: "Windows_MSVC"
+            platform: "WinXP"
+            compiler: "MSVC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Visual Studio"
+            runner: "windows-2016"
+
+
+# Windows, GCC, MinGW-w64, x86_64
+          - target: "Windows_MinGW-w64"
+            platform: "x86_64"
+            compiler: "GCC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+          - target: "Windows_MinGW-w64"
+            platform: "x86_64"
+            compiler: "GCC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+# Windows, GCC, MinGW-w64, i686
+          - target: "Windows_MinGW-w64"
+            platform: "i686"
+            compiler: "GCC"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+          - target: "Windows_MinGW-w64"
+            platform: "i686"
+            compiler: "GCC"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+# Windows, Clang, MinGW-w64, x86_64
+          - target: "Windows_MinGW-w64"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+          - target: "Windows_MinGW-w64"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+# Windows, Clang, MinGW-w64, i686
+          - target: "Windows_MinGW-w64"
+            platform: "i686"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+          - target: "Windows_MinGW-w64"
+            platform: "i686"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "MinGW Makefiles"
+            runner: "windows-2016"
+
+
+# === Android, on Linux ===
+
+# Android, armeabi-v7a, on Linux
+          - target: "Android_Linux"
+            platform: "armeabi-v7a"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+          - target: "Android_Linux"
+            platform: "armeabi-v7a"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+# Android, arm64-v8a, on Linux
+          - target: "Android_Linux"
+            platform: "arm64-v8a"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+          - target: "Android_Linux"
+            platform: "arm64-v8a"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+# Android, x86, on Linux
+          - target: "Android_Linux"
+            platform: "x86"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+          - target: "Android_Linux"
+            platform: "x86"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+# Android, x86_64, on Linux
+          - target: "Android_Linux"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+          - target: "Android_Linux"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "ubuntu-18.04"
+
+
+# === Android, on Windows ===
+
+# Android, armeabi-v7a, on Windows
+          - target: "Android_Windows"
+            platform: "armeabi-v7a"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+          - target: "Android_Windows"
+            platform: "armeabi-v7a"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+# Android, arm64-v8a, on Windows
+          - target: "Android_Windows"
+            platform: "arm64-v8a"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+          - target: "Android_Windows"
+            platform: "arm64-v8a"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+# Android, x86, on Windows
+          - target: "Android_Windows"
+            platform: "x86"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+          - target: "Android_Windows"
+            platform: "x86"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+# Android, x86_64, on Windows
+          - target: "Android_Windows"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+          - target: "Android_Windows"
+            platform: "x86_64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Ninja"
+            runner: "windows-2016"
+
+
+# === iOS ===
+
+# iOS, Clang, SIMULATOR64
+          - target: "iOS"
+            platform: "SIMULATOR64"
+            compiler: "Clang"
+            build_type: "Debug"
+            lib_linking: "shared"
+            cmake_generator: "Xcode"
+            runner: "macos-10.15"
+
+          - target: "iOS"
+            platform: "SIMULATOR64"
+            compiler: "Clang"
+            build_type: "Release"
+            lib_linking: "static"
+            cmake_generator: "Xcode"
+            runner: "macos-10.15"
+
+
+    name: ${{join( matrix.*, ', ' )}}
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      cmr_TARGET: ${{ matrix.target }}
+      cmr_PLATFORM: ${{ matrix.platform }}
+      cmr_COMPILER: ${{ matrix.compiler }}
+      cmr_CMAKE_BUILD_TYPE: ${{ matrix.build_type }}
+      cmr_LIB_LINKING: ${{ matrix.lib_linking }}
+      cmr_CMAKE_GENERATOR: ${{ matrix.cmake_generator }}
+      cmr_RUNNER: ${{ matrix.runner }}
+
+      cmr_LibCMaker_DIR_NAME: "LibCMaker"
+      cmr_LibCMaker_Lib_DIR_NAME: "LibCMaker_Lib"
+
+
+    steps:
+      - name: Checkout Library repo
+        uses: actions/checkout@v2
+        with:
+          path: LibCMaker_Lib
+
+      - name: Checkout LibCMaker repo
+        uses: actions/checkout@v2
+        with:
+          repository: LibCMaker/LibCMaker
+          path: LibCMaker
+
+
+#      - name: Cache dirs
+#        uses: actions/cache@v2
+#        id: cache
+#        with:
+#          # Change vN to delete old cache and create new one.
+#          key: v5-${{join( matrix.*, '-' )}}
+#          # Can not use environmetn variables in 'path:'.
+#          path: |
+#            work  # Relative to ${GITHUB_WORKSPACE}
+
+
+# Check caching
+#      - run: |
+#          if [[ ! -d "${GITHUB_WORKSPACE}/work" ]] ; then
+#            mkdir -p ${GITHUB_WORKSPACE}/work
+#            cp -r ${GITHUB_WORKSPACE}/LibCMaker_Lib ${GITHUB_WORKSPACE}/work
+#            echo Files are copied.
+#          fi
+
+      - name: Build project and run test
+        run: ${GITHUB_WORKSPACE}/LibCMaker/ci/ci_build.sh
